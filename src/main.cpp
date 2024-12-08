@@ -227,13 +227,15 @@ void setup() {
       bool RxWeather  = false;
       bool RxForecast = false;
       WiFiClient client;   // wifi client object
-      while ((RxWeather == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
+      // while ((RxWeather == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
+      while ((RxWeather == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
         if (RxWeather  == false) RxWeather  = obtainWeatherData(client, "onecall");
-        if (RxForecast == false) RxForecast = obtainWeatherData(client, "forecast");
+        // if (RxForecast == false) RxForecast = obtainWeatherData(client, "forecast");
         Attempts++;
       }
       Serial.println("Received all weather data...");
-      if (RxWeather && RxForecast) { // Only if received both Weather or Forecast proceed
+      // if (RxWeather && RxForecast) { // Only if received both Weather or Forecast proceed
+      if (RxWeather) { // Only if received both Weather or Forecast proceed
         StopWiFi();         // Reduces power consumption
         epd_poweron();      // Switch on EPD display
         epd_clear();        // Clear the screen
@@ -403,7 +405,7 @@ void DisplayWeather() {                          // 4.7" e-paper display is 960x
   DisplayAstronomySection(5, 252);               // Astronomy section Sun rise/set, Moon phase and Moon icon
   DisplayMainWeatherSection(320, 110);           // Centre section of display for Location, temperature, Weather report, current Wx Symbol
   DisplayWeatherIcon(835, 140);                  // Display weather icon scale = Large;
-  DisplayForecastSection(285, 220);              // 3hr forecast boxes
+  // DisplayForecastSection(285, 220);              // 3hr forecast boxes
   DisplayGraphSection(320, 220);                 // Graphs of pressure, temperature, humidity and rain or snowfall
 }
 
