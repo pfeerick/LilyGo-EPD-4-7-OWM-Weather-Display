@@ -25,4 +25,9 @@ To compile you will need following libraries
 * https://github.com/Xinyuan-LilyGO/LilyGo-EPD47
 * https://github.com/bblanchon/ArduinoJson
 
+Note: I successfully used the following package versions
+ - ESP32 Board Support Package 2.0.17 (3.0 fails - looks like some minor API changes and possibly EPD47 needs some changes)
+ - ArduinoJson 6.19.4 (6.20 onwards has compile errors due to removal of depreciated functions)
+ - LilyGo-EPD47 1.0.1
+
 In board manager choose ESP32 Dev Module with PSRAM Enabled
