@@ -339,8 +339,8 @@ bool obtainWeatherData(WiFiClient & client, const String & RequestType) {
   const String units = (Units == "M" ? "metric" : "imperial");
   client.stop(); // close connection before sending a new request
   HTTPClient http;
-  //api.openweathermap.org/data/2.5/RequestType?lat={lat}&lon={lon}&appid={API key}
-  String uri = "/data/2.5/" + RequestType + "?lat=" + Latitude + "&lon=" + Longitude + "&appid=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
+  //api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API key}
+  String uri = "/data/3.0/" + RequestType + "?lat=" + Latitude + "&lon=" + Longitude + "&appid=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
   if (RequestType == "onecall") uri += "&exclude=minutely,hourly,alerts,daily";
   http.begin(client, server, 80, uri); //http.begin(uri,test_root_ca); //HTTPS example connection
   int httpCode = http.GET();
@@ -350,7 +350,7 @@ bool obtainWeatherData(WiFiClient & client, const String & RequestType) {
   }
   else
   {
-    Serial.printf("connection failed, error: %s", http.errorToString(httpCode).c_str());
+    Serial.printf("connection failed, error: %s\n", http.errorToString(httpCode).c_str());
     client.stop();
     http.end();
     return false;
