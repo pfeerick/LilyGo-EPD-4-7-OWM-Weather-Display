@@ -221,6 +221,15 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>(); // Get Highest temperature for next 24Hrs
   Serial.println("THig High: " + String(WxConditions[0].High));
 
+  //TODO: Perhaps this should also still step through per hour for
+  //      temperature, so it can re-create the high and low for each 
+  //      three hourly forecast block?
+
+  //TODO: Figure out why can't get 48 hours worth of hourly forecast
+  //      in order to do do two day forecast. 
+
+  //TODO: Is it worth using daily data to build a weekly forecast or something?
+  
   JsonArray list                    = root["hourly"];
   byte wxIndex = 0; // Index to populate WxForecast sequentially
   Serial.println("hourly list size" + String(list.size())); // 48 hours of hourly data is returned by the API
