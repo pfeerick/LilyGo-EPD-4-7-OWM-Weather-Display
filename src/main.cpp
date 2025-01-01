@@ -255,7 +255,7 @@ void Convert_Readings_to_Imperial() { // Only the first 3-hours are used
 }
 
 bool DecodeWeather(WiFiClient& json, String Type) {
-  Serial.print(F("\nCreating object...and "));
+  Serial.print(F("\nCreating object..."));
   DynamicJsonDocument doc(64 * 1024);                      // allocate the JsonDocument
   DeserializationError error = deserializeJson(doc, json); // Deserialize the JSON document
   if (error) {                                             // Test if parsing succeeds.
@@ -311,14 +311,20 @@ bool DecodeWeather(WiFiClient& json, String Type) {
       }
     }
     //------------------------------------------
-    float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure; // Measure pressure slope between ~now and later
-    pressure_trend = ((int)(pressure_trend * 10)) / 10.0; // Remove any small variations less than 0.1
-    WxConditions[0].Trend = "=";
-    if (pressure_trend > 0)  WxConditions[0].Trend = "+";
-    if (pressure_trend < 0)  WxConditions[0].Trend = "-";
-    if (pressure_trend == 0) WxConditions[0].Trend = "0";
+    if (wxIndex >= 2) {
+      float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure; // Measure pressure slope between ~now and later
+      pressure_trend = ((int)(pressure_trend * 10)) / 10.0; // Remove any small variations less than 0.1
+      WxConditions[0].Trend = "=";
+      if (pressure_trend > 0)  WxConditions[0].Trend = "+";
+      if (pressure_trend < 0)  WxConditions[0].Trend = "-";
+      if (pressure_trend == 0) WxConditions[0].Trend = "0";
+    } else {
+      WxConditions[0].Trend = "0"; // Default if insufficient data
+    }
 
     if (Units == "I") Convert_Readings_to_Imperial();
+
+    wxIndex++; // Increment WxForecast index for sequential population
   }
   return true;
 }
@@ -343,7 +349,7 @@ bool obtainWeatherData(WiFiClient & client, const String & RequestType) {
   HTTPClient http;
   //api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API key}
   String uri = "/data/3.0/" + RequestType + "?lat=" + Latitude + "&lon=" + Longitude + "&appid=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
-  if (RequestType == "onecall") uri += "&exclude=minutely,hourly,alerts,daily";
+  if (RequestType == "onecall") uri += "&exclude=minutely,alerts";
   http.begin(client, server, 80, uri); //http.begin(uri,test_root_ca); //HTTPS example connection
   int httpCode = http.GET();
   if (httpCode == HTTP_CODE_OK) {
@@ -405,7 +411,7 @@ void DisplayWeather() {                          // 4.7" e-paper display is 960x
   DisplayAstronomySection(5, 252);               // Astronomy section Sun rise/set, Moon phase and Moon icon
   DisplayMainWeatherSection(320, 110);           // Centre section of display for Location, temperature, Weather report, current Wx Symbol
   DisplayWeatherIcon(835, 140);                  // Display weather icon scale = Large;
-  // DisplayForecastSection(285, 220);              // 3hr forecast boxes
+  DisplayForecastSection(285, 220);              // 3hr forecast boxes
   DisplayGraphSection(320, 220);                 // Graphs of pressure, temperature, humidity and rain or snowfall
 }
 
