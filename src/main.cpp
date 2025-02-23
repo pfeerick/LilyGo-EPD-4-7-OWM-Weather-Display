@@ -14,14 +14,10 @@
 
 #include "owm_credentials.h"
 #include "forecast_record.h"
-#include "lang.h"
+#include "translations/lang_en.h"
 
 #define SCREEN_WIDTH   EPD_WIDTH
 #define SCREEN_HEIGHT  EPD_HEIGHT
-
-//################  VERSION  ##################################################
-String version = "2.7 / 4.7in";  // Programme version, see change log at end
-//################ VARIABLES ##################################################
 
 enum alignment {LEFT, RIGHT, CENTER};
 #define White         0xFF
@@ -62,15 +58,17 @@ long SleepTimer      = 0;
 long Delta           = 30; // ESP32 rtc speed compensation, prevents display at xx:59:yy and then xx:00:yy (one minute later) to save power
 
 //fonts
-#include "opensans8b.h"
-#include "opensans10b.h"
-#include "opensans12b.h"
-#include "opensans18b.h"
-#include "opensans24b.h"
-#include "moon.h"
-#include "sunrise.h"
-#include "sunset.h"
-#include "uvi.h"
+#include "fonts/opensans8b.h"
+#include "fonts/opensans10b.h"
+#include "fonts/opensans12b.h"
+#include "fonts/opensans18b.h"
+#include "fonts/opensans24b.h"
+
+//image "fonts"
+#include "images/moon.h"
+#include "images/sunrise.h"
+#include "images/sunset.h"
+#include "images/uvi.h"
 
 GFXfont  currentFont;
 uint8_t *framebuffer;
@@ -1138,6 +1136,3 @@ void setFont(GFXfont const & font) {
 void edp_update() {
   epd_draw_grayscale_image(epd_full_screen(), framebuffer); // Update the screen
 }
-/*
-   1071 lines of code 03-03-2021
-*/
