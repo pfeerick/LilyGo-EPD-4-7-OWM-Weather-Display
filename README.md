@@ -1,8 +1,8 @@
-# LilyGo-EPD-4-7-OWM-Weather-Display
+# LilyGo EPD 4.7" OpenWeather Weather Display
 
-Open Weather Map weather station using [LilyGo EPD 4.7" display](https://bit.ly/3exI3Hb)
+OpenWeather weather station using [LilyGo EPD 4.7" display](https://bit.ly/3exI3Hb)
 
-[![Presetation video](doc/assets/001.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
+[![Presentation video](doc/assets/001.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
 
 # License
 
@@ -18,16 +18,9 @@ This fork fixes the problem by setting the correct license for the code while ke
 
 # Compiling and flashing
 
-Edit `owm_credentials.h` and enter OWM API key as well as the location for which you want to display the weather data
+Edit `owm_credentials.h` and enter OWM API key as well as the location for which you want to display the weather data.
 
-To compile you will need following libraries
+To compile you will need following libraries, compatiable versions of which will automatically be installed by PlatformIO.
 
 * https://github.com/Xinyuan-LilyGO/LilyGo-EPD47
 * https://github.com/bblanchon/ArduinoJson
-
-Note: I successfully used the following package versions
- - ESP32 Board Support Package 2.0.17 (3.0 fails - looks like some minor API changes and possibly EPD47 needs some changes)
- - ArduinoJson 6.19.4 (6.20 onwards has compile errors due to removal of depreciated functions)
- - LilyGo-EPD47 1.0.1
-
-In board manager choose ESP32 Dev Module with PSRAM Enabled
