@@ -18,7 +18,7 @@ This fork fixes the problem by setting the correct license for the code while ke
 
 # Compiling and flashing
 
-Edit `owm_credentials.h` and enter OWM API key as well as the location for which you want to display the weather data.
+Copy `include/owm_credentials.h.example` to `include/owm_credentials.h` and fill in your OWM API key, WiFi credentials, and location. The local `owm_credentials.h` is gitignored so your credentials won't be committed.
 
 To compile you will need following libraries, compatiable versions of which will automatically be installed by PlatformIO.
 
