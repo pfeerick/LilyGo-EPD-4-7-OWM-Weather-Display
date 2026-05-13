@@ -40,7 +40,7 @@ String  Date_str = "-- --- ----";
 int     wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, EventCnt = 0, vref = 1100;
 //################ PROGRAM VARIABLES and OBJECTS ##########################################
 #define max_readings 24 // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
-#define max_graph_readings 8
+#define max_graph_readings 16
 
 Forecast_record_type  WxConditions[1];
 Forecast_record_type  WxForecast[max_readings];
@@ -299,27 +299,24 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>(); // Get Highest temperature for next 24Hrs
   Serial.println("THig High: " + String(WxConditions[0].High));
 
-  //TODO: Figure out why can't get 48 hours worth of hourly forecast
-  //      in order to do do two day forecast.
-
   //TODO: Is it worth using daily data to build a weekly forecast or something?
 
   JsonArray list                    = root["hourly"];
   byte wxIndex = 0; // Index to populate WxForecast sequentially
   Serial.println("hourly list size" + String(list.size())); // 48 hours of hourly data is returned by the API
-  for (byte r = 0; r < max_readings; r+=3) {
+  for (byte r = 0; r < 48 && wxIndex < 16; r+=3) {
     Serial.println("\nPeriod-" + String(r) + "--------------");
 
     WxForecast[wxIndex].Dt                = list[r]["dt"].as<int>();
-    WxForecast[wxIndex].Temperature       = list[r]["temp"].as<float>();       Serial.println("Temp: " + String(WxForecast[r].Temperature));
+    WxForecast[wxIndex].Temperature       = list[r]["temp"].as<float>();       Serial.println("Temp: " + String(WxForecast[wxIndex].Temperature));
     float t1 = list[r+1]["temp"].as<float>();
     float t2 = list[r+2]["temp"].as<float>();
     WxForecast[wxIndex].High              = max(max(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("High: " + String(WxForecast[wxIndex].High));
     WxForecast[wxIndex].Low               = min(min(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("Low: " + String(WxForecast[wxIndex].Low));
-    WxForecast[wxIndex].Pressure          = list[r]["pressure"].as<float>();   Serial.println("Pres: " + String(WxForecast[r].Pressure));
-    WxForecast[wxIndex].Humidity          = list[r]["humidity"].as<float>();   Serial.println("Humi: " + String(WxForecast[r].Humidity));
-    WxForecast[wxIndex].Icon              = list[r]["weather"][0]["icon"].as<const char*>(); Serial.println("Icon: " + String(WxForecast[r].Icon));
-    WxForecast[wxIndex].Rainfall          = list[r]["rain"]["1h"].as<float>();         Serial.println("Rain: " + String(WxForecast[r].Rainfall));
+    WxForecast[wxIndex].Pressure          = list[r]["pressure"].as<float>();   Serial.println("Pres: " + String(WxForecast[wxIndex].Pressure));
+    WxForecast[wxIndex].Humidity          = list[r]["humidity"].as<float>();   Serial.println("Humi: " + String(WxForecast[wxIndex].Humidity));
+    WxForecast[wxIndex].Icon              = list[r]["weather"][0]["icon"].as<const char*>(); Serial.println("Icon: " + String(WxForecast[wxIndex].Icon));
+    WxForecast[wxIndex].Rainfall          = list[r]["rain"]["1h"].as<float>();         Serial.println("Rain: " + String(WxForecast[wxIndex].Rainfall));
 
     //------------------------------------------
     if (wxIndex >= 2) {
