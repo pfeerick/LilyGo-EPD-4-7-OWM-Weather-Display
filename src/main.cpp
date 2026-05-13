@@ -299,7 +299,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>(); // Get Highest temperature for next 24Hrs
   Serial.println("THig High: " + String(WxConditions[0].High));
 
-  //TODO: Is it worth using daily data to build a weekly forecast or something?
+  //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
   JsonArray list                    = root["hourly"];
   byte wxIndex = 0; // Index to populate WxForecast sequentially
