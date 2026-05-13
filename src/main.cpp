@@ -257,7 +257,7 @@ void Convert_Readings_to_Imperial() { // Only the first 3-hours are used
 
 bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.print(F("\nCreating object..."));
-  DynamicJsonDocument doc(64 * 1024);                      // allocate the JsonDocument
+  JsonDocument doc;                                        // allocate the JsonDocument
   DeserializationError error = deserializeJson(doc, json); // Deserialize the JSON document
   if (error) {                                             // Test if parsing succeeds.
     Serial.print(F("deserializeJson() failed: "));
@@ -291,7 +291,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
 
   Serial.println(json);
   Serial.print(F("\nReceiving Forecast period - ")); //------------------------------------------------
-  
+
   // Daily
   JsonArray daily                    = root["daily"];
   WxConditions[0].Low = daily[0]["temp"]["min"].as<float>(); // Get Lowest temperature for next 24Hrs
@@ -300,14 +300,14 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.println("THig High: " + String(WxConditions[0].High));
 
   //TODO: Perhaps this should also still step through per hour for
-  //      temperature, so it can re-create the high and low for each 
+  //      temperature, so it can re-create the high and low for each
   //      three hourly forecast block?
 
   //TODO: Figure out why can't get 48 hours worth of hourly forecast
-  //      in order to do do two day forecast. 
+  //      in order to do do two day forecast.
 
   //TODO: Is it worth using daily data to build a weekly forecast or something?
-  
+
   JsonArray list                    = root["hourly"];
   byte wxIndex = 0; // Index to populate WxForecast sequentially
   Serial.println("hourly list size" + String(list.size())); // 48 hours of hourly data is returned by the API
@@ -320,7 +320,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
     WxForecast[wxIndex].Humidity          = list[r]["humidity"].as<float>();   Serial.println("Humi: " + String(WxForecast[r].Humidity));
     WxForecast[wxIndex].Icon              = list[r]["weather"][0]["icon"].as<const char*>(); Serial.println("Icon: " + String(WxForecast[r].Icon));
     WxForecast[wxIndex].Rainfall          = list[r]["rain"]["1h"].as<float>();         Serial.println("Rain: " + String(WxForecast[r].Rainfall));
-   
+
     //------------------------------------------
     if (wxIndex >= 2) {
       float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure; // Measure pressure slope between ~now and later
@@ -780,7 +780,7 @@ boolean UpdateLocalTime() {
 void DrawBattery(int x, int y) {
   uint8_t percentage = 100;
   esp_adc_cal_characteristics_t adc_chars;
-  esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+  esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
   if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
     Serial.printf("eFuse Vref:%u mV", adc_chars.vref);
     vref = adc_chars.vref;
