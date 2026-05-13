@@ -299,10 +299,6 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>(); // Get Highest temperature for next 24Hrs
   Serial.println("THig High: " + String(WxConditions[0].High));
 
-  //TODO: Perhaps this should also still step through per hour for
-  //      temperature, so it can re-create the high and low for each
-  //      three hourly forecast block?
-
   //TODO: Figure out why can't get 48 hours worth of hourly forecast
   //      in order to do do two day forecast.
 
@@ -316,6 +312,10 @@ bool DecodeWeather(WiFiClient& json, String Type) {
 
     WxForecast[wxIndex].Dt                = list[r]["dt"].as<int>();
     WxForecast[wxIndex].Temperature       = list[r]["temp"].as<float>();       Serial.println("Temp: " + String(WxForecast[r].Temperature));
+    float t1 = list[r+1]["temp"].as<float>();
+    float t2 = list[r+2]["temp"].as<float>();
+    WxForecast[wxIndex].High              = max(max(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("High: " + String(WxForecast[wxIndex].High));
+    WxForecast[wxIndex].Low               = min(min(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("Low: " + String(WxForecast[wxIndex].Low));
     WxForecast[wxIndex].Pressure          = list[r]["pressure"].as<float>();   Serial.println("Pres: " + String(WxForecast[r].Pressure));
     WxForecast[wxIndex].Humidity          = list[r]["humidity"].as<float>();   Serial.println("Humi: " + String(WxForecast[r].Humidity));
     WxForecast[wxIndex].Icon              = list[r]["weather"][0]["icon"].as<const char*>(); Serial.println("Icon: " + String(WxForecast[r].Icon));
