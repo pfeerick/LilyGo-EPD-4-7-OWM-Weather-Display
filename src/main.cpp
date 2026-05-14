@@ -863,11 +863,9 @@ void addsun(int x, int y, int scale, bool IconSize) {
 
 void addfog(int x, int y, int scale, int linesize, bool IconSize) {
   if (IconSize == SmallIcon) linesize = 3;
-  for (int i = 0; i < 6; i++) {
-    fillRect(x - scale * 3, y + scale * 1.5, scale * 6, linesize, Black);
-    fillRect(x - scale * 3, y + scale * 2.0, scale * 6, linesize, Black);
-    fillRect(x - scale * 3, y + scale * 2.5, scale * 6, linesize, Black);
-  }
+  fillRect(x - scale * 3, y + scale * 1.5, scale * 6, linesize, Black);
+  fillRect(x - scale * 3, y + scale * 2.0, scale * 6, linesize, Black);
+  fillRect(x - scale * 3, y + scale * 2.5, scale * 6, linesize, Black);
 }
 
 void DrawAngledLine(int x, int y, int x1, int y1, int size, int color) {
