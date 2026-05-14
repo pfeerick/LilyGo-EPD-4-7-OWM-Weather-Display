@@ -265,8 +265,8 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   // convert it to a JsonObject
   JsonObject root = doc.as<JsonObject>();
   Serial.println(" Decoding " + Type + " data");
-  WxConditions[0].High        = -50; // Minimum forecast low
-  WxConditions[0].Low         = 50;  // Maximum Forecast High
+  WxConditions[0].High        = -50; // Sentinel: replaced by daily[0] max below
+  WxConditions[0].Low         = 50;  // Sentinel: replaced by daily[0] min below
   JsonObject current = doc["current"];
   WxConditions[0].Sunrise     = current["sunrise"];                              Serial.println("SRis: " + String(WxConditions[0].Sunrise));
   WxConditions[0].Sunset      = current["sunset"];                               Serial.println("SSet: " + String(WxConditions[0].Sunset));
@@ -294,7 +294,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   WxConditions[0].Low = daily[0]["temp"]["min"].as<float>(); // Get Lowest temperature for next 24Hrs
   Serial.println("TLow: " + String(WxConditions[0].Low));
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>(); // Get Highest temperature for next 24Hrs
-  Serial.println("THig High: " + String(WxConditions[0].High));
+  Serial.println("High: " + String(WxConditions[0].High));
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
