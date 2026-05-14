@@ -306,8 +306,8 @@ bool DecodeWeather(WiFiClient& json, String Type) {
 
     WxForecast[wxIndex].Dt                = list[r]["dt"].as<int>();
     WxForecast[wxIndex].Temperature       = list[r]["temp"].as<float>();       Serial.println("Temp: " + String(WxForecast[wxIndex].Temperature));
-    float t1 = list[r+1]["temp"].as<float>();
-    float t2 = list[r+2]["temp"].as<float>();
+    float t1 = (r + 1 < (int)list.size()) ? list[r+1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
+    float t2 = (r + 2 < (int)list.size()) ? list[r+2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
     WxForecast[wxIndex].High              = max(max(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("High: " + String(WxForecast[wxIndex].High));
     WxForecast[wxIndex].Low               = min(min(WxForecast[wxIndex].Temperature, t1), t2); Serial.println("Low: " + String(WxForecast[wxIndex].Low));
     WxForecast[wxIndex].Pressure          = list[r]["pressure"].as<float>();   Serial.println("Pres: " + String(WxForecast[wxIndex].Pressure));
