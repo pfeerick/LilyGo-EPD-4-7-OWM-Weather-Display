@@ -976,8 +976,8 @@ void addmoon(int x, int y, bool IconSize) {
   int xOffset = 65;
   int yOffset = 12;
   if (IconSize == LargeIcon) {
-    xOffset = 130;
-    yOffset = -40;
+    xOffset = 102;
+    yOffset = -13;
   }
   fillCircle(x - 28 + xOffset, y - 37 + yOffset, Small, Black);
   fillCircle(x - 16 + xOffset, y - 37 + yOffset, (int)(Small * 1.6), White);
