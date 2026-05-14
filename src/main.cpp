@@ -267,7 +267,6 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.println(" Decoding " + Type + " data");
   WxConditions[0].High        = -50; // Minimum forecast low
   WxConditions[0].Low         = 50;  // Maximum Forecast High
-  WxConditions[0].FTimezone   = doc["timezone_offset"]; // "0"
   JsonObject current = doc["current"];
   WxConditions[0].Sunrise     = current["sunrise"];                              Serial.println("SRis: " + String(WxConditions[0].Sunrise));
   WxConditions[0].Sunset      = current["sunset"];                               Serial.println("SSet: " + String(WxConditions[0].Sunset));

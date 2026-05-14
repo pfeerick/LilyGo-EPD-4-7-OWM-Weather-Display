@@ -8,7 +8,6 @@ typedef struct { // For current Day and Day 1, 2, 3, etc
   String Icon;
   String Trend;
   String Forecast0;
-  String Description;
   float  Temperature;
   float  FeelsLike;
   float  DewPoint;
@@ -24,7 +23,6 @@ typedef struct { // For current Day and Day 1, 2, 3, etc
   int    Visibility;
   int    Sunrise;
   int    Sunset;
-  int    FTimezone;
   float  UVI;
 } Forecast_record_type;
 
