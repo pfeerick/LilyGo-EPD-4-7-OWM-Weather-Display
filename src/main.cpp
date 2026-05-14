@@ -80,7 +80,7 @@ boolean SetupTime();
 uint8_t StartWiFi();
 void StopWiFi();
 void InitialiseSystem();
-void Convert_Readings_to_Imperial();
+void Convert_Readings_to_Imperial(int count);
 bool DecodeWeather(WiFiClient& json, String Type);
 String ConvertUnixTime(int unix_time);
 bool obtainWeatherData(WiFiClient& client, const String& RequestType);
@@ -249,10 +249,12 @@ void setup() {
   BeginSleep();
 }
 
-void Convert_Readings_to_Imperial() { // Only the first 3-hours are used
+void Convert_Readings_to_Imperial(int count) {
   WxConditions[0].Pressure = hPa_to_inHg(WxConditions[0].Pressure);
-  WxForecast[0].Rainfall   = mm_to_inches(WxForecast[0].Rainfall);
-  WxForecast[0].Snowfall   = mm_to_inches(WxForecast[0].Snowfall);
+  for (int i = 0; i < count; i++) {
+    WxForecast[i].Rainfall = mm_to_inches(WxForecast[i].Rainfall);
+    WxForecast[i].Snowfall = mm_to_inches(WxForecast[i].Snowfall);
+  }
 }
 
 bool DecodeWeather(WiFiClient& json, String Type) {
@@ -331,10 +333,9 @@ bool DecodeWeather(WiFiClient& json, String Type) {
       WxConditions[0].Trend = "0"; // Default if insufficient data
     }
 
-    if (Units == "I") Convert_Readings_to_Imperial();
-
     wxIndex++; // Increment WxForecast index for sequential population
   }
+  if (Units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
 //#########################################################################################
@@ -654,12 +655,12 @@ void DisplayForecastSection(int x, int y) {
 
 void DisplayGraphSection(int x, int y) {
   int r = 0;
-  do { // Pre-load temporary arrays with with data - because C parses by reference and remember that[1] has already been converted to I units
-    if (Units == "I") pressure_readings[r] = WxForecast[r].Pressure * 0.02953;   else pressure_readings[r] = WxForecast[r].Pressure;
-    if (Units == "I") rain_readings[r]     = WxForecast[r].Rainfall * 0.0393701; else rain_readings[r]     = WxForecast[r].Rainfall;
-    if (Units == "I") snow_readings[r]     = WxForecast[r].Snowfall * 0.0393701; else snow_readings[r]     = WxForecast[r].Snowfall;
-    temperature_readings[r]                = WxForecast[r].Temperature;
-    humidity_readings[r]                   = WxForecast[r].Humidity;
+  do { // Pre-load temporary arrays with data — values already in display units after DecodeWeather
+    pressure_readings[r]    = WxForecast[r].Pressure;
+    rain_readings[r]        = WxForecast[r].Rainfall;
+    snow_readings[r]        = WxForecast[r].Snowfall;
+    temperature_readings[r] = WxForecast[r].Temperature;
+    humidity_readings[r]    = WxForecast[r].Humidity;
     r++;
   } while (r < max_readings);
   int gwidth = 175, gheight = 100;
