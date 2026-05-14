@@ -1051,7 +1051,7 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   }
   // Draw the graph
   last_x = x_pos + 1;
-  last_y = y_pos + (Y1Max - constrain(DataArray[1], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
+  last_y = y_pos + (Y1Max - constrain(DataArray[0], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
   drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, Grey);
   drawString(x_pos - 20 + gwidth / 2, y_pos - 28, title, CENTER);
   for (int gx = 0; gx < readings; gx++) {
