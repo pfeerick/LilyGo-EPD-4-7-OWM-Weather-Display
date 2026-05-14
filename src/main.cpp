@@ -317,6 +317,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
     WxForecast[wxIndex].Humidity          = list[r]["humidity"].as<float>();   Serial.println("Humi: " + String(WxForecast[wxIndex].Humidity));
     WxForecast[wxIndex].Icon              = list[r]["weather"][0]["icon"].as<const char*>(); Serial.println("Icon: " + String(WxForecast[wxIndex].Icon));
     WxForecast[wxIndex].Rainfall          = list[r]["rain"]["1h"].as<float>();         Serial.println("Rain: " + String(WxForecast[wxIndex].Rainfall));
+    WxForecast[wxIndex].Snowfall          = list[r]["snow"]["1h"].as<float>();         Serial.println("Snow: " + String(WxForecast[wxIndex].Snowfall));
 
     //------------------------------------------
     if (wxIndex >= 2) {
