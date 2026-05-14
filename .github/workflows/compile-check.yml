@@ -1,0 +1,31 @@
+name: Compile Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  platformio:
+    name: PlatformIO
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-platformio
+      - uses: actions/cache@v5
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Copy credentials stub
+        run: cp include/owm_credentials.h.example include/owm_credentials.h
+      - name: Compile
+        run: pio run
