@@ -906,7 +906,7 @@ void ScatteredClouds(int x, int y, bool IconSize, String IconName) {
   if (IconName.endsWith("n")) addmoon(x, y, IconSize);
   y += 15;
   if (IconSize == LargeIcon) scale = Large;
-  addcloud(x - (IconSize ? 35 : 0), y * (IconSize ? 0.75 : 0.93), scale / 2, linesize); // Cloud top left
+  addcloud(x - (IconSize ? 35 : 0), y - scale * 2, scale / 2, linesize); // Cloud top left
   addcloud(x, y, scale * 0.9, linesize);                                         // Main cloud
 }
 
