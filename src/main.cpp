@@ -93,7 +93,7 @@ void DisplayWeather();
 void DisplayGeneralInfoSection();
 void DisplayWeatherIcon(int x, int y);
 void DisplayMainWeatherSection(int x, int y);
-void DisplayDisplayWindSection(int x, int y, float angle, float windspeed, int Cradius);
+void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius);
 String WindDegToOrdinalDirection(float winddirection);
 void DisplayTempHumiPressSection(int x, int y);
 void DisplayForecastTextSection(int x, int y);
@@ -412,7 +412,7 @@ String TitleCase(String text) {
 void DisplayWeather() {                          // 4.7" e-paper display is 960x540 resolution
   DisplayStatusSection(600, 20, wifi_signal);    // Wi-Fi signal strength and Battery voltage
   DisplayGeneralInfoSection();                   // Top line of the display
-  DisplayDisplayWindSection(137, 150, WxConditions[0].Winddir, WxConditions[0].Windspeed, 100);
+  DisplayWindSection(137, 150, WxConditions[0].Winddir, WxConditions[0].Windspeed, 100);
   DisplayAstronomySection(5, 252);               // Astronomy section Sun rise/set, Moon phase and Moon icon
   DisplayMainWeatherSection(320, 110);           // Centre section of display for Location, temperature, Weather report, current Wx Symbol
   DisplayWeatherIcon(835, 140);                  // Display weather icon scale = Large;
@@ -438,7 +438,7 @@ void DisplayMainWeatherSection(int x, int y) {
   DisplayVisiCCoverUVISection(x - 10, y + 95);
 }
 
-void DisplayDisplayWindSection(int x, int y, float angle, float windspeed, int Cradius) {
+void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius) {
   arrow(x, y, Cradius - 22, angle, 18, 33); // Show wind direction on outer circle of width and length
   setFont(OpenSans8B);
   int dxo, dyo, dxi, dyi;
