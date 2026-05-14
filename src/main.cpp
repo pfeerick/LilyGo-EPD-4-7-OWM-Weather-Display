@@ -1035,8 +1035,8 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
 #define auto_scale_margin 0 // Sets the autoscale increment, so axis steps up fter a change of e.g. 3
 #define y_minor_axis 5      // 5 y-axis division markers
   setFont(OpenSans10B);
-  int maxYscale = -10000;
-  int minYscale =  10000;
+  float maxYscale = -10000;
+  float minYscale =  10000;
   int last_x, last_y;
   float x2, y2;
   if (auto_scale == true) {
