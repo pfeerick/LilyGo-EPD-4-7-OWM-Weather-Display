@@ -37,7 +37,7 @@ boolean SmallIcon   = false;
 #define Small  10           // For icon drawing
 String  Time_str = "--:--:--";
 String  Date_str = "-- --- ----";
-int     wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, EventCnt = 0, vref = 1100;
+int     wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 //################ PROGRAM VARIABLES and OBJECTS ##########################################
 #define max_readings 24 // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
 #define max_graph_readings 16
