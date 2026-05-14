@@ -657,7 +657,7 @@ void DisplayGraphSection(int x, int y) {
     temperature_readings[r] = WxForecast[r].Temperature;
     humidity_readings[r]    = WxForecast[r].Humidity;
     r++;
-  } while (r < max_readings);
+  } while (r < max_graph_readings);
   int gwidth = 175, gheight = 100;
   int gx = (SCREEN_WIDTH - gwidth * 4) / 5 + 8;
   int gy = (SCREEN_HEIGHT - gheight - 30);
@@ -666,7 +666,7 @@ void DisplayGraphSection(int x, int y) {
   DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, Units == "M" ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN, pressure_readings, max_graph_readings, autoscale_on, barchart_off);
   DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30,    Units == "M" ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_graph_readings, autoscale_on, barchart_off);
   DrawGraph(gx + 2 * gap, gy, gwidth, gheight, 0, 100,   TXT_HUMIDITY_PERCENT, humidity_readings, max_graph_readings, autoscale_off, barchart_off);
-  if (SumOfPrecip(rain_readings, max_readings) >= SumOfPrecip(snow_readings, max_readings))
+  if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
     DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, max_graph_readings, autoscale_on, barchart_on);
   else
     DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, max_graph_readings, autoscale_on, barchart_on);
