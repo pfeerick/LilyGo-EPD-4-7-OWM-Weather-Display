@@ -532,7 +532,6 @@ void DisplayForecastTextSection(int x, int y) {
 
 void DisplayVisiCCoverUVISection(int x, int y) {
   setFont(OpenSans12B);
-  Serial.print("=========================="); Serial.println(WxConditions[0].Visibility);
   Visibility(x + 5, y, String(WxConditions[0].Visibility) + "M");
   CloudCover(x + 155, y, WxConditions[0].Cloudcover);
   Display_UVIndexLevel(x + 265, y, WxConditions[0].UVI);
@@ -980,8 +979,8 @@ void addmoon(int x, int y, bool IconSize) {
     xOffset = 130;
     yOffset = -40;
   }
-  fillCircle(x - 28 + xOffset, y - 37 + yOffset, uint16_t(Small * 1.0), Black);
-  fillCircle(x - 16 + xOffset, y - 37 + yOffset, uint16_t(Small * 1.6), White);
+  fillCircle(x - 28 + xOffset, y - 37 + yOffset, Small, Black);
+  fillCircle(x - 16 + xOffset, y - 37 + yOffset, (int)(Small * 1.6), White);
 }
 
 void Nodata(int x, int y, bool IconSize, String IconName) {
