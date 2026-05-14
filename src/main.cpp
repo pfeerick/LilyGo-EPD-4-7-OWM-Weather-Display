@@ -523,10 +523,11 @@ void DisplayForecastTextSection(int x, int y) {
     charCount++;
   }
   if (WxForecast[0].Rainfall > 0) Wx_Description += " (" + String(WxForecast[0].Rainfall, 1) + String((Units == "M" ? "mm" : "in")) + ")";
-  String Line1 = Wx_Description.substring(0, Wx_Description.indexOf("~"));
-  String Line2 = Wx_Description.substring(Wx_Description.indexOf("~") + 1);
+  int sep = Wx_Description.indexOf("~");
+  String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
+  String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
   drawString(x + 30, y + 5, TitleCase(Line1), LEFT);
-  if (Line1 != Line2) drawString(x + 30, y + 30, Line2, LEFT);
+  if (Line2.length() > 0) drawString(x + 30, y + 30, Line2, LEFT);
 }
 
 void DisplayVisiCCoverUVISection(int x, int y) {
