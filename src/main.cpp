@@ -512,10 +512,10 @@ void DisplayForecastTextSection(int x, int y) {
   setFont(OpenSans12B);
   String Wx_Description = WxConditions[0].Forecast0;
   Wx_Description.replace(".", ""); // remove any '.'
-  int spaceRemaining = 0, p = 0, charCount = 0, Width = lineWidth;
+  int spaceRemaining = 0, p = 0, charCount = 0;
   while (p < Wx_Description.length()) {
     if (Wx_Description.substring(p, p + 1) == " ") spaceRemaining = p;
-    if (charCount > Width - 1) { // '~' is the end of line marker
+    if (charCount > lineWidth - 1) { // '~' is the end of line marker
       Wx_Description = Wx_Description.substring(0, spaceRemaining) + "~" + Wx_Description.substring(spaceRemaining + 1);
       charCount = 0;
     }
