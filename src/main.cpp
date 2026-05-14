@@ -226,17 +226,13 @@ void setup() {
     if (WakeUp) {
       byte Attempts = 1;
       bool RxWeather  = false;
-      bool RxForecast = false;
       WiFiClient client;   // wifi client object
-      // while ((RxWeather == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
-      while ((RxWeather == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
-        if (RxWeather  == false) RxWeather  = obtainWeatherData(client, "onecall");
-        // if (RxForecast == false) RxForecast = obtainWeatherData(client, "forecast");
+      while ((RxWeather == false) && Attempts <= 2) { // Try up-to 2 time for Weather data
+        if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
       Serial.println("Received all weather data...");
-      // if (RxWeather && RxForecast) { // Only if received both Weather or Forecast proceed
-      if (RxWeather) { // Only if received both Weather or Forecast proceed
+      if (RxWeather) { // Only if received Weather data proceed
         StopWiFi();         // Reduces power consumption
         epd_poweron();      // Switch on EPD display
         epd_clear();        // Clear the screen
