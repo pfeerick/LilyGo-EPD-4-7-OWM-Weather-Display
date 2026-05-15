@@ -25,7 +25,5 @@ jobs:
           restore-keys: pio-${{ runner.os }}-
       - name: Install PlatformIO
         run: pip install platformio
-      - name: Copy credentials stub
-        run: cp include/owm_credentials.h.example include/owm_credentials.h
       - name: Compile
         run: pio run

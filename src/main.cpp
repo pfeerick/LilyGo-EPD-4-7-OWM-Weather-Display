@@ -12,7 +12,9 @@
 #include <SPI.h>                // In-built
 #include <time.h>               // In-built
 
-#include "owm_credentials.h"
+#include <LittleFS.h>
+#include "config.h"
+#include "setup_portal.h"
 #include "forecast_record.h"
 #include "translations/lang_en.h"
 
@@ -51,9 +53,9 @@ float humidity_readings[max_readings]    = {0};
 float rain_readings[max_readings]        = {0};
 float snow_readings[max_readings]        = {0};
 
-long SleepDuration   = 60; // Sleep time in minutes, aligned to the nearest minute boundary, so if 30 will always update at 00 or 30 past the hour
-int  WakeupHour      = 8;  // Wakeup after 07:00 to save battery power
-int  SleepHour       = 23; // Sleep  after 23:00 to save battery power
+long SleepDuration;
+int  WakeupHour;
+int  SleepHour;
 long StartTime       = 0;
 long SleepTimer      = 0;
 long Delta           = 30; // ESP32 rtc speed compensation, prevents display at xx:59:yy and then xx:00:yy (one minute later) to save power
@@ -165,26 +167,26 @@ void BeginSleep() {
 }
 
 boolean SetupTime() {
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer, "time.nist.gov"); //(gmtOffset_sec, daylightOffset_sec, ntpServer)
-  setenv("TZ", Timezone, 1);  //setenv()adds the "TZ" variable to the environment with a value TimeZone, only used if set to 1, 0 means no change
+  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, "time.nist.gov");
+  setenv("TZ", cfg.timezone, 1);
   tzset(); // Set the TZ environment variable
   delay(100);
   return UpdateLocalTime();
 }
 
 uint8_t StartWiFi() {
-  Serial.println("\r\nConnecting to: " + String(ssid));
+  Serial.println("\r\nConnecting to: " + String(cfg.ssid));
   IPAddress dns(8, 8, 8, 8); // Use Google DNS
   WiFi.disconnect();
   WiFi.mode(WIFI_STA); // switch off AP
   WiFi.setAutoConnect(true);
   WiFi.setAutoReconnect(true);
-  WiFi.begin(ssid, password);
+  WiFi.begin(cfg.ssid, cfg.password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("STA: Failed!\n");
     WiFi.disconnect(false);
     delay(500);
-    WiFi.begin(ssid, password);
+    WiFi.begin(cfg.ssid, cfg.password);
   }
   if (WiFi.status() == WL_CONNECTED) {
     wifi_signal = WiFi.RSSI(); // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
@@ -215,9 +217,54 @@ void loop() {
   // Nothing to do here
 }
 
+void DisplaySetupScreen(const char* apName);
+
 void setup() {
   InitialiseSystem();
-  if (StartWiFi() == WL_CONNECTED && SetupTime() == true) {
+
+  // Check for button-held config mode before loading config
+  bool forceConfig = false;
+  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
+  if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
+    delay(CONFIG_BUTTON_HOLD_MS);
+    if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
+      Serial.println("Config button held — entering setup mode");
+      forceConfig = true;
+    }
+  }
+
+  if (!loadConfig() || !isConfigValid()) {
+    if (!seedConfigFromHeader() || !isConfigValid()) {
+      Serial.println("No valid config found — entering setup mode");
+      forceConfig = true;
+    }
+  }
+
+  // Populate schedule globals from config
+  SleepDuration = cfg.sleepDuration;
+  WakeupHour    = cfg.wakeupHour;
+  SleepHour     = cfg.sleepHour;
+
+  if (forceConfig) {
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    char apName[24];
+    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(apName);
+    enterSetupMode(); // never returns
+  }
+
+  if (StartWiFi() != WL_CONNECTED) {
+    Serial.println("WiFi failed — entering setup mode");
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    char apName[24];
+    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(apName);
+    enterSetupMode(); // never returns
+  }
+
+  if (SetupTime()) {
     bool WakeUp = false;
     if (WakeupHour > SleepHour)
       WakeUp = (CurrentHour >= WakeupHour || CurrentHour <= SleepHour);
@@ -226,23 +273,42 @@ void setup() {
     if (WakeUp) {
       byte Attempts = 1;
       bool RxWeather  = false;
-      WiFiClient client;   // wifi client object
-      while ((RxWeather == false) && Attempts <= 2) { // Try up-to 2 time for Weather data
+      WiFiClient client;
+      while ((RxWeather == false) && Attempts <= 2) {
         if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
       Serial.println("Received all weather data...");
-      if (RxWeather) { // Only if received Weather data proceed
-        StopWiFi();         // Reduces power consumption
-        epd_poweron();      // Switch on EPD display
-        epd_clear();        // Clear the screen
-        DisplayWeather();   // Display the weather data
-        edp_update();       // Update the display to show the information
-        epd_poweroff_all(); // Switch off all power to EPD
+      if (RxWeather) {
+        StopWiFi();
+        epd_poweron();
+        epd_clear();
+        DisplayWeather();
+        edp_update();
+        epd_poweroff_all();
       }
     }
   }
   BeginSleep();
+}
+
+void DisplaySetupScreen(const char* apName) {
+  epd_poweron();
+  epd_clear();
+  int cx = EPD_WIDTH / 2;
+  int y  = EPD_HEIGHT / 4;
+  setFont(OpenSans18B);
+  drawString(cx, y,        "SETUP MODE",              CENTER);
+  setFont(OpenSans12B);
+  drawString(cx, y + 60,   "Connect to WiFi network:", CENTER);
+  setFont(OpenSans18B);
+  drawString(cx, y + 100,  String(apName),             CENTER);
+  setFont(OpenSans12B);
+  drawString(cx, y + 160,  "Then open:",               CENTER);
+  setFont(OpenSans18B);
+  drawString(cx, y + 200,  "http://192.168.4.1",       CENTER);
+  edp_update();
+  epd_poweroff_all();
 }
 
 void Convert_Readings_to_Imperial(int count) {
@@ -330,7 +396,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
 
     wxIndex++; // Increment WxForecast index for sequential population
   }
-  if (Units == "I") Convert_Readings_to_Imperial(wxIndex);
+  if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
 //#########################################################################################
@@ -339,7 +405,7 @@ String ConvertUnixTime(int unix_time) {
   time_t tm = unix_time;
   struct tm *now_tm = localtime(&tm);
   char output[40];
-  if (Units == "M") {
+  if (strcmp(cfg.units, "M") == 0) {
     strftime(output, sizeof(output), "%H:%M %d/%m/%y", now_tm);
   }
   else {
@@ -349,13 +415,13 @@ String ConvertUnixTime(int unix_time) {
 }
 //#########################################################################################
 bool obtainWeatherData(WiFiClient & client, const String & RequestType) {
-  const String units = (Units == "M" ? "metric" : "imperial");
+  const String units = (strcmp(cfg.units, "M") == 0 ? "metric" : "imperial");
   client.stop(); // close connection before sending a new request
   HTTPClient http;
   //api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API key}
-  String uri = "/data/3.0/" + RequestType + "?lat=" + Latitude + "&lon=" + Longitude + "&appid=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
+  String uri = "/data/3.0/" + RequestType + "?lat=" + cfg.latitude + "&lon=" + cfg.longitude + "&appid=" + cfg.apikey + "&mode=json&units=" + units + "&lang=" + cfg.language;
   if (RequestType == "onecall") uri += "&exclude=minutely,alerts";
-  http.begin(client, server, 80, uri); //http.begin(uri,test_root_ca); //HTTPS example connection
+  http.begin(client, cfg.server, 80, uri);
   int httpCode = http.GET();
   if (httpCode == HTTP_CODE_OK) {
     if (!DecodeWeather(http.getStream(), RequestType)) return false;
@@ -422,7 +488,7 @@ void DisplayWeather() {                          // 4.7" e-paper display is 960x
 
 void DisplayGeneralInfoSection() {
   setFont(OpenSans10B);
-  drawString(5, 2, City, LEFT);
+  drawString(5, 2, String(cfg.city), LEFT);
   setFont(OpenSans8B);
   drawString(500, 2, Date_str + "  @   " + Time_str, LEFT);
 }
@@ -471,7 +537,7 @@ void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius)
   setFont(OpenSans24B);
   drawString(x + 3, y - 18, String(windspeed, 1), CENTER);
   setFont(OpenSans12B);
-  drawString(x, y + 25, (Units == "M" ? "m/s" : "mph"), CENTER);
+  drawString(x, y + 25, (strcmp(cfg.units, "M") == 0 ? "m/s" : "mph"), CENTER);
 }
 
 String WindDegToOrdinalDirection(float winddirection) {
@@ -522,7 +588,7 @@ void DisplayForecastTextSection(int x, int y) {
     p++;
     charCount++;
   }
-  if (WxForecast[0].Rainfall > 0) Wx_Description += " (" + String(WxForecast[0].Rainfall, 1) + String((Units == "M" ? "mm" : "in")) + ")";
+  if (WxForecast[0].Rainfall > 0) Wx_Description += " (" + String(WxForecast[0].Rainfall, 1) + String((strcmp(cfg.units, "M") == 0 ? "mm" : "in")) + ")";
   int sep = Wx_Description.indexOf("~");
   String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
   String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
@@ -567,9 +633,9 @@ void DisplayAstronomySection(int x, int y) {
   setFont(OpenSans10B);
   time_t now = time(NULL);
   struct tm * now_utc  = gmtime(&now);
-  drawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, Hemisphere), LEFT);
+  drawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, String(cfg.hemisphere)), LEFT);
   DrawMoonImage(x + 10, y + 23); // Different references!
-  DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, Hemisphere); // Spaced at 1/2 moon size, so 10 - 75/2 = -28
+  DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, String(cfg.hemisphere)); // Spaced at 1/2 moon size, so 10 - 75/2 = -28
   drawString(x + 115, y + 40, ConvertUnixTime(WxConditions[0].Sunrise).substring(0, 5), LEFT); // Sunrise
   drawString(x + 115, y + 80, ConvertUnixTime(WxConditions[0].Sunset).substring(0, 5), LEFT);  // Sunset
   DrawSunriseImage(x + 180, y + 20);
@@ -663,13 +729,13 @@ void DisplayGraphSection(int x, int y) {
   int gy = (SCREEN_HEIGHT - gheight - 30);
   int gap = gwidth + gx;
   // (x,y,width,height,MinValue, MaxValue, Title, Data Array, AutoScale, ChartMode)
-  DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, Units == "M" ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN, pressure_readings, max_graph_readings, autoscale_on, barchart_off);
-  DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30,    Units == "M" ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_graph_readings, autoscale_on, barchart_off);
+  DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, strcmp(cfg.units, "M") == 0 ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN, pressure_readings, max_graph_readings, autoscale_on, barchart_off);
+  DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30,    strcmp(cfg.units, "M") == 0 ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_graph_readings, autoscale_on, barchart_off);
   DrawGraph(gx + 2 * gap, gy, gwidth, gheight, 0, 100,   TXT_HUMIDITY_PERCENT, humidity_readings, max_graph_readings, autoscale_off, barchart_off);
   if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, max_graph_readings, autoscale_on, barchart_on);
+    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, strcmp(cfg.units, "M") == 0 ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, max_graph_readings, autoscale_on, barchart_on);
   else
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, max_graph_readings, autoscale_on, barchart_on);
+    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, strcmp(cfg.units, "M") == 0 ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, max_graph_readings, autoscale_on, barchart_on);
 }
 
 void DisplayConditionsSection(int x, int y, String IconName, bool IconSize) {
@@ -708,7 +774,7 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
 }
 
 void DrawPressureAndTrend(int x, int y, float pressure, String slope) {
-  drawString(x + 25, y - 10, String(pressure, (Units == "M" ? 0 : 1)) + (Units == "M" ? "hPa" : "in"), LEFT);
+  drawString(x + 25, y - 10, String(pressure, (strcmp(cfg.units, "M") == 0 ? 0 : 1)) + (strcmp(cfg.units, "M") == 0 ? "hPa" : "in"), LEFT);
   if      (slope == "+") {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
     DrawSegment(x - 1, y, 0, 0, 8, -8, 8, -8, 16, 0);
@@ -755,7 +821,7 @@ boolean UpdateLocalTime() {
   CurrentSec  = timeinfo.tm_sec;
   //See http://www.cplusplus.com/reference/ctime/strftime/
   Serial.println(&timeinfo, "%a %b %d %Y   %H:%M:%S");      // Displays: Saturday, June 24 2017 14:05:49
-  if (Units == "M") {
+  if (strcmp(cfg.units, "M") == 0) {
     sprintf(day_output, "%s, %02u %s %04u", weekday_D[timeinfo.tm_wday], timeinfo.tm_mday, month_M[timeinfo.tm_mon], (timeinfo.tm_year) + 1900);
     strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
     sprintf(time_output, "%s", update_time);

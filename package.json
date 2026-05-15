@@ -1,0 +1,12 @@
+{
+  "name": "lilygo-epd47-owm-weather",
+  "version": "1.0.0",
+  "description": "Preview server for weather display web UI",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
