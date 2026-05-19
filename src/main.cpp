@@ -16,9 +16,6 @@
 #include "forecast_record.h"
 #include "translations/lang_en.h"
 
-#define SCREEN_WIDTH epd_width()
-#define SCREEN_HEIGHT epd_height()
-
 enum alignment { LEFT, RIGHT, CENTER };
 #define White 0xFF
 #define LightGrey 0xBB
@@ -285,9 +282,9 @@ void setup() {
       Serial.println("Received all weather data...");
       if (RxWeather) {
         StopWiFi();
-        epd_hl_set_all_white(&hl);
-        DisplayWeather();
         epd_poweron();
+        epd_fullclear(&hl, (int)epd_ambient_temperature());
+        DisplayWeather();
         edp_update();
         epd_poweroff();
       }
@@ -297,7 +294,8 @@ void setup() {
 }
 
 void DisplaySetupScreen(const char* apName) {
-  epd_hl_set_all_white(&hl);
+  epd_poweron();
+  epd_fullclear(&hl, (int)epd_ambient_temperature());
   int cx = epd_width() / 2;
   int y = epd_height() / 4;
   setFont(OpenSans18B);
@@ -310,7 +308,6 @@ void DisplaySetupScreen(const char* apName) {
   drawString(cx, y + 160, "Then open:", CENTER);
   setFont(OpenSans18B);
   drawString(cx, y + 200, "http://192.168.4.1", CENTER);
-  epd_poweron();
   edp_update();
   epd_poweroff();
 }
@@ -759,8 +756,8 @@ void DisplayGraphSection(int x, int y) {
     r++;
   } while (r < max_graph_readings);
   int gwidth = 175, gheight = 100;
-  int gx = (SCREEN_WIDTH - gwidth * 4) / 5 + 8;
-  int gy = (SCREEN_HEIGHT - gheight - 30);
+  int gx = (epd_width() - gwidth * 4) / 5 + 8;
+  int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
   // (x,y,width,height,MinValue, MaxValue, Title, Data Array, AutoScale, ChartMode)
   DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
