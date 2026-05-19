@@ -76,9 +76,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           SHA=$(gh release view latest --json targetCommitish --jq '.targetCommitish' 2>/dev/null || echo "")
-          if [ -n "$SHA" ]; then
-            SHA=$(git rev-parse "$SHA" 2>/dev/null || echo "")
-          fi
           echo "range=$( [ -n "$SHA" ] && echo "${SHA}..HEAD" || echo "" )" >> "$GITHUB_OUTPUT"
 
       - name: Delete existing latest release
@@ -114,5 +111,5 @@ jobs:
             --prerelease \
             --title "Latest Build" \
             --notes-file release-notes.md \
-            --target main \
+            --target "$GITHUB_SHA" \
             firmware-latest.bin
