@@ -3,6 +3,16 @@ name: Release
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'doc/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'index.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.node-version'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
