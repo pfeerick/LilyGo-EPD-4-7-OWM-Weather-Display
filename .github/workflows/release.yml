@@ -20,9 +20,12 @@ jobs:
   compile-check:
     uses: ./.github/workflows/compile-check.yml
 
+  lint:
+    uses: ./.github/workflows/lint.yml
+
   release:
     name: Create Release
-    needs: compile-check
+    needs: [compile-check, lint]
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,0 +1,30 @@
+name: C++ Lint
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'include/**'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'include/**'
+  workflow_call:
+
+jobs:
+  clang-format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install clang-format-18
+        run: sudo apt-get install -y clang-format-18
+
+      - name: Check formatting
+        run: |
+          clang-format-18 --dry-run --Werror \
+            src/*.cpp \
+            include/*.h \
+            include/translations/*.h
