@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  compile-check:
+    uses: ./.github/workflows/compile-check.yml
+
+  release:
+    name: Create Release
+    needs: compile-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+
+      - name: Stage artifact (versioned release)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: cp firmware.bin "firmware-${{ github.ref_name }}.bin"
+
+      - name: Stage artifact (latest release)
+        if: github.ref == 'refs/heads/main'
+        run: cp firmware.bin firmware-latest.bin
+
+      - name: Create versioned release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "LilyGo EPD 4.7\" OWM Weather Display ${{ github.ref_name }}" \
+            --generate-notes \
+            "firmware-${{ github.ref_name }}.bin"
+
+      - name: Update latest release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV_SHA=$(gh release view latest --json targetCommitish --jq '.targetCommitish' 2>/dev/null || echo "")
+          gh release delete latest --yes --cleanup-tag || true
+          if [ -n "$PREV_SHA" ]; then
+            git tag latest-prev "$PREV_SHA"
+            git push origin latest-prev
+            gh release create latest \
+              --prerelease \
+              --title "Latest Build" \
+              --generate-notes \
+              --notes-start-tag latest-prev \
+              --target main \
+              firmware-latest.bin
+            git push origin --delete latest-prev
+          else
+            gh release create latest \
+              --prerelease \
+              --title "Latest Build" \
+              --generate-notes \
+              --target main \
+              firmware-latest.bin
+          fi

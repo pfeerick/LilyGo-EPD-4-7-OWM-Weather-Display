@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 jobs:
   platformio:
@@ -27,3 +28,8 @@ jobs:
         run: pip install platformio
       - name: Compile
         run: pio run
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: .pio/build/display/firmware.bin
