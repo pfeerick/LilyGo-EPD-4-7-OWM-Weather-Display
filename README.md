@@ -6,15 +6,7 @@ OpenWeather weather station using [LilyGo EPD 4.7" display](https://bit.ly/3exI3
 
 # License
 
-This code created by https://github.com/G6EJD/ is using the GPLv3 https://github.com/Xinyuan-LilyGO/LilyGo-EPD47 library to handle the display and as such falls into the GPLv3 license itself. This situation is described in the https://www.gnu.org/licenses/gpl-faq.html#IfLibraryIsGPL
-
-> If a library is released under the GPL (not the LGPL), does that mean that any software which uses it has to be under the GPL or a GPL-compatible license?
-
-> Yes, because the program actually links to the library. As such, the terms of the GPL apply to the entire combination. The software modules that link with the library may be under various GPL compatible licenses, but the work as a whole must be licensed under the GPL.
-
-This means that the original proprietary license that G6EJD tried to enforce is unlawful as it is not compatible with the GPLv3.
-
-This fork fixes the problem by setting the correct license for the code while keeping the attribution and all the copyright of the original creator.
+This project is licensed under GPLv3. See [HISTORY.md](HISTORY.md) for the licensing background and the fork's origin.
 
 # Configuration
 
@@ -61,9 +53,7 @@ If you prefer to bake your settings into the firmware at compile time (useful fo
 
 On first boot the values are automatically written to the on-device config store and the device starts up without entering the web portal. The portal remains available afterwards — hold IO39 at boot (or hold IO39 + press RST) to enter setup mode and modify any setting.
 
-# Compiling and flashing
-
-## Flashing a pre-built release
+# Installing firmware
 
 The easiest way to get started is to flash a pre-built firmware using the
 [ESPHome Web Flasher](https://web.esphome.io/) — no toolchain required:
@@ -78,36 +68,7 @@ The easiest way to get started is to flash a pre-built firmware using the
 
 The web flasher runs entirely in your browser via WebSerial — no installation required.
 
-## Building from source
-
-To compile you will need the following libraries, compatible versions of which will be installed automatically by PlatformIO:
-
-* https://github.com/Xinyuan-LilyGO/LilyGo-EPD47
-* https://github.com/bblanchon/ArduinoJson
-
-The setup portal HTML lives in `web/config.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` (the embedded PROGMEM copy) — no separate filesystem upload is needed.
-
-## Previewing the web UI
-
-You can iterate on the setup portal page without flashing firmware using the included Node.js preview server. The required Node.js version is pinned in `.node-version`. Using [fnm](https://github.com/Schniz/fnm) is recommended:
-
-```sh
-# Install fnm (if not already installed)
-winget install Schniz.fnm                          # Windows
-curl -fsSL https://fnm.vercel.app/install | bash   # Linux / macOS
-
-# Install the pinned Node.js version and activate it
-fnm install
-fnm use
-
-# Install dependencies and start the preview server
-npm install
-npm run dev
-```
-
-Then open **http://localhost:3000** in a browser. The page is served from `web/config.html` with placeholder values filled from the mock config in `index.js`. `POST /save` is stubbed — it logs the submitted values and returns a confirmation page without restarting anything.
-
-After editing `web/config.html`, refresh the browser to see changes immediately. The next `pio run` will regenerate `include/config_html.h` automatically.
+Want to build from source or work on the UI? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 # GPIOs
 ## Buttons

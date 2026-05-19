@@ -1,0 +1,57 @@
+# Contributing
+
+## Code style
+
+Two formatters are enforced by CI:
+
+- **C/C++**: [clang-format](https://clang.llvm.org/docs/ClangFormat.html) with the Google base style at 120-column line width (see [.clang-format](.clang-format))
+- **Web files**: [Prettier](https://prettier.io/) (see [.prettierrc](.prettierrc))
+
+Run clang-format on changed C/C++ files before submitting, and `npm run format` (or `npx prettier --write`) on any changed web files.
+
+## Commit style
+
+Use [Conventional Commits](https://www.conventionalcommits.org):
+
+```
+<type>(<optional scope>): <short summary>
+```
+
+Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`, `build`, `ci`, `chore`
+
+## Pull requests
+
+Open a PR against `main`. Keep changes focused — one logical change per PR makes review easier.
+
+---
+
+## Building from source
+
+To compile you will need the following libraries, compatible versions of which will be installed automatically by PlatformIO:
+
+- <https://github.com/Xinyuan-LilyGO/LilyGo-EPD47>
+- <https://github.com/bblanchon/ArduinoJson>
+
+The setup portal HTML lives in `web/config.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` (the embedded PROGMEM copy) — no separate filesystem upload is needed.
+
+## Previewing the web UI
+
+You can iterate on the setup portal page without flashing firmware using the included Node.js preview server. The required Node.js version is pinned in `.node-version`. Using [fnm](https://github.com/Schniz/fnm) is recommended:
+
+```sh
+# Install fnm (if not already installed)
+winget install Schniz.fnm                          # Windows
+curl -fsSL https://fnm.vercel.app/install | bash   # Linux / macOS
+
+# Install the pinned Node.js version and activate it
+fnm install
+fnm use
+
+# Install dependencies and start the preview server
+npm install
+npm run dev
+```
+
+Then open **http://localhost:3000** in a browser. The page is served from `web/config.html` with placeholder values filled from the mock config in `index.js`. `POST /save` is stubbed — it logs the submitted values and returns a confirmation page without restarting anything.
+
+After editing `web/config.html`, refresh the browser to see changes immediately. The next `pio run` will regenerate `include/config_html.h` automatically.
