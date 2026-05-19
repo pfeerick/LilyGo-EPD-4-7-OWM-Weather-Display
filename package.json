@@ -2,16 +2,13 @@
   "name": "lilygo-epd47-owm-weather",
   "version": "1.0.0",
   "description": "Preview server for weather display web UI",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "node index.js",
-    "format": "prettier --write web/config.html index.js",
-    "format:check": "prettier --check web/config.html index.js"
-  },
-  "dependencies": {
-    "express": "^4.21.2"
+    "dev": "bun run index.js",
+    "format": "biome format --write web/config.html index.js",
+    "format:check": "biome ci web/config.html index.js"
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "@biomejs/biome": "2.4.15"
   }
 }

@@ -4,7 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 include/owm_credentials.h
+include/config_html.h
 
-# Node.js
+# Bun / Node
 node_modules/
-npm-debug.log*
