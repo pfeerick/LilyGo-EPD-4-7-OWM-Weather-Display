@@ -7,7 +7,7 @@
 #include <ArduinoJson.h>
 
 static WebServer httpServer(80);
-static DNSServer  dnsServer;
+static DNSServer dnsServer;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -17,11 +17,20 @@ static String htmlEscape(const char* s) {
   String out;
   for (const char* p = s; *p; p++) {
     switch (*p) {
-      case '&':  out += "&amp;";  break;
-      case '"':  out += "&quot;"; break;
-      case '<':  out += "&lt;";   break;
-      case '>':  out += "&gt;";   break;
-      default:   out += *p;
+      case '&':
+        out += "&amp;";
+        break;
+      case '"':
+        out += "&quot;";
+        break;
+      case '<':
+        out += "&lt;";
+        break;
+      case '>':
+        out += "&gt;";
+        break;
+      default:
+        out += *p;
     }
   }
   return out;
@@ -29,57 +38,58 @@ static String htmlEscape(const char* s) {
 
 static String buildPage() {
   String page = FPSTR(CONFIG_HTML);
-  page.replace("__SSID__",         htmlEscape(cfg.ssid));
-  page.replace("__PASSWORD__",     "");  // never pre-fill password
-  page.replace("__APIKEY__",       htmlEscape(cfg.apikey));
-  page.replace("__SERVER__",       htmlEscape(cfg.server));
-  page.replace("__CITY__",         htmlEscape(cfg.city));
-  page.replace("__LATITUDE__",     htmlEscape(cfg.latitude));
-  page.replace("__LONGITUDE__",    htmlEscape(cfg.longitude));
-  page.replace("__HEM_NORTH__",    strcmp(cfg.hemisphere, "south") == 0 ? "" : "selected");
-  page.replace("__HEM_SOUTH__",    strcmp(cfg.hemisphere, "south") == 0 ? "selected" : "");
-  page.replace("__UNITS_M__",      strcmp(cfg.units, "I") == 0 ? "" : "selected");
-  page.replace("__UNITS_I__",      strcmp(cfg.units, "I") == 0 ? "selected" : "");
+  page.replace("__SSID__", htmlEscape(cfg.ssid));
+  page.replace("__PASSWORD__", "");  // never pre-fill password
+  page.replace("__APIKEY__", htmlEscape(cfg.apikey));
+  page.replace("__SERVER__", htmlEscape(cfg.server));
+  page.replace("__CITY__", htmlEscape(cfg.city));
+  page.replace("__LATITUDE__", htmlEscape(cfg.latitude));
+  page.replace("__LONGITUDE__", htmlEscape(cfg.longitude));
+  page.replace("__HEM_NORTH__", strcmp(cfg.hemisphere, "south") == 0 ? "" : "selected");
+  page.replace("__HEM_SOUTH__", strcmp(cfg.hemisphere, "south") == 0 ? "selected" : "");
+  page.replace("__UNITS_M__", strcmp(cfg.units, "I") == 0 ? "" : "selected");
+  page.replace("__UNITS_I__", strcmp(cfg.units, "I") == 0 ? "selected" : "");
 
   // Language options
-  const char* langs[] = {"EN","AR","CZ","EL","FA","FR","GL","HU","JA","KR","LA","LT","MK","SK","SL","VI"};
+  const char* langs[] = {"EN", "AR", "CZ", "EL", "FA", "FR", "GL", "HU",
+                         "JA", "KR", "LA", "LT", "MK", "SK", "SL", "VI"};
   for (const char* lang : langs) {
     String token = String("__LANG_") + lang + "__";
     page.replace(token, strcmp(cfg.language, lang) == 0 ? "selected" : "");
   }
 
-  page.replace("__TIMEZONE__",     htmlEscape(cfg.timezone));
-  page.replace("__NTPSERVER__",    htmlEscape(cfg.ntpServer));
-  page.replace("__GMTOFFSET__",    String(cfg.gmtOffset_sec));
-  page.replace("__DSTOFFSET__",    String(cfg.daylightOffset_sec));
-  page.replace("__SLEEPDURATION__",String(cfg.sleepDuration));
-  page.replace("__WAKEUPHOUR__",   String(cfg.wakeupHour));
-  page.replace("__SLEEPHOUR__",    String(cfg.sleepHour));
+  page.replace("__TIMEZONE__", htmlEscape(cfg.timezone));
+  page.replace("__NTPSERVER__", htmlEscape(cfg.ntpServer));
+  page.replace("__GMTOFFSET__", String(cfg.gmtOffset_sec));
+  page.replace("__DSTOFFSET__", String(cfg.daylightOffset_sec));
+  page.replace("__SLEEPDURATION__", String(cfg.sleepDuration));
+  page.replace("__WAKEUPHOUR__", String(cfg.wakeupHour));
+  page.replace("__SLEEPHOUR__", String(cfg.sleepHour));
   return page;
 }
 
 #ifdef ENABLE_CONFIG_DOWNLOAD
 static void handleConfigJson() {
   JsonDocument doc;
-  doc["ssid"]               = cfg.ssid;
+  doc["ssid"] = cfg.ssid;
 #ifndef REDACT_PASSWORD_IN_CONFIG_DOWNLOAD
-  doc["password"]           = cfg.password;
+  doc["password"] = cfg.password;
 #endif
-  doc["apikey"]             = cfg.apikey;
-  doc["server"]             = cfg.server;
-  doc["city"]               = cfg.city;
-  doc["latitude"]           = cfg.latitude;
-  doc["longitude"]          = cfg.longitude;
-  doc["language"]           = cfg.language;
-  doc["hemisphere"]         = cfg.hemisphere;
-  doc["units"]              = cfg.units;
-  doc["timezone"]           = cfg.timezone;
-  doc["ntpServer"]          = cfg.ntpServer;
-  doc["gmtOffset_sec"]      = cfg.gmtOffset_sec;
+  doc["apikey"] = cfg.apikey;
+  doc["server"] = cfg.server;
+  doc["city"] = cfg.city;
+  doc["latitude"] = cfg.latitude;
+  doc["longitude"] = cfg.longitude;
+  doc["language"] = cfg.language;
+  doc["hemisphere"] = cfg.hemisphere;
+  doc["units"] = cfg.units;
+  doc["timezone"] = cfg.timezone;
+  doc["ntpServer"] = cfg.ntpServer;
+  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
   doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"]      = cfg.sleepDuration;
-  doc["wakeupHour"]         = cfg.wakeupHour;
-  doc["sleepHour"]          = cfg.sleepHour;
+  doc["sleepDuration"] = cfg.sleepDuration;
+  doc["wakeupHour"] = cfg.wakeupHour;
+  doc["sleepHour"] = cfg.sleepHour;
   doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
   String body;
   serializeJsonPretty(doc, body);
@@ -110,17 +120,17 @@ static void handleSave() {
   arg("units").toCharArray(cfg.units, sizeof(cfg.units));
   arg("timezone").toCharArray(cfg.timezone, sizeof(cfg.timezone));
   arg("ntpServer").toCharArray(cfg.ntpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec      = arg("gmtOffset_sec").toInt();
+  cfg.gmtOffset_sec = arg("gmtOffset_sec").toInt();
   cfg.daylightOffset_sec = arg("daylightOffset_sec").toInt();
-  cfg.sleepDuration      = arg("sleepDuration").toInt();
-  cfg.wakeupHour         = arg("wakeupHour").toInt();
-  cfg.sleepHour          = arg("sleepHour").toInt();
+  cfg.sleepDuration = arg("sleepDuration").toInt();
+  cfg.wakeupHour = arg("wakeupHour").toInt();
+  cfg.sleepHour = arg("sleepHour").toInt();
 
   saveConfig();
 
   httpServer.send(200, "text/html",
-    "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>"
-    "<h2>Saved!</h2><p>Device is restarting&hellip;</p></body></html>");
+                  "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>"
+                  "<h2>Saved!</h2><p>Device is restarting&hellip;</p></body></html>");
   delay(1000);
   ESP.restart();
 }
@@ -150,8 +160,8 @@ void enterSetupMode() {
   // Wildcard DNS — send every hostname to our IP so phones auto-open the portal
   dnsServer.start(53, "*", WiFi.softAPIP());
 
-  httpServer.on("/",       HTTP_GET,  handleRoot);
-  httpServer.on("/save",   HTTP_POST, handleSave);
+  httpServer.on("/", HTTP_GET, handleRoot);
+  httpServer.on("/save", HTTP_POST, handleSave);
 #ifdef ENABLE_CONFIG_DOWNLOAD
   httpServer.on("/config.json", HTTP_GET, handleConfigJson);
 #endif
