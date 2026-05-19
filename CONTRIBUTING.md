@@ -5,9 +5,9 @@
 Two formatters are enforced by CI:
 
 - **C/C++**: [clang-format](https://clang.llvm.org/docs/ClangFormat.html) with the Google base style at 120-column line width (see [.clang-format](.clang-format))
-- **Web files**: [Prettier](https://prettier.io/) (see [.prettierrc](.prettierrc))
+- **Web files**: [Biome](https://biomejs.dev/) (see [biome.json](biome.json))
 
-Run clang-format on changed C/C++ files before submitting, and `bun run format` (or `bunx prettier --write`) on any changed web files.
+Run clang-format on changed C/C++ files before submitting, and `bun run format` (or `bunx biome format --write`) on any changed web files.
 
 ## Commit style
 

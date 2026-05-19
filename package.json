@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "bun run index.js",
-    "format": "prettier --write web/config.html index.js",
-    "format:check": "prettier --check web/config.html index.js"
+    "format": "biome format --write web/config.html index.js",
+    "format:check": "biome ci web/config.html index.js"
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "@biomejs/biome": "2.4.15"
   }
 }

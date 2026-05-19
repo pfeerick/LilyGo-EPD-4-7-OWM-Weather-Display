@@ -26,8 +26,8 @@ jobs:
             include/*.h \
             include/translations/*.h
 
-  prettier:
-    name: prettier
+  biome:
+    name: biome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
