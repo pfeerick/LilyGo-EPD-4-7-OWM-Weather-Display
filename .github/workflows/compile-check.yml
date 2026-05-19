@@ -29,7 +29,7 @@ jobs:
       - name: Compile
         run: pio run
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware
           path: .pio/build/display/firmware.bin
