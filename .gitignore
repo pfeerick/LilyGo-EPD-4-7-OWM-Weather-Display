@@ -5,6 +5,5 @@
 .vscode/ipch
 include/owm_credentials.h
 
-# Node.js
+# Bun / Node
 node_modules/
-npm-debug.log*

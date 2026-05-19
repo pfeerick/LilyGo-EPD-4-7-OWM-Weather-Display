@@ -1,14 +1,9 @@
-#!/usr/bin/env node
+import { readFileSync } from "fs";
+import { join } from "path";
 
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const port = parseInt(process.env.PORT ?? "3000", 10);
+const webDir = join(import.meta.dir, "web");
 
-const app = express();
-const port = process.env.PORT || 3000;
-const webDir = path.join(__dirname, "web");
-
-// Mock config values shown in the preview
 const mock = {
   __SSID__: "MyHomeWiFi",
   __PASSWORD__: "",
@@ -46,31 +41,40 @@ const mock = {
   __SLEEPHOUR__: "23",
 };
 
-app.get("/", (req, res) => {
-  let html = fs.readFileSync(path.join(webDir, "config.html"), "utf8");
-  for (const [token, value] of Object.entries(mock)) {
-    html = html.replaceAll(token, value);
-  }
-  res.send(html);
+const server = Bun.serve({
+  port,
+  async fetch(req) {
+    const { pathname } = new URL(req.url);
+
+    if (req.method === "GET" && pathname === "/") {
+      let html = readFileSync(join(webDir, "config.html"), "utf8");
+      for (const [token, value] of Object.entries(mock)) {
+        html = html.replaceAll(token, value);
+      }
+      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+
+    if (req.method === "POST" && pathname === "/save") {
+      const body = new URLSearchParams(await req.text());
+      const parsed = Object.fromEntries(body.entries());
+      console.log("POST /save (preview mode):", parsed);
+      return new Response(
+        "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>" +
+          "<h2>Saved!</h2><p>Preview mode &mdash; no actual save performed.</p>" +
+          "<p><a href='/'>Back</a></p></body></html>",
+        { headers: { "Content-Type": "text/html; charset=utf-8" } },
+      );
+    }
+
+    return new Response("Not Found", { status: 404 });
+  },
 });
 
-// Stub — log the form data but don't actually save anything
-app.post("/save", express.urlencoded({ extended: false }), (req, res) => {
-  console.log("POST /save (preview mode):", req.body);
-  res.send(
-    "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>" +
-      "<h2>Saved!</h2><p>Preview mode &mdash; no actual save performed.</p>" +
-      "<p><a href='/'>Back</a></p></body></html>",
-  );
-});
-
-const server = app.listen(port, () => {
-  console.log(`Preview server running at http://localhost:${port}`);
-  console.log(`Serving web/ from: ${webDir}`);
-});
+console.log(`Preview server running at http://localhost:${server.port}`);
+console.log(`Serving web/ from: ${webDir}`);
 
 process.on("SIGINT", () => {
   console.log("\nShutting down...");
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 3000);
+  server.stop();
+  process.exit(0);
 });

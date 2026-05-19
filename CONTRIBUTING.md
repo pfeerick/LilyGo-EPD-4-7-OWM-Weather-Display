@@ -7,7 +7,7 @@ Two formatters are enforced by CI:
 - **C/C++**: [clang-format](https://clang.llvm.org/docs/ClangFormat.html) with the Google base style at 120-column line width (see [.clang-format](.clang-format))
 - **Web files**: [Prettier](https://prettier.io/) (see [.prettierrc](.prettierrc))
 
-Run clang-format on changed C/C++ files before submitting, and `npm run format` (or `npx prettier --write`) on any changed web files.
+Run clang-format on changed C/C++ files before submitting, and `bun run format` (or `bunx prettier --write`) on any changed web files.
 
 ## Commit style
 
@@ -36,20 +36,18 @@ The setup portal HTML lives in `web/config.html`. On each PlatformIO build, `scr
 
 ## Previewing the web UI
 
-You can iterate on the setup portal page without flashing firmware using the included Node.js preview server. The required Node.js version is pinned in `.node-version`. Using [fnm](https://github.com/Schniz/fnm) is recommended:
+You can iterate on the setup portal page without flashing firmware using the included Bun preview server. The required Bun version is pinned in `.bun-version`. Install [Bun](https://bun.sh) if you do not have it already:
 
 ```sh
-# Install fnm (if not already installed)
-winget install Schniz.fnm                          # Windows
-curl -fsSL https://fnm.vercel.app/install | bash   # Linux / macOS
+# Install Bun
+curl -fsSL https://bun.sh/install | bash          # Linux / macOS
+powershell -c "irm bun.sh/install.ps1 | iex"      # Windows (PowerShell)
+```
 
-# Install the pinned Node.js version and activate it
-fnm install
-fnm use
-
+```sh
 # Install dependencies and start the preview server
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Then open **http://localhost:3000** in a browser. The page is served from `web/config.html` with placeholder values filled from the mock config in `index.js`. `POST /save` is stubbed — it logs the submitted values and returns a confirmation page without restarting anything.
