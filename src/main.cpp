@@ -1278,5 +1278,5 @@ void setFont(EpdFont const& font) {
 }
 
 void edp_update() {
-  epd_hl_update_screen(&hl, MODE_GC16, 25);
+  epd_hl_update_screen(&hl, MODE_GC16, (int)epd_ambient_temperature());
 }
