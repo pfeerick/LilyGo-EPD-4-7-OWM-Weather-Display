@@ -5,11 +5,6 @@ on:
     paths:
       - 'src/**'
       - 'include/**'
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'include/**'
   workflow_call:
 
 jobs:
