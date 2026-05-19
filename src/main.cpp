@@ -1229,7 +1229,8 @@ void drawString(int x, int y, String text, alignment align) {
   int x1, y1;  //the bounds of x,y and w and h of the variable 'text' in pixels.
   int w, h;
   int xx = x, yy = y;
-  epd_get_text_bounds(&currentFont, data, &xx, &yy, &x1, &y1, &w, &h, NULL);
+  EpdFontProperties props = epd_font_properties_default();
+  epd_get_text_bounds(&currentFont, data, &xx, &yy, &x1, &y1, &w, &h, &props);
   if (align == RIGHT) x = x - w;
   if (align == CENTER) x = x - w / 2;
   int cursor_y = y + h;
