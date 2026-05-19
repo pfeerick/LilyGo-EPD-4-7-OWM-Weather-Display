@@ -93,7 +93,7 @@ You can iterate on the setup portal page without flashing firmware using the inc
 
 ```sh
 # Install fnm (if not already installed)
-winget install Schniz.fnm          # Windows
+winget install Schniz.fnm                          # Windows
 curl -fsSL https://fnm.vercel.app/install | bash   # Linux / macOS
 
 # Install the pinned Node.js version and activate it
