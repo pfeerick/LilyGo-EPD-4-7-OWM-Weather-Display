@@ -1,129 +1,196 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Weather Display Setup</title>
-<style>
-  body{font-family:sans-serif;max-width:520px;margin:0 auto;padding:16px;background:#f5f5f5}
-  h1{font-size:1.4em;margin-bottom:4px}
-  h2{font-size:1em;color:#555;margin:20px 0 8px}
-  label{display:block;font-size:.85em;color:#333;margin-bottom:2px}
-  input,select{width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid #ccc;border-radius:4px;font-size:.95em;margin-bottom:12px}
-  .row{display:flex;gap:12px}
-  .row>div{flex:1}
-  button{width:100%;padding:12px;background:#2a7ae2;color:#fff;border:none;border-radius:4px;font-size:1em;cursor:pointer;margin-top:8px}
-  button:hover{background:#1a5dbf}
-  .note{font-size:.78em;color:#777;margin-top:-8px;margin-bottom:12px}
-  .saved{background:#e6f4ea;border:1px solid #4caf50;padding:12px;border-radius:4px;margin-bottom:16px;display:none}
-</style>
-</head>
-<body>
-<h1>Weather Display Setup</h1>
-<p class="note">Fill in the fields below and press <strong>Save &amp; Restart</strong>.</p>
-<div class="saved" id="msg">Saved! Device is restarting&hellip;</div>
-<form id="f" method="POST" action="/save">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Weather Display Setup</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 16px;
+        background: #f5f5f5;
+      }
+      h1 {
+        font-size: 1.4em;
+        margin-bottom: 4px;
+      }
+      h2 {
+        font-size: 1em;
+        color: #555;
+        margin: 20px 0 8px;
+      }
+      label {
+        display: block;
+        font-size: 0.85em;
+        color: #333;
+        margin-bottom: 2px;
+      }
+      input,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.95em;
+        margin-bottom: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+      }
+      .row > div {
+        flex: 1;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #2a7ae2;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 1em;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      button:hover {
+        background: #1a5dbf;
+      }
+      .note {
+        font-size: 0.78em;
+        color: #777;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
+      .saved {
+        background: #e6f4ea;
+        border: 1px solid #4caf50;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Weather Display Setup</h1>
+    <p class="note">Fill in the fields below and press <strong>Save &amp; Restart</strong>.</p>
+    <div class="saved" id="msg">Saved! Device is restarting&hellip;</div>
+    <form id="f" method="POST" action="/save">
+      <h2>WiFi</h2>
+      <label>Network (SSID)</label>
+      <input name="ssid" value="__SSID__" required maxlength="63" />
+      <label>Password</label>
+      <input
+        name="password"
+        type="password"
+        value="__PASSWORD__"
+        maxlength="63"
+        placeholder="Leave blank to keep current"
+      />
 
-<h2>WiFi</h2>
-<label>Network (SSID)</label>
-<input name="ssid" value="__SSID__" required maxlength="63">
-<label>Password</label>
-<input name="password" type="password" value="__PASSWORD__" maxlength="63" placeholder="Leave blank to keep current">
+      <h2>OpenWeatherMap</h2>
+      <label>API Key</label>
+      <input name="apikey" value="__APIKEY__" required maxlength="63" />
+      <label>API Server</label>
+      <input name="server" value="__SERVER__" required maxlength="63" />
 
-<h2>OpenWeatherMap</h2>
-<label>API Key</label>
-<input name="apikey" value="__APIKEY__" required maxlength="63">
-<label>API Server</label>
-<input name="server" value="__SERVER__" required maxlength="63">
+      <h2>Location</h2>
+      <label>City Name (display only)</label>
+      <input name="city" value="__CITY__" required maxlength="63" />
+      <div class="row">
+        <div>
+          <label>Latitude</label>
+          <input name="latitude" value="__LATITUDE__" required maxlength="15" placeholder="e.g. 51.38" />
+        </div>
+        <div>
+          <label>Longitude</label>
+          <input name="longitude" value="__LONGITUDE__" required maxlength="15" placeholder="e.g. -2.36" />
+        </div>
+      </div>
+      <label>Hemisphere</label>
+      <select name="hemisphere">
+        <option value="north" __HEM_NORTH__>North</option>
+        <option value="south" __HEM_SOUTH__>South</option>
+      </select>
 
-<h2>Location</h2>
-<label>City Name (display only)</label>
-<input name="city" value="__CITY__" required maxlength="63">
-<div class="row">
-  <div>
-    <label>Latitude</label>
-    <input name="latitude" value="__LATITUDE__" required maxlength="15" placeholder="e.g. 51.38">
-  </div>
-  <div>
-    <label>Longitude</label>
-    <input name="longitude" value="__LONGITUDE__" required maxlength="15" placeholder="e.g. -2.36">
-  </div>
-</div>
-<label>Hemisphere</label>
-<select name="hemisphere">
-  <option value="north" __HEM_NORTH__>North</option>
-  <option value="south" __HEM_SOUTH__>South</option>
-</select>
+      <h2>Units &amp; Language</h2>
+      <div class="row">
+        <div>
+          <label>Units</label>
+          <select name="units">
+            <option value="M" __UNITS_M__>Metric (°C)</option>
+            <option value="I" __UNITS_I__>Imperial (°F)</option>
+          </select>
+        </div>
+        <div>
+          <label>Language</label>
+          <select name="language">
+            <option value="EN" __LANG_EN__>English</option>
+            <option value="AR" __LANG_AR__>Arabic</option>
+            <option value="CZ" __LANG_CZ__>Czech</option>
+            <option value="EL" __LANG_EL__>Greek</option>
+            <option value="FA" __LANG_FA__>Persian</option>
+            <option value="FR" __LANG_FR__>French</option>
+            <option value="GL" __LANG_GL__>Galician</option>
+            <option value="HU" __LANG_HU__>Hungarian</option>
+            <option value="JA" __LANG_JA__>Japanese</option>
+            <option value="KR" __LANG_KR__>Korean</option>
+            <option value="LA" __LANG_LA__>Latvian</option>
+            <option value="LT" __LANG_LT__>Lithuanian</option>
+            <option value="MK" __LANG_MK__>Macedonian</option>
+            <option value="SK" __LANG_SK__>Slovak</option>
+            <option value="SL" __LANG_SL__>Slovenian</option>
+            <option value="VI" __LANG_VI__>Vietnamese</option>
+          </select>
+        </div>
+      </div>
 
-<h2>Units &amp; Language</h2>
-<div class="row">
-  <div>
-    <label>Units</label>
-    <select name="units">
-      <option value="M" __UNITS_M__>Metric (°C)</option>
-      <option value="I" __UNITS_I__>Imperial (°F)</option>
-    </select>
-  </div>
-  <div>
-    <label>Language</label>
-    <select name="language">
-      <option value="EN" __LANG_EN__>English</option>
-      <option value="AR" __LANG_AR__>Arabic</option>
-      <option value="CZ" __LANG_CZ__>Czech</option>
-      <option value="EL" __LANG_EL__>Greek</option>
-      <option value="FA" __LANG_FA__>Persian</option>
-      <option value="FR" __LANG_FR__>French</option>
-      <option value="GL" __LANG_GL__>Galician</option>
-      <option value="HU" __LANG_HU__>Hungarian</option>
-      <option value="JA" __LANG_JA__>Japanese</option>
-      <option value="KR" __LANG_KR__>Korean</option>
-      <option value="LA" __LANG_LA__>Latvian</option>
-      <option value="LT" __LANG_LT__>Lithuanian</option>
-      <option value="MK" __LANG_MK__>Macedonian</option>
-      <option value="SK" __LANG_SK__>Slovak</option>
-      <option value="SL" __LANG_SL__>Slovenian</option>
-      <option value="VI" __LANG_VI__>Vietnamese</option>
-    </select>
-  </div>
-</div>
+      <h2>Time &amp; Timezone</h2>
+      <label>POSIX Timezone String</label>
+      <input
+        name="timezone"
+        value="__TIMEZONE__"
+        required
+        maxlength="79"
+        placeholder="e.g. GMT0BST,M3.5.0/01,M10.5.0/02"
+      />
+      <p class="note">Find yours at <em>github.com/nayarsystems/posix_tz_db</em></p>
+      <label>NTP Server</label>
+      <input name="ntpServer" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org" />
+      <div class="row">
+        <div>
+          <label>GMT Offset (seconds)</label>
+          <input name="gmtOffset_sec" type="number" value="__GMTOFFSET__" maxlength="7" />
+        </div>
+        <div>
+          <label>DST Offset (seconds)</label>
+          <input name="daylightOffset_sec" type="number" value="__DSTOFFSET__" maxlength="7" />
+        </div>
+      </div>
 
-<h2>Time &amp; Timezone</h2>
-<label>POSIX Timezone String</label>
-<input name="timezone" value="__TIMEZONE__" required maxlength="79" placeholder="e.g. GMT0BST,M3.5.0/01,M10.5.0/02">
-<p class="note">Find yours at <em>github.com/nayarsystems/posix_tz_db</em></p>
-<label>NTP Server</label>
-<input name="ntpServer" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org">
-<div class="row">
-  <div>
-    <label>GMT Offset (seconds)</label>
-    <input name="gmtOffset_sec" type="number" value="__GMTOFFSET__" maxlength="7">
-  </div>
-  <div>
-    <label>DST Offset (seconds)</label>
-    <input name="daylightOffset_sec" type="number" value="__DSTOFFSET__" maxlength="7">
-  </div>
-</div>
+      <h2>Power / Schedule</h2>
+      <div class="row">
+        <div>
+          <label>Update Interval (minutes)</label>
+          <input name="sleepDuration" type="number" min="5" max="720" value="__SLEEPDURATION__" />
+        </div>
+        <div>
+          <label>Wake Hour (0–23)</label>
+          <input name="wakeupHour" type="number" min="0" max="23" value="__WAKEUPHOUR__" />
+        </div>
+      </div>
+      <label>Sleep Hour (0–23)</label>
+      <input name="sleepHour" type="number" min="0" max="23" value="__SLEEPHOUR__" />
 
-<h2>Power / Schedule</h2>
-<div class="row">
-  <div>
-    <label>Update Interval (minutes)</label>
-    <input name="sleepDuration" type="number" min="5" max="720" value="__SLEEPDURATION__">
-  </div>
-  <div>
-    <label>Wake Hour (0–23)</label>
-    <input name="wakeupHour" type="number" min="0" max="23" value="__WAKEUPHOUR__">
-  </div>
-</div>
-<label>Sleep Hour (0–23)</label>
-<input name="sleepHour" type="number" min="0" max="23" value="__SLEEPHOUR__">
-
-<button type="submit">Save &amp; Restart</button>
-</form>
-<script>
-document.getElementById('f').addEventListener('submit',function(){
-  document.getElementById('msg').style.display='block';
-});
-</script>
-</body>
+      <button type="submit">Save &amp; Restart</button>
+    </form>
+    <script>
+      document.getElementById("f").addEventListener("submit", function () {
+        document.getElementById("msg").style.display = "block";
+      });
+    </script>
+  </body>
 </html>

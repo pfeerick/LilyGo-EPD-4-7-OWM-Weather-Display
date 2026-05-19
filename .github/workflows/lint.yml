@@ -1,10 +1,12 @@
-name: C++ Lint
+name: Lint
 
 on:
   pull_request:
     paths:
       - 'src/**'
       - 'include/**'
+      - 'web/**'
+      - 'index.js'
   workflow_call:
 
 jobs:
@@ -23,3 +25,19 @@ jobs:
             src/*.cpp \
             include/*.h \
             include/translations/*.h
+
+  prettier:
+    name: prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
