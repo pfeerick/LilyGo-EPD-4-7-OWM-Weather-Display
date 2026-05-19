@@ -2,7 +2,7 @@
 #include <esp_task_wdt.h>       // In-built
 #include "freertos/FreeRTOS.h"  // In-built
 #include "freertos/task.h"      // In-built
-#include "epd_driver.h"         // https://github.com/Xinyuan-LilyGO/LilyGo-EPD47
+#include "epdiy.h"               // https://github.com/vroland/epdiy
 #include "esp_adc_cal.h"        // In-built
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 #include <HTTPClient.h>         // In-built
@@ -16,8 +16,8 @@
 #include "forecast_record.h"
 #include "translations/lang_en.h"
 
-#define SCREEN_WIDTH EPD_WIDTH
-#define SCREEN_HEIGHT EPD_HEIGHT
+#define SCREEN_WIDTH epd_width()
+#define SCREEN_HEIGHT epd_height()
 
 enum alignment { LEFT, RIGHT, CENTER };
 #define White 0xFF
@@ -72,8 +72,9 @@ long Delta =
 #include "images/sunset.h"
 #include "images/uvi.h"
 
-GFXfont currentFont;
+EpdFont currentFont;
 uint8_t* framebuffer;
+static EpdiyHighlevelState hl;
 
 #pragma region Function Prototypes
 void BeginSleep();
@@ -151,12 +152,12 @@ void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
 void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
 void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 void drawPixel(int x, int y, uint8_t color);
-void setFont(GFXfont const& font);
+void setFont(EpdFont const& font);
 void edp_update();
 #pragma endregion
 
 void BeginSleep() {
-  epd_poweroff_all();
+  epd_poweroff();
   UpdateLocalTime();
   SleepTimer = (SleepDuration * 60 - ((CurrentMin % SleepDuration) * 60 + CurrentSec)) +
                Delta;  //Some ESP32 have a RTC that is too fast to maintain accurate time, so add an offset
@@ -209,10 +210,11 @@ void InitialiseSystem() {
   while (!Serial)
     ;
   Serial.println(String(__FILE__) + "\nStarting...");
-  epd_init();
-  framebuffer = (uint8_t*)ps_calloc(sizeof(uint8_t), EPD_WIDTH * EPD_HEIGHT / 2);
-  if (!framebuffer) Serial.println("Memory alloc failed!");
-  memset(framebuffer, 0xFF, EPD_WIDTH * EPD_HEIGHT / 2);
+  epd_init(&epd_board_lilygo_t5_47, &ED047TC2, EPD_LUT_64K);
+  epd_set_vcom(1560);
+  hl = epd_hl_init(EPD_BUILTIN_WAVEFORM);
+  framebuffer = epd_hl_get_framebuffer(&hl);
+  epd_hl_set_all_white(&hl);
 }
 
 void loop() {
@@ -283,11 +285,11 @@ void setup() {
       Serial.println("Received all weather data...");
       if (RxWeather) {
         StopWiFi();
-        epd_poweron();
-        epd_clear();
+        epd_hl_set_all_white(&hl);
         DisplayWeather();
+        epd_poweron();
         edp_update();
-        epd_poweroff_all();
+        epd_poweroff();
       }
     }
   }
@@ -295,10 +297,9 @@ void setup() {
 }
 
 void DisplaySetupScreen(const char* apName) {
-  epd_poweron();
-  epd_clear();
-  int cx = EPD_WIDTH / 2;
-  int y = EPD_HEIGHT / 4;
+  epd_hl_set_all_white(&hl);
+  int cx = epd_width() / 2;
+  int y = epd_height() / 4;
   setFont(OpenSans18B);
   drawString(cx, y, "SETUP MODE", CENTER);
   setFont(OpenSans12B);
@@ -309,8 +310,9 @@ void DisplaySetupScreen(const char* apName) {
   drawString(cx, y + 160, "Then open:", CENTER);
   setFont(OpenSans18B);
   drawString(cx, y + 200, "http://192.168.4.1", CENTER);
+  epd_poweron();
   edp_update();
-  epd_poweroff_all();
+  epd_poweroff();
 }
 
 void Convert_Readings_to_Imperial(int count) {
@@ -1121,23 +1123,23 @@ void Nodata(int x, int y, bool IconSize, String IconName) {
 }
 
 void DrawMoonImage(int x, int y) {
-  Rect_t area = {.x = x, .y = y, .width = moon_width, .height = moon_height};
-  epd_draw_grayscale_image(area, (uint8_t*)moon_data);
+  EpdRect area = {x, y, moon_width, moon_height};
+  epd_copy_to_framebuffer(area, (uint8_t*)moon_data, framebuffer);
 }
 
 void DrawSunriseImage(int x, int y) {
-  Rect_t area = {.x = x, .y = y, .width = sunrise_width, .height = sunrise_height};
-  epd_draw_grayscale_image(area, (uint8_t*)sunrise_data);
+  EpdRect area = {x, y, sunrise_width, sunrise_height};
+  epd_copy_to_framebuffer(area, (uint8_t*)sunrise_data, framebuffer);
 }
 
 void DrawSunsetImage(int x, int y) {
-  Rect_t area = {.x = x, .y = y, .width = sunset_width, .height = sunset_height};
-  epd_draw_grayscale_image(area, (uint8_t*)sunset_data);
+  EpdRect area = {x, y, sunset_width, sunset_height};
+  epd_copy_to_framebuffer(area, (uint8_t*)sunset_data, framebuffer);
 }
 
 void DrawUVI(int x, int y) {
-  Rect_t area = {.x = x, .y = y, .width = uvi_width, .height = uvi_height};
-  epd_draw_grayscale_image(area, (uint8_t*)uvi_data);
+  EpdRect area = {x, y, uvi_width, uvi_height};
+  epd_copy_to_framebuffer(area, (uint8_t*)uvi_data, framebuffer);
 }
 
 /* (C) D L BIRD
@@ -1227,11 +1229,11 @@ void drawString(int x, int y, String text, alignment align) {
   int x1, y1;  //the bounds of x,y and w and h of the variable 'text' in pixels.
   int w, h;
   int xx = x, yy = y;
-  get_text_bounds(&currentFont, data, &xx, &yy, &x1, &y1, &w, &h, NULL);
+  epd_get_text_bounds(&currentFont, data, &xx, &yy, &x1, &y1, &w, &h, NULL);
   if (align == RIGHT) x = x - w;
   if (align == CENTER) x = x - w / 2;
   int cursor_y = y + h;
-  write_string(&currentFont, data, &x, &cursor_y, framebuffer);
+  epd_write_default(&currentFont, data, &x, &cursor_y, framebuffer);
 }
 
 void fillCircle(int x, int y, int r, uint8_t color) {
@@ -1247,7 +1249,7 @@ void drawFastVLine(int16_t x0, int16_t y0, int length, uint16_t color) {
 }
 
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
-  epd_write_line(x0, y0, x1, y1, color, framebuffer);
+  epd_draw_line(x0, y0, x1, y1, color, framebuffer);
 }
 
 void drawCircle(int x0, int y0, int r, uint8_t color) {
@@ -1255,11 +1257,11 @@ void drawCircle(int x0, int y0, int r, uint8_t color) {
 }
 
 void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  epd_draw_rect(x, y, w, h, color, framebuffer);
+  epd_draw_rect({x, y, w, h}, color, framebuffer);
 }
 
 void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  epd_fill_rect(x, y, w, h, color, framebuffer);
+  epd_fill_rect({x, y, w, h}, color, framebuffer);
 }
 
 void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
@@ -1270,10 +1272,10 @@ void drawPixel(int x, int y, uint8_t color) {
   epd_draw_pixel(x, y, color, framebuffer);
 }
 
-void setFont(GFXfont const& font) {
+void setFont(EpdFont const& font) {
   currentFont = font;
 }
 
 void edp_update() {
-  epd_draw_grayscale_image(epd_full_screen(), framebuffer);  // Update the screen
+  epd_hl_update_screen(&hl, MODE_GC16, 25);
 }

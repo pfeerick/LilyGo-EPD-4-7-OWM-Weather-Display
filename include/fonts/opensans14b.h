@@ -1,5 +1,5 @@
 #pragma once
-#include "epd_driver.h"
+#include "epdiy.h"
 const uint8_t OpenSans14BBitmaps[19347] = {
     0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x78, 0x9C, 0xFB, 0xF2, 0x7F, 0xFE, 0xE7, 0xFF,
     0xFD, 0x9F, 0xFE, 0xD7, 0x7F, 0xFC, 0x9F, 0xFF, 0xE1, 0x7F, 0x3C, 0x18, 0xF9, 0x3F, 0xF8, 0x6F,
@@ -1212,7 +1212,7 @@ const uint8_t OpenSans14BBitmaps[19347] = {
     0x3A, 0x83, 0xB6, 0x83, 0x2B, 0x10, 0x7E, 0x21, 0x73, 0x39, 0xA4, 0x73, 0xEF, 0xAF, 0x0F, 0x7B,
     0x5E, 0x5E, 0x85,
 };
-const GFXglyph OpenSans14BGlyphs[] = {
+const EpdGlyph OpenSans14BGlyphs[] = {
     { 0, 0, 8, 0, 0, 8, 0 }, //  
     { 6, 21, 8, 1, 21, 64, 8 }, // !
     { 11, 7, 14, 1, 21, 48, 72 }, // "
@@ -1405,14 +1405,14 @@ const GFXglyph OpenSans14BGlyphs[] = {
     { 16, 29, 18, 2, 22, 103, 19067 }, // �
     { 17, 29, 17, 0, 22, 177, 19170 }, // �
 };
-const UnicodeInterval OpenSans14BIntervals[] = {
+const EpdUnicodeInterval OpenSans14BIntervals[] = {
     { 0x20, 0x7E, 0x0 },
     { 0xA0, 0xFF, 0x5F },
 };
-const GFXfont OpenSans14B = {
+const EpdFont OpenSans14B = {
     (uint8_t*)OpenSans14BBitmaps,
-    (GFXglyph*)OpenSans14BGlyphs,
-    (UnicodeInterval*)OpenSans14BIntervals,
+    (EpdGlyph*)OpenSans14BGlyphs,
+    (EpdUnicodeInterval*)OpenSans14BIntervals,
     2,
     1,
     40,

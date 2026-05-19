@@ -1,5 +1,5 @@
 #pragma once
-#include "epd_driver.h"
+#include "epdiy.h"
 const uint8_t OpenSans24Bitmaps[32261] = {
     0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x78, 0x9C, 0x5D, 0xCE, 0xB1, 0x11, 0xC1, 0x00,
     0x00, 0x85, 0xE1, 0x17, 0x05, 0x3A, 0x3A, 0x65, 0xB2, 0x01, 0x1B, 0xB0, 0x01, 0x0B, 0xB8, 0xD8,
@@ -2019,7 +2019,7 @@ const uint8_t OpenSans24Bitmaps[32261] = {
     0x5E, 0x49, 0x2C, 0xED, 0x91, 0xD6, 0x90, 0x04, 0x0E, 0x75, 0xE0, 0x71, 0x35, 0x3B, 0x8D, 0xD3,
     0xBF, 0x03, 0xF5, 0x9C, 0x8D,
 };
-const GFXglyph OpenSans24Glyphs[] = {
+const EpdGlyph OpenSans24Glyphs[] = {
     { 0, 0, 13, 0, 0, 8, 0 }, //  
     { 7, 37, 13, 3, 36, 118, 8 }, // !
     { 14, 13, 20, 3, 36, 100, 126 }, // "
@@ -2212,14 +2212,14 @@ const GFXglyph OpenSans24Glyphs[] = {
     { 24, 50, 31, 4, 38, 189, 31791 }, // þ
     { 26, 49, 25, 0, 37, 281, 31980 }, // ÿ
 };
-const UnicodeInterval OpenSans24Intervals[] = {
+const EpdUnicodeInterval OpenSans24Intervals[] = {
     { 0x20, 0x7E, 0x0 },
     { 0xA0, 0xFF, 0x5F },
 };
-const GFXfont OpenSans24 = {
+const EpdFont OpenSans24 = {
     (uint8_t*)OpenSans24Bitmaps,
-    (GFXglyph*)OpenSans24Glyphs,
-    (UnicodeInterval*)OpenSans24Intervals,
+    (EpdGlyph*)OpenSans24Glyphs,
+    (EpdUnicodeInterval*)OpenSans24Intervals,
     2,
     1,
     68,

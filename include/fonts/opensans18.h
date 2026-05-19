@@ -1,5 +1,5 @@
 #pragma once
-#include "epd_driver.h"
+#include "epdiy.h"
 const uint8_t OpenSans18Bitmaps[23779] = {
     0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x78, 0x9C, 0x35, 0xC1, 0x6B, 0x15, 0x40, 0x30,
     0x00, 0x80, 0xD1, 0x0D, 0x33, 0xF3, 0x5C, 0x03, 0x1A, 0x10, 0x41, 0x03, 0x8B, 0xB0, 0x08, 0x22,
@@ -1489,7 +1489,7 @@ const uint8_t OpenSans18Bitmaps[23779] = {
     0xD6, 0xE5, 0x3E, 0x5F, 0x27, 0x75, 0x5F, 0xA4, 0x6E, 0x7F, 0xE4, 0xC4, 0x50, 0xFA, 0x00, 0xDD,
     0xAB, 0x5B, 0xA9,
 };
-const GFXglyph OpenSans18Glyphs[] = {
+const EpdGlyph OpenSans18Glyphs[] = {
     { 0, 0, 10, 0, 0, 8, 0 }, //  
     { 6, 27, 10, 2, 27, 85, 8 }, // !
     { 11, 10, 15, 2, 27, 71, 93 }, // "
@@ -1682,14 +1682,14 @@ const GFXglyph OpenSans18Glyphs[] = {
     { 19, 38, 23, 3, 29, 144, 23428 }, // �
     { 20, 37, 19, 0, 28, 207, 23572 }, // �
 };
-const UnicodeInterval OpenSans18Intervals[] = {
+const EpdUnicodeInterval OpenSans18Intervals[] = {
     { 0x20, 0x7E, 0x0 },
     { 0xA0, 0xFF, 0x5F },
 };
-const GFXfont OpenSans18 = {
+const EpdFont OpenSans18 = {
     (uint8_t*)OpenSans18Bitmaps,
-    (GFXglyph*)OpenSans18Glyphs,
-    (UnicodeInterval*)OpenSans18Intervals,
+    (EpdGlyph*)OpenSans18Glyphs,
+    (EpdUnicodeInterval*)OpenSans18Intervals,
     2,
     1,
     51,
