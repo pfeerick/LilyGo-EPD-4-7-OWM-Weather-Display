@@ -1,0 +1,36 @@
+[changelog]
+header = """
+## Flashing
+
+Use the [ESPHome Web Flasher](https://web.esphome.io/) to flash directly from your browser:
+1. Download the firmware binary from the assets below
+2. Open [web.esphome.io](https://web.esphome.io/), connect your device, and upload the file
+
+## Changes
+
+"""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+
+{% for commit in commits %}
+- {{ commit.message | upper_first }}
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+commit_parsers = [
+  { message = "^feat",             group = "Features"      },
+  { message = "^fix",              group = "Bug Fixes"     },
+  { message = "^perf",             group = "Performance"   },
+  { message = "^refactor",         group = "Refactoring"   },
+  { message = "^docs",             group = "Documentation" },
+  { message = "^style",            group = "Styling"       },
+  { message = "^test",             group = "Testing"       },
+  { message = "^chore|^ci|^build", skip = true             },
+]
+filter_commits = true

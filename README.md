@@ -63,6 +63,23 @@ On first boot the values are automatically written to the on-device config store
 
 # Compiling and flashing
 
+## Flashing a pre-built release
+
+The easiest way to get started is to flash a pre-built firmware using the
+[ESPHome Web Flasher](https://web.esphome.io/) — no toolchain required:
+
+1. Download `firmware-latest.bin` (or a specific version) from the
+   [Releases](https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases) page
+2. Open [web.esphome.io](https://web.esphome.io/) in your browser, connect your
+   device via USB, and upload the file
+3. After flashing, the device will enter the
+   [web setup portal](#option-1-web-setup-portal-recommended) on first boot to
+   guide you through configuration
+
+The web flasher runs entirely in your browser via WebSerial — no installation required.
+
+## Building from source
+
 To compile you will need the following libraries, compatible versions of which will be installed automatically by PlatformIO:
 
 * https://github.com/Xinyuan-LilyGO/LilyGo-EPD47
