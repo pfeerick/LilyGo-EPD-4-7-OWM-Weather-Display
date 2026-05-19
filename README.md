@@ -115,7 +115,8 @@ Reset button + 4 user buttons
 - IO39 (right-most, used for config mode trigger)
 - IO34
 - IO35
-- IO0 (RST / left-most)
+- IO0
+- RST (left-most, ESP32 reset)
 
 ## Touch (6-pin FPC connector)
 V | 15 | 14 | 13 | G
