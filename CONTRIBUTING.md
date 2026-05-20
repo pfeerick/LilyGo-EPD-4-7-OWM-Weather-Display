@@ -29,7 +29,7 @@ Open a PR against `main`. Keep changes focused — one logical change per PR mak
 
 To compile you will need the following libraries, compatible versions of which will be installed automatically by PlatformIO:
 
-- <https://github.com/Xinyuan-LilyGO/LilyGo-EPD47>
+- <https://github.com/vroland/epdiy> (display driver — replaced the frozen LilyGo-EPD47 fork)
 - <https://github.com/bblanchon/ArduinoJson>
 
 The setup portal HTML lives in `web/config.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` (the embedded PROGMEM copy) — no separate filesystem upload is needed.

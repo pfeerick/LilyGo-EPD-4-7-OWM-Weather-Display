@@ -1,5 +1,5 @@
 #pragma once
-#include "epd_driver.h"
+#include "epdiy.h"
 const uint8_t OpenSans26Bitmaps[92605] = {
     0xF7, 0xFF, 0xEF, 0x00, 0xF7, 0xFF, 0xDF, 0x00, 0xF6, 0xFF, 0xDF, 0x00, 0xF5, 0xFF, 0xCF, 0x00,
     0xF4, 0xFF, 0xBF, 0x00, 0xF4, 0xFF, 0xAF, 0x00, 0xF3, 0xFF, 0x9F, 0x00, 0xF2, 0xFF, 0x9F, 0x00,
@@ -5790,7 +5790,7 @@ const uint8_t OpenSans26Bitmaps[92605] = {
     0x00, 0xF9, 0xFF, 0xFF, 0xFF, 0x9F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB5,
     0xFE, 0xEF, 0x8C, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
-const GFXglyph OpenSans26Glyphs[] = {
+const EpdGlyph OpenSans26Glyphs[] = {
     { 0, 0, 14, 0, 0, 0, 0 }, //  
     { 7, 40, 14, 4, 39, 160, 0 }, // !
     { 16, 14, 22, 3, 39, 112, 160 }, // "
@@ -5983,14 +5983,14 @@ const GFXglyph OpenSans26Glyphs[] = {
     { 27, 54, 33, 4, 41, 756, 91121 }, // �
     { 28, 52, 27, 0, 39, 728, 91877 }, // �
 };
-const UnicodeInterval OpenSans26Intervals[] = {
+const EpdUnicodeInterval OpenSans26Intervals[] = {
     { 0x20, 0x7E, 0x0 },
     { 0xA0, 0xFF, 0x5F },
 };
-const GFXfont OpenSans26 = {
+const EpdFont OpenSans26 = {
     (uint8_t*)OpenSans26Bitmaps,
-    (GFXglyph*)OpenSans26Glyphs,
-    (UnicodeInterval*)OpenSans26Intervals,
+    (EpdGlyph*)OpenSans26Glyphs,
+    (EpdUnicodeInterval*)OpenSans26Intervals,
     2,
     0,
     74,
