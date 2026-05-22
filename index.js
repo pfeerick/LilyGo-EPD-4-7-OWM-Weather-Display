@@ -9,9 +9,9 @@ function git(args) {
     return "unknown";
   }
 }
-const sha    = git("rev-parse --short HEAD");
+const sha = git("rev-parse --short HEAD");
 const branch = git("rev-parse --abbrev-ref HEAD");
-const dirty  = git("status --porcelain") !== "";
+const dirty = git("status --porcelain") !== "";
 const buildTime = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
 const port = parseInt(process.env.PORT ?? "3000", 10);

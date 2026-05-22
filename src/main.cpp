@@ -304,19 +304,20 @@ static int drawQR(const char* text, int originX, int originY, int moduleSize, in
   _renderedPx = 0;
 
   esp_qrcode_config_t cfg = {
-      .display_func = [](esp_qrcode_handle_t qrcode) {
-        int size = esp_qrcode_get_size(qrcode);
-        _renderedPx = size * _ms;
-        int border = _ms * 2;
-        fillRect(_ox - border, _oy - border, _renderedPx + border * 2, _renderedPx + border * 2, White);
-        for (int y = 0; y < size; y++) {
-          for (int x = 0; x < size; x++) {
-            if (esp_qrcode_get_module(qrcode, x, y)) {
-              fillRect(_ox + x * _ms, _oy + y * _ms, _ms, _ms, Black);
+      .display_func =
+          [](esp_qrcode_handle_t qrcode) {
+            int size = esp_qrcode_get_size(qrcode);
+            _renderedPx = size * _ms;
+            int border = _ms * 2;
+            fillRect(_ox - border, _oy - border, _renderedPx + border * 2, _renderedPx + border * 2, White);
+            for (int y = 0; y < size; y++) {
+              for (int x = 0; x < size; x++) {
+                if (esp_qrcode_get_module(qrcode, x, y)) {
+                  fillRect(_ox + x * _ms, _oy + y * _ms, _ms, _ms, Black);
+                }
+              }
             }
-          }
-        }
-      },
+          },
       .max_qrcode_version = 10,
       .qrcode_ecc_level = eccLevel,
   };
@@ -329,16 +330,16 @@ void DisplaySetupScreen(const char* apName) {
   epd_poweron();
   epd_fullclear(&hl, (int)epd_ambient_temperature());
 
-  int cx  = epd_width() / 2;  // 480
-  int w   = epd_width();       // 960
-  int ms  = 6;
+  int cx = epd_width() / 2;  // 480
+  int w = epd_width();       // 960
+  int ms = 6;
   int pad = 16;
 
   // WiFi QR (ECC Low): WIFI:S:WeatherSetup-XXXX;T:nopass;; → version 4 = 33 modules = 198px
   // Portal QR (ECC High): http://192.168.4.1 → forced to version 4 = 33 modules = 198px
-  int qrPx   = 33 * ms;   // 198px — both QRs render at this size
-  int qrCxL  = pad + qrPx / 2;          // left QR centre x
-  int qrCxR  = w - pad - qrPx / 2;      // right QR centre x
+  int qrPx = 33 * ms;              // 198px — both QRs render at this size
+  int qrCxL = pad + qrPx / 2;      // left QR centre x
+  int qrCxR = w - pad - qrPx / 2;  // right QR centre x
 
   // Top-left: WiFi join QR — label positioned from actual rendered size
   char wifiQR[64];
@@ -351,34 +352,34 @@ void DisplaySetupScreen(const char* apName) {
 
   // Two-line labels under each QR, each positioned from its own actual rendered height
   setFont(OpenSans12B);
-  int labelGap  = 24;
-  int wifiGap   = 34;
+  int labelGap = 24;
+  int wifiGap = 34;
   int portalGap = 28;
-  drawString(qrCxL, pad + wifiQRpx + labelGap,             "Scan to join",  CENTER);
-  drawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap,   "WiFi network",  CENTER);
-  drawString(qrCxR, pad + portalQRpx + labelGap,              "Scan to open",  CENTER);
-  drawString(qrCxR, pad + portalQRpx + labelGap + portalGap,  "config portal", CENTER);
+  drawString(qrCxL, pad + wifiQRpx + labelGap, "Scan to join", CENTER);
+  drawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap, "WiFi network", CENTER);
+  drawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", CENTER);
+  drawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", CENTER);
 
   // Middle text block — sits between the QRs, starts near the top
   // Vertically centre the block in the display height
   // Block height: heading(~22) + gap(20) + 6 lines × ~38px = ~270px
-  int blockH  = 270;
-  int textY   = (epd_height() - blockH) / 2;
+  int blockH = 270;
+  int textY = (epd_height() - blockH) / 2;
 
   setFont(OpenSans18B);
-  drawString(cx, textY - 48,   "SETUP MODE",              CENTER);
+  drawString(cx, textY - 48, "SETUP MODE", CENTER);
   setFont(OpenSans12B);
-  drawString(cx, textY + 48,   "Connect to WiFi network:", CENTER);
+  drawString(cx, textY + 48, "Connect to WiFi network:", CENTER);
   setFont(OpenSans18B);
-  drawString(cx, textY + 80,   String(apName),            CENTER);
+  drawString(cx, textY + 80, String(apName), CENTER);
   setFont(OpenSans12B);
-  drawString(cx, textY + 140,  "Then open in a browser:", CENTER);
+  drawString(cx, textY + 140, "Then open in a browser:", CENTER);
   setFont(OpenSans18B);
-  drawString(cx, textY + 172,  "http://192.168.4.1",      CENTER);
+  drawString(cx, textY + 172, "http://192.168.4.1", CENTER);
   setFont(OpenSans12B);
-  drawString(cx, textY + 228,  "To update firmware:",     CENTER);
+  drawString(cx, textY + 228, "To update firmware:", CENTER);
   setFont(OpenSans18B);
-  drawString(cx, textY + 260,  "http://192.168.4.1/update", CENTER);
+  drawString(cx, textY + 260, "http://192.168.4.1/update", CENTER);
 
   edp_update();
   epd_poweroff();
