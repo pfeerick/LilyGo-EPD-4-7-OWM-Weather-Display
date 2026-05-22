@@ -201,7 +201,7 @@ void enterSetupMode() {
 
   httpServer.on("/", HTTP_GET, handleRoot);
   httpServer.on("/save", HTTP_POST, handleSave);
-  httpServer.on("/update", HTTP_GET,  handleOTAPage);
+  httpServer.on("/update", HTTP_GET, handleOTAPage);
   httpServer.on("/update", HTTP_POST, handleOTADone, handleOTAUpload);
 #ifdef ENABLE_CONFIG_DOWNLOAD
   httpServer.on("/config.json", HTTP_GET, handleConfigJson);
@@ -211,14 +211,11 @@ void enterSetupMode() {
   Serial.println("Web server started on http://192.168.4.1");
 
   ArduinoOTA.setHostname("WeatherDisplay");
-  ArduinoOTA.onStart([]()   { Serial.println("ArduinoOTA start"); });
-  ArduinoOTA.onEnd([]()     { Serial.println("\nArduinoOTA complete"); });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("OTA: %u%%\r", progress / (total / 100));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("ArduinoOTA error[%u]\n", error);
-  });
+  ArduinoOTA.onStart([]() { Serial.println("ArduinoOTA start"); });
+  ArduinoOTA.onEnd([]() { Serial.println("\nArduinoOTA complete"); });
+  ArduinoOTA.onProgress(
+      [](unsigned int progress, unsigned int total) { Serial.printf("OTA: %u%%\r", progress / (total / 100)); });
+  ArduinoOTA.onError([](ota_error_t error) { Serial.printf("ArduinoOTA error[%u]\n", error); });
   ArduinoOTA.begin();
   Serial.println("ArduinoOTA listening (hostname: WeatherDisplay)");
 
