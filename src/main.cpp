@@ -308,6 +308,10 @@ void DisplaySetupScreen(const char* apName) {
   drawString(cx, y + 160, "Then open:", CENTER);
   setFont(OpenSans18B);
   drawString(cx, y + 200, "http://192.168.4.1", CENTER);
+  setFont(OpenSans12B);
+  drawString(cx, y + 270, "To update firmware, visit:", CENTER);
+  setFont(OpenSans18B);
+  drawString(cx, y + 305, "http://192.168.4.1/update", CENTER);
   edp_update();
   epd_poweroff();
 }

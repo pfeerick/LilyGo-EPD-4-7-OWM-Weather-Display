@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Firmware Update</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 16px;
+        background: #f5f5f5;
+      }
+      h1 {
+        font-size: 1.4em;
+        margin-bottom: 4px;
+      }
+      .note {
+        font-size: 0.78em;
+        color: #777;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
+      #drop {
+        border: 2px dashed #aaa;
+        border-radius: 6px;
+        padding: 32px 16px;
+        text-align: center;
+        color: #666;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        margin-bottom: 12px;
+      }
+      #drop.over {
+        border-color: #2a7ae2;
+        background: #eef4fd;
+      }
+      #drop.picked {
+        border-color: #4caf50;
+        color: #2e7d32;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #2a7ae2;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 1em;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      button:disabled {
+        background: #aaa;
+        cursor: default;
+      }
+      button:hover:not(:disabled) {
+        background: #1a5dbf;
+      }
+      progress {
+        width: 100%;
+        height: 20px;
+        margin: 12px 0 4px;
+        display: none;
+      }
+      #status {
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 12px;
+        display: none;
+      }
+      .info {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+      }
+      .ok {
+        background: #e6f4ea;
+        border: 1px solid #4caf50;
+      }
+      .error {
+        background: #fdecea;
+        border: 1px solid #f44336;
+      }
+      .back {
+        display: block;
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #2a7ae2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Firmware Update</h1>
+    <p class="note">
+      Drag a <code>.bin</code> or <code>.bin.gz</code> file onto the zone below, or click to
+      browse.
+    </p>
+
+    <div id="drop">
+      <span id="drop-label">Drop .bin / .bin.gz file here, or click to select</span>
+    </div>
+    <input type="file" id="file" accept=".bin,.bin.gz" />
+
+    <button id="btn" type="button" disabled>Flash Firmware</button>
+    <progress id="prog" value="0" max="100"></progress>
+    <div id="status"></div>
+
+    <a href="/" class="back">&#8592; Back to configuration</a>
+
+    <script>
+      var file = null;
+      var dropEl = document.getElementById("drop");
+      var fileEl = document.getElementById("file");
+      var btn = document.getElementById("btn");
+      var prog = document.getElementById("prog");
+      var status = document.getElementById("status");
+      var label = document.getElementById("drop-label");
+
+      function picked(f) {
+        file = f;
+        label.textContent = `${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+        dropEl.className = "picked";
+        btn.disabled = false;
+      }
+
+      dropEl.addEventListener("click", () => {
+        fileEl.click();
+      });
+      fileEl.addEventListener("change", function () {
+        if (this.files[0]) picked(this.files[0]);
+      });
+
+      dropEl.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropEl.classList.add("over");
+      });
+      dropEl.addEventListener("dragleave", () => {
+        dropEl.classList.remove("over");
+      });
+      dropEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropEl.classList.remove("over");
+        if (e.dataTransfer.files[0]) picked(e.dataTransfer.files[0]);
+      });
+
+      btn.addEventListener("click", () => {
+        if (!file) return;
+        btn.disabled = true;
+        prog.style.display = "block";
+        prog.value = 0;
+        setStatus("Uploading… do not power off.", "info");
+
+        var fd = new FormData();
+        fd.append("firmware", file);
+        var xhr = new XMLHttpRequest();
+        var pct = 0;
+        xhr.open("POST", "/update");
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            pct = Math.round((e.loaded / e.total) * 100);
+            prog.value = pct;
+            setStatus(`Uploading… ${pct}%`, "info");
+            if (pct === 100) setStatus("Flashing… do not power off.", "info");
+          }
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status === 200) {
+            setStatus("Update complete! Device is restarting…", "ok");
+          } else {
+            setStatus(`Update failed (HTTP ${xhr.status}). Try again.`, "error");
+            btn.disabled = false;
+          }
+        });
+        xhr.addEventListener("error", () => {
+          // Connection drop here is expected on success — device reboots mid-response
+          setStatus(
+            "Update complete (or connection lost). Device may be restarting…",
+            "ok",
+          );
+        });
+        xhr.send(fd);
+      });
+
+      function setStatus(msg, cls) {
+        status.textContent = msg;
+        status.className = cls;
+        status.style.display = "block";
+      }
+    </script>
+  </body>
+</html>
