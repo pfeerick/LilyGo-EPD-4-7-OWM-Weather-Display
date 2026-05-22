@@ -1,7 +1,6 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
 
 // Load simulator/.env if present (gitignored credentials file)
 const dotenvPath = join(import.meta.dir, "simulator", ".env");

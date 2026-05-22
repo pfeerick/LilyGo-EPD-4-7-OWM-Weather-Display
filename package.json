@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run index.js",
-    "format": "biome format --write web/config.html index.js",
-    "format:check": "biome ci web/config.html index.js"
+    "format": "biome format --write web/config.html web/display.html index.js",
+    "format:check": "biome ci web/config.html web/display.html index.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15"
