@@ -64,6 +64,35 @@
         margin-top: -8px;
         margin-bottom: 12px;
       }
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #1e1e2e;
+        display: flex;
+        z-index: 100;
+      }
+      nav a {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        color: #aaa;
+        text-decoration: none;
+        font-size: 0.9em;
+        border-bottom: 3px solid transparent;
+      }
+      nav a.active {
+        color: #fff;
+        border-bottom-color: #2a7ae2;
+      }
+      nav a:hover:not(.active) {
+        color: #ddd;
+        background: #2a2a3e;
+      }
+      body {
+        padding-top: 52px;
+      }
       .saved {
         background: #e6f4ea;
         border: 1px solid #4caf50;
@@ -75,6 +104,10 @@
     </style>
   </head>
   <body>
+    <nav>
+      <a href="/" class="active">Configuration</a>
+      <a href="/update">Firmware Update</a>
+    </nav>
     <h1>Weather Display Setup</h1>
     <p class="note">Fill in the fields below and press <strong>Save &amp; Restart</strong>.</p>
     <div class="saved" id="msg">Saved! Device is restarting&hellip;</div>
@@ -187,15 +220,7 @@
 
       <button type="submit">Save &amp; Restart</button>
     </form>
-    <div style="margin-top:24px;border-top:1px solid #ddd;padding-top:16px;">
-      <p class="note">Need to flash new firmware? Use the OTA update page:</p>
-      <a
-        href="/update"
-        style="display:block;width:100%;box-sizing:border-box;padding:12px;
-               background:#6c757d;color:#fff;border-radius:4px;
-               font-size:1em;text-align:center;text-decoration:none;"
-      >Firmware Update (OTA)</a>
-    </div>
+    <p class="note" style="margin-top:24px;text-align:center;">Built: __BUILD__</p>
     <script>
       document.getElementById("f").addEventListener("submit", () => {
         document.getElementById("msg").style.display = "block";

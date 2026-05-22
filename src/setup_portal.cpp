@@ -147,15 +147,22 @@ static void handleOTAPage() {
 }
 
 static void handleOTAUpload() {
+  static uint32_t lastLogged = 0;
   HTTPUpload& upload = httpServer.upload();
   if (upload.status == UPLOAD_FILE_START) {
-    Serial.printf("OTA start: %s\n", upload.filename.c_str());
+    lastLogged = 0;
+    Serial.printf("OTA upload start: %s\n", upload.filename.c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) Update.printError(Serial);
   } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) Update.printError(Serial);
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+      Update.printError(Serial);
+    } else if (upload.totalSize - lastLogged >= 65536) {
+      Serial.printf("OTA progress: %u bytes\n", upload.totalSize);
+      lastLogged = upload.totalSize;
+    }
   } else if (upload.status == UPLOAD_FILE_END) {
     if (Update.end(true)) {
-      Serial.printf("OTA success: %u bytes\n", upload.totalSize);
+      Serial.printf("OTA success: %u bytes written\n", upload.totalSize);
     } else {
       Update.printError(Serial);
     }
@@ -176,6 +183,11 @@ static void handleOTADone() {
 
 // Redirect all unknown URLs to root (captive portal behaviour)
 static void handleNotFound() {
+  Serial.printf("404: %s %s\n", httpServer.method() == HTTP_GET ? "GET" : "POST", httpServer.uri().c_str());
+  if (httpServer.method() == HTTP_POST) {
+    httpServer.send(404, "text/plain", "Not Found");
+    return;
+  }
   httpServer.sendHeader("Location", "http://192.168.4.1/", true);
   httpServer.send(302, "text/plain", "");
 }
