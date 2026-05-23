@@ -87,6 +87,7 @@
     <div id="controls">
       <button type="button" id="refreshBtn">Refresh</button>
       <button type="button" id="refetchBtn" title="Re-fetch live OWM data">Re-fetch OWM</button>
+      <button type="button" id="saveBtn" title="Save the current display as a PNG">Save PNG</button>
       <label>
         <input type="checkbox" id="autoRefresh" />
         Auto-refresh
@@ -205,6 +206,19 @@
 
       document.getElementById("refreshBtn").addEventListener("click", () => fetchAndRender(false));
       document.getElementById("refetchBtn").addEventListener("click", () => fetchAndRender(true));
+
+      document.getElementById("saveBtn").addEventListener("click", () => {
+        canvas.toBlob((blob) => {
+          if (!blob) { statusEl.textContent = "PNG export failed"; return; }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+          a.href = url;
+          a.download = `epd-${ts}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      });
 
       document.getElementById("autoRefresh").addEventListener("change", (e) => {
         e.target.checked ? startAuto() : stopAuto();
