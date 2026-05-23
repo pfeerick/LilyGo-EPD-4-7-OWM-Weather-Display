@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'include/**'
+      - 'simulator/**'
       - 'web/**'
       - 'index.js'
   workflow_call:
@@ -24,7 +25,13 @@ jobs:
           clang-format-18 --dry-run --Werror \
             src/*.cpp \
             include/*.h \
-            include/translations/*.h
+            include/translations/*.h \
+            simulator/*.cpp \
+            simulator/*.h \
+            simulator/epdiy_pc/*.c \
+            simulator/epdiy_pc/*.h \
+            simulator/esp_stubs/*.h \
+            simulator/esp_stubs/xtensa/*.h
 
   biome:
     name: biome
