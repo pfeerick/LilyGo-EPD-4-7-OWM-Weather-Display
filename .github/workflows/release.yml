@@ -9,7 +9,6 @@ on:
       - 'LICENSE'
       - '.gitignore'
       - '.gitattributes'
-      - 'index.js'
       - 'package.json'
       - 'package-lock.json'
       - '.node-version'
@@ -23,9 +22,12 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yml
 
+  simulator:
+    uses: ./.github/workflows/simulator-build.yml
+
   release:
     name: Create Release
-    needs: [compile-check, lint]
+    needs: [compile-check, lint, simulator]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -39,13 +41,24 @@ jobs:
         with:
           name: firmware
 
-      - name: Stage artifact (versioned release)
-        if: startsWith(github.ref, 'refs/tags/')
-        run: cp firmware.bin "firmware-${{ github.ref_name }}.bin"
+      - name: Download simulator artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: simulator-wasm
 
-      - name: Stage artifact (latest release)
+      - name: Stage artifacts (versioned release)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cp firmware.bin "firmware-${{ github.ref_name }}.bin"
+          cp simulator.js   "simulator-wasm-${{ github.ref_name }}.js"
+          cp simulator.wasm "simulator-wasm-${{ github.ref_name }}.wasm"
+
+      - name: Stage artifacts (latest release)
         if: github.ref == 'refs/heads/main'
-        run: cp firmware.bin firmware-latest.bin
+        run: |
+          cp firmware.bin   firmware-latest.bin
+          cp simulator.js   simulator-wasm-latest.js
+          cp simulator.wasm simulator-wasm-latest.wasm
 
       - name: Generate changelog (versioned)
         if: startsWith(github.ref, 'refs/tags/')
@@ -70,7 +83,9 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --title "LilyGo EPD 4.7\" OWM Weather Display ${{ github.ref_name }}" \
             --notes-file release-notes.md \
-            "firmware-${{ github.ref_name }}.bin"
+            "firmware-${{ github.ref_name }}.bin" \
+            "simulator-wasm-${{ github.ref_name }}.js" \
+            "simulator-wasm-${{ github.ref_name }}.wasm"
 
       - name: Get previous latest SHA
         if: github.ref == 'refs/heads/main'
@@ -115,4 +130,6 @@ jobs:
             --title "Latest Build" \
             --notes-file release-notes.md \
             --target "$GITHUB_SHA" \
-            firmware-latest.bin
+            firmware-latest.bin \
+            simulator-wasm-latest.js \
+            simulator-wasm-latest.wasm

@@ -56,44 +56,44 @@ After editing `web/config.html`, refresh the browser to see changes immediately.
 
 ## Simulating the display
 
-The `simulator/` directory contains a native Windows build that runs the real rendering code (`DisplayWeather()`) against live OWM data and serves the resulting e-ink framebuffer to a browser canvas — no hardware required.
+The `simulator/` directory runs the real rendering code (`DisplayWeather()`) against live OWM data and renders it to a browser canvas via WebAssembly — no hardware or C++ toolchain required.
 
 ### Prerequisites
 
-- [CMake](https://cmake.org/) ≥ 3.20 — `scoop install cmake`
-- [Ninja](https://ninja-build.org/) — `scoop install ninja`
-- GCC/G++ — `scoop install gcc`
 - An [OpenWeatherMap](https://openweathermap.org/) API key with One Call API 3.0 access
-
-### Build
-
-```powershell
-cd simulator
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-The output is `simulator/build/simulator.exe`.
+- [Bun](https://bun.sh/) (already required for the rest of the project)
 
 ### Run
 
-Copy the credentials template and fill in your values:
+Download `simulator.js` and `simulator.wasm` from the [latest release](https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/latest) and place them in `simulator/wasm/`:
 
-```powershell
-Copy-Item simulator\.env.example simulator\.env
-# then edit simulator\.env
+```sh
+mkdir -p simulator/wasm
+curl -L -o simulator/wasm/simulator.js   https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/latest/simulator-wasm-latest.js
+curl -L -o simulator/wasm/simulator.wasm https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/latest/simulator-wasm-latest.wasm
 ```
 
-`simulator/.env` is gitignored. The Bun server loads it automatically. Then start it as usual:
+Set up credentials and start the server:
 
-```powershell
+```sh
+cp simulator/.env.example simulator/.env
+# edit simulator/.env with your OWM API key and location
 bun run dev
 ```
 
-Open **http://localhost:3000/display** in a browser to see the rendered display. The framebuffer is cached for 5 minutes by default; click **Re-fetch OWM** to force a refresh, or set `REFRESH_TTL` (milliseconds) in the environment to change the cache duration.
+Open **http://localhost:3000/display** to see the rendered display.
 
-The simulator writes 259,200 raw bytes (960 × 540 px, 4bpp packed grayscale) to stdout and exits. The Bun server spawns it on demand and converts the framebuffer to a PNG for the browser canvas.
+### Rebuilding the WASM module
+
+Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and Ninja.
+
+```sh
+emcmake cmake -B simulator/build -S simulator -G Ninja -DCMAKE_BUILD_TYPE=Release
+emmake cmake --build simulator/build
+```
+
+The build writes `simulator.js` and `simulator.wasm` straight into `simulator/wasm/` (gitignored). When your PR is merged to `main`, CI rebuilds the artifacts and publishes them to the `latest` release.
 
 ### How it tracks `main.cpp`
 
-The simulator `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef PC_SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_pc.cpp`. If you add new weather fields to `DecodeWeather`, update the PC version in `main_pc.cpp` to match.
+The WASM module `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef PC_SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub version in `main_wasm.cpp` to match.

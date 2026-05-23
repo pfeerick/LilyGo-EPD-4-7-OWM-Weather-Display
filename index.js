@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -30,6 +30,7 @@ const buildTime = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UT
 
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const webDir = join(import.meta.dir, "web");
+const SIMULATOR_WASM_DIR = join(import.meta.dir, "simulator", "wasm");
 
 const mock = {
   __SSID__: "MyHomeWiFi",
@@ -68,42 +69,6 @@ const mock = {
   __SLEEPHOUR__: "23",
   __BUILD__: `${branch}@${sha}${dirty ? "*" : ""} &bull; ${buildTime} (dev server)`,
 };
-
-// Path to the compiled simulator binary
-const SIMULATOR_EXE = join(import.meta.dir, "simulator", "build", "simulator.exe");
-const EPD_FB_SIZE = (960 / 2) * 540; // 259,200 bytes
-
-// Cache the framebuffer for REFRESH_TTL ms so every browser poll doesn't re-fetch OWM.
-const REFRESH_TTL = parseInt(process.env.REFRESH_TTL ?? "300000", 10); // default 5 min
-let cachedFb = null;
-let cacheExpiry = 0;
-
-function runSimulator() {
-  if (!existsSync(SIMULATOR_EXE)) {
-    return {
-      error: `Simulator not built. Run: cd simulator && cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build`,
-    };
-  }
-
-  const result = spawnSync(SIMULATOR_EXE, [], {
-    maxBuffer: EPD_FB_SIZE + 64 * 1024,
-    timeout: 30_000,
-    env: process.env,
-  });
-
-  if (result.status !== 0) {
-    const stderr = result.stderr?.toString() ?? "(no stderr)";
-    console.error("[simulator] exit", result.status, "\n", stderr);
-    return { error: `Simulator exited with status ${result.status}`, detail: stderr };
-  }
-
-  const buf = result.stdout;
-  if (!buf || buf.length !== EPD_FB_SIZE) {
-    return { error: `Expected ${EPD_FB_SIZE} bytes, got ${buf?.length ?? 0}` };
-  }
-
-  return { fb: buf };
-}
 
 const server = Bun.serve({
   port,
@@ -187,41 +152,52 @@ const server = Bun.serve({
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
-    if (req.method === "GET" && pathname === "/framebuffer") {
-      const now = Date.now();
-      if (!cachedFb || now > cacheExpiry || req.headers.get("cache-control") === "no-cache") {
-        console.log("[simulator] running...");
-        const { fb, error, detail } = runSimulator();
-        if (error) {
-          console.error("[simulator]", error);
-          return new Response(JSON.stringify({ error, detail }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-        cachedFb = fb;
-        cacheExpiry = now + REFRESH_TTL;
-        console.log(`[simulator] done — cached for ${REFRESH_TTL / 1000}s`);
-      }
-      return new Response(cachedFb, {
-        headers: { "Content-Type": "application/octet-stream", "Cache-Control": "no-store" },
+    if (req.method === "GET" && pathname === "/owm") {
+      const apikey = process.env.OWM_APIKEY ?? "";
+      const lat = process.env.OWM_LAT ?? "";
+      const lon = process.env.OWM_LON ?? "";
+      const units = { M: "metric", I: "imperial" }[process.env.OWM_UNITS ?? "M"] ?? "metric";
+      const lang = (process.env.OWM_LANG ?? "EN").toLowerCase();
+      const server = process.env.OWM_SERVER ?? "api.openweathermap.org";
+      const owmUrl =
+        `https://${server}/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apikey}` +
+        `&mode=json&units=${units}&lang=${lang}&exclude=minutely,alerts`;
+      const owmRes = await fetch(owmUrl);
+      const body = await owmRes.arrayBuffer();
+      return new Response(body, {
+        status: owmRes.status,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Bust the cache and re-run the simulator immediately
-    if (req.method === "POST" && pathname === "/framebuffer/refresh") {
-      cachedFb = null;
-      cacheExpiry = 0;
-      return new Response("ok", { headers: { "Content-Type": "text/plain" } });
+    if (req.method === "GET" && pathname === "/owm-config") {
+      return new Response(
+        JSON.stringify({
+          city: process.env.OWM_CITY ?? "",
+          units: process.env.OWM_UNITS ?? "M",
+          lang: process.env.OWM_LANG ?? "EN",
+          hemisphere: process.env.OWM_HEMISPHERE ?? "north",
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (req.method === "GET" && pathname.startsWith("/wasm/")) {
+      const file = pathname.slice(6);
+      const wasmPath = join(SIMULATOR_WASM_DIR, file);
+      if (!existsSync(wasmPath)) return new Response("Not Found", { status: 404 });
+      const ct = file.endsWith(".wasm") ? "application/wasm" : "application/javascript";
+      return new Response(Bun.file(wasmPath), { headers: { "Content-Type": ct } });
     }
 
     return new Response("Not Found", { status: 404 });
   },
 });
 
+const wasmAvailable = existsSync(join(SIMULATOR_WASM_DIR, "simulator.wasm"));
 console.log(`Preview server running at http://localhost:${server.port}`);
 console.log(`Serving web/ from: ${webDir}`);
-console.log(`Simulator: ${existsSync(SIMULATOR_EXE) ? SIMULATOR_EXE : "(not built yet)"}`);
+console.log(`Simulator (WASM): ${wasmAvailable ? SIMULATOR_WASM_DIR : "(not built — run emcmake cmake)"}`);
 
 process.on("SIGINT", () => {
   console.log("\nShutting down...");

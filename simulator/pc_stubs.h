@@ -294,8 +294,13 @@ inline uint8_t esp_read_mac(uint8_t* mac, int) {
 // but need the declaration to compile
 struct tm;
 inline bool getLocalTime(struct tm* info, int timeout = 5000) {
+  (void)timeout;
   time_t now = time(nullptr);
+#ifdef _WIN32
   localtime_s(info, &now);
+#else
+  localtime_r(&now, info);
+#endif
   return true;
 }
 

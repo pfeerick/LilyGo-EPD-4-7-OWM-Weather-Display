@@ -1,14 +1,10 @@
-// PC-side weather display simulator.
-// Fetches live OWM data, runs the real rendering code, writes 259,200 bytes to stdout.
+// WASM entry point for the weather display simulator.
+// OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
 #define PC_SIMULATOR_BUILD 1
 
 #include "pc_stubs.h"
-
-// EPDIY types — self-contained PC header (no ESP-IDF/xtensa deps)
 #include "epdiy_pc/epdiy_pc.h"
 
-// ArduinoJson (header-only, compiles on PC).
-// Must undef min/max macros from pc_stubs.h — they break .as<T>() template calls.
 #ifdef min
 #undef min
 #endif
@@ -17,8 +13,6 @@
 #endif
 #include "../.pio/libdeps/display/ArduinoJson/src/ArduinoJson.h"
 
-
-// Project includes (all needed by rendering code and DecodeWeather)
 #include "../include/config.h"
 #include "../include/forecast_record.h"
 #include "../include/translations/lang_en.h"
@@ -32,14 +26,16 @@
 #include "../include/images/sunset.h"
 #include "../include/images/uvi.h"
 
-#include "owm_http.h"
-
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-#ifdef _WIN32
-#include <io.h>
-#include <fcntl.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#else
+// Allow the file to compile under a native toolchain (e.g. for IDE checks).
+// EMSCRIPTEN_KEEPALIVE becomes a no-op; the exported functions exist but are
+// not linked as WASM exports.
+#define EMSCRIPTEN_KEEPALIVE
 #endif
 
 // ---- Globals expected by the rendering code ----
@@ -76,7 +72,7 @@ EpdFont currentFont;
 uint8_t* framebuffer;
 static EpdiyHighlevelState hl;
 
-// ---- Config (extern AppConfig cfg declared in config.h) ----
+// ---- Config ----
 
 AppConfig cfg = {"",                        // ssid
                  "",                        // password
@@ -108,17 +104,10 @@ bool seedConfigFromHeader() {
   return false;
 }
 
-// ---- PC implementations of hardware-dependent helpers ----
-
-// UpdateLocalTime — uses system clock instead of FreeRTOS NTP
 boolean UpdateLocalTime() {
   time_t now = time(nullptr);
   struct tm t;
-#ifdef _WIN32
-  localtime_s(&t, &now);
-#else
   localtime_r(&now, &t);
-#endif
   CurrentHour = t.tm_hour;
   CurrentMin = t.tm_min;
   CurrentSec = t.tm_sec;
@@ -136,18 +125,10 @@ boolean UpdateLocalTime() {
   return true;
 }
 
-// edp_update — no-op on PC (we read the framebuffer directly)
 void edp_update() {}
 
-// ---- Include the rendering code from main.cpp ----
-// PC_SIMULATOR_BUILD gates out: includes, globals, BeginSleep, SetupTime,
-// StartWiFi, StopWiFi, InitialiseSystem, loop, setup, DisplaySetupScreen.
-// Everything else (Convert_Readings_to_Imperial, DecodeWeather, ConvertUnixTime,
-// all DisplayWeather sub-functions, drawing wrappers) compiles unchanged.
 #include "../src/main.cpp"
 
-// DrawBattery — skip ADC, draw a "USB" indicator instead.
-// Must come after #include "../src/main.cpp" so drawRect/fillRect/drawString are defined.
 void DrawBattery(int x, int y) {
   drawRect(x + 25, y - 14, 40, 15, (uint16_t)0x00);
   fillRect(x + 65, y - 10, 4, 7, (uint16_t)0x00);
@@ -155,9 +136,6 @@ void DrawBattery(int x, int y) {
   drawString(x + 85, y - 14, String("USB"), LEFT);
 }
 
-// ---- OWM data loading ----
-// PC replacement for DecodeWeather() from main.cpp (which is guarded out).
-// Uses std::string directly — ArduinoJson natively supports it.
 bool DecodeWeather(const std::string& json, String Type) {
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, json);
@@ -226,58 +204,39 @@ bool DecodeWeather(const std::string& json, String Type) {
   return true;
 }
 
-bool loadWeatherFromJson(const std::string& json) {
-  return DecodeWeather(json, "onecall");
-}
+// ---- Exported WASM API ----
 
-// ---- Entry point ----
+extern "C" {
 
-int main() {
-  // Config from environment variables
-  auto env = [](const char* var, char* dest, size_t sz) {
-    if (const char* v = getenv(var)) strncpy(dest, v, sz - 1);
-  };
-  env("OWM_APIKEY", cfg.apikey, sizeof(cfg.apikey));
-  env("OWM_LAT", cfg.latitude, sizeof(cfg.latitude));
-  env("OWM_LON", cfg.longitude, sizeof(cfg.longitude));
-  env("OWM_CITY", cfg.city, sizeof(cfg.city));
-  env("OWM_UNITS", cfg.units, sizeof(cfg.units));
-  env("OWM_LANG", cfg.language, sizeof(cfg.language));
-  env("OWM_HEMISPHERE", cfg.hemisphere, sizeof(cfg.hemisphere));
-
-  if (!isConfigValid()) {
-    fprintf(stderr,
-            "ERROR: Missing OWM credentials.\n"
-            "Set environment variables: OWM_APIKEY, OWM_LAT, OWM_LON\n"
-            "Optionally: OWM_CITY, OWM_UNITS (M/I), OWM_LANG, OWM_HEMISPHERE (north/south)\n"
-            "Or create include/owm_credentials.h and rebuild.\n");
-    return 1;
-  }
-
-  UpdateLocalTime();
-
+EMSCRIPTEN_KEEPALIVE void wasm_init() {
   hl = epd_hl_init(nullptr);
   framebuffer = epd_pc_get_framebuffer();
   epd_hl_set_all_white(&hl);
+}
 
-  std::string json = owm_fetch(cfg.server, cfg.apikey, cfg.latitude, cfg.longitude, cfg.units, cfg.language);
-  if (json.empty()) {
-    fprintf(stderr, "ERROR: OWM fetch failed\n");
-    return 1;
-  }
+EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang,
+                                          const char* hemisphere) {
+  if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
+  if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
+  if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
+  if (hemisphere) strncpy(cfg.hemisphere, hemisphere, sizeof(cfg.hemisphere) - 1);
+}
 
-  if (!loadWeatherFromJson(json)) {
-    fprintf(stderr, "ERROR: OWM JSON decode failed\n");
-    return 1;
-  }
-
+EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {
+  UpdateLocalTime();
+  epd_hl_set_all_white(&hl);
+  std::string json_str(json, len);
+  if (!DecodeWeather(json_str, "onecall")) return -1;
   DisplayWeather();
-
-#ifdef _WIN32
-  _setmode(_fileno(stdout), _O_BINARY);
-#endif
-  size_t fb_size = (size_t)(epd_width() / 2) * epd_height();
-  fwrite(framebuffer, 1, fb_size, stdout);
-  fflush(stdout);
   return 0;
 }
+
+EMSCRIPTEN_KEEPALIVE uint8_t* wasm_get_framebuffer() {
+  return epd_pc_get_framebuffer();
+}
+
+EMSCRIPTEN_KEEPALIVE int wasm_fb_size() {
+  return (epd_width() / 2) * epd_height();
+}
+
+}  // extern "C"

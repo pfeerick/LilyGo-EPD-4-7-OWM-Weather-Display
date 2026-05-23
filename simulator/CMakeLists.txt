@@ -14,8 +14,7 @@ endif()
 set(ROOT "${CMAKE_SOURCE_DIR}/..")
 
 add_executable(simulator
-  main_pc.cpp
-  owm_http.cpp
+  main_wasm.cpp
   epdiy_pc/epdiy.c
   epdiy_pc/font.c
   # miniz split-file amalgamation (3.x)
@@ -26,7 +25,7 @@ add_executable(simulator
 )
 
 target_include_directories(simulator PRIVATE
-  ${CMAKE_SOURCE_DIR}                           # pc_stubs.h, owm_http.h
+  ${CMAKE_SOURCE_DIR}                           # pc_stubs.h
   ${CMAKE_SOURCE_DIR}/esp_stubs                 # esp_attr.h, esp_err.h, xtensa/
   ${CMAKE_SOURCE_DIR}/miniz                     # miniz.h and split headers
   ${ROOT}/include                               # config.h, fonts/, images/
@@ -37,6 +36,20 @@ target_include_directories(simulator PRIVATE
 
 target_compile_definitions(simulator PRIVATE PC_SIMULATOR_BUILD=1)
 
-if(WIN32)
-  target_link_libraries(simulator PRIVATE winhttp)
+if(EMSCRIPTEN)
+  set_target_properties(simulator PROPERTIES
+    OUTPUT_NAME "simulator"
+    SUFFIX ".js"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/wasm"
+  )
+  target_link_options(simulator PRIVATE
+    -sEXPORTED_FUNCTIONS=_wasm_init,_wasm_set_config,_wasm_render,_wasm_get_framebuffer,_wasm_fb_size,_malloc,_free
+    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPU8,stringToUTF8,lengthBytesUTF8
+    -sMODULARIZE=1
+    "-sEXPORT_NAME=SimulatorModule"
+    -sINITIAL_MEMORY=33554432
+    -sALLOW_MEMORY_GROWTH=1
+    -sNO_EXIT_RUNTIME=1
+    --no-entry
+  )
 endif()
