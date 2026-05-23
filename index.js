@@ -80,7 +80,9 @@ let cacheExpiry = 0;
 
 function runSimulator() {
   if (!existsSync(SIMULATOR_EXE)) {
-    return { error: `Simulator not built. Run: cd simulator && cmake -B build && cmake --build build` };
+    return {
+      error: `Simulator not built. Run: cd simulator && cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build`,
+    };
   }
 
   const result = spawnSync(SIMULATOR_EXE, [], {
@@ -113,6 +115,7 @@ const server = Bun.serve({
       for (const [token, value] of Object.entries(mock)) {
         html = html.replaceAll(token, value);
       }
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -168,6 +171,7 @@ const server = Bun.serve({
     </script>`;
       let html = readFileSync(join(webDir, "update.html"), "utf8").replace("</head>", `${devScript}\n  </head>`);
       html = html.replace("__BUILD__", mock.__BUILD__);
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -210,7 +214,6 @@ const server = Bun.serve({
       cacheExpiry = 0;
       return new Response("ok", { headers: { "Content-Type": "text/plain" } });
     }
-
 
     return new Response("Not Found", { status: 404 });
   },

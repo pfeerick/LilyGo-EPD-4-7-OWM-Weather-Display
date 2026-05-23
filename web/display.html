@@ -13,8 +13,35 @@
         justify-content: flex-start;
         min-height: 100vh;
         padding: 24px 16px;
+        padding-top: 52px;
         font-family: sans-serif;
         gap: 16px;
+      }
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #1e1e2e;
+        display: flex;
+        z-index: 100;
+      }
+      nav a {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        color: #aaa;
+        text-decoration: none;
+        font-size: 0.9em;
+        border-bottom: 3px solid transparent;
+      }
+      nav a.active {
+        color: #fff;
+        border-bottom-color: #2a7ae2;
+      }
+      nav a:hover:not(.active) {
+        color: #ddd;
+        background: #2a2a3e;
       }
       h1 { color: #eee; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
       #frame {
@@ -48,6 +75,11 @@
     </style>
   </head>
   <body>
+    <nav>
+      <a href="/">Configuration</a>
+      <a href="/update">Firmware Update</a>
+      <a href="/display" class="active">Display</a>
+    </nav>
     <h1>E-ink Display Simulator &mdash; 960 &times; 540</h1>
     <div id="frame">
       <canvas id="epd" width="960" height="540"></canvas>
