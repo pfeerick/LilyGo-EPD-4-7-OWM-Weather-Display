@@ -53,3 +53,47 @@ bun run dev
 Then open **http://localhost:3000** in a browser. The page is served from `web/config.html` with placeholder values filled from the mock config in `index.js`. `POST /save` is stubbed — it logs the submitted values and returns a confirmation page without restarting anything.
 
 After editing `web/config.html`, refresh the browser to see changes immediately. The next `pio run` will regenerate `include/config_html.h` automatically.
+
+## Simulating the display
+
+The `simulator/` directory contains a native Windows build that runs the real rendering code (`DisplayWeather()`) against live OWM data and serves the resulting e-ink framebuffer to a browser canvas — no hardware required.
+
+### Prerequisites
+
+- [CMake](https://cmake.org/) ≥ 3.20 — `scoop install cmake`
+- [Ninja](https://ninja-build.org/) — `scoop install ninja`
+- GCC/G++ — `scoop install gcc`
+- An [OpenWeatherMap](https://openweathermap.org/) API key with One Call API 3.0 access
+
+### Build
+
+```powershell
+cd simulator
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+The output is `simulator/build/simulator.exe`.
+
+### Run
+
+Copy the credentials template and fill in your values:
+
+```powershell
+Copy-Item simulator\.env.example simulator\.env
+# then edit simulator\.env
+```
+
+`simulator/.env` is gitignored. The Bun server loads it automatically. Then start it as usual:
+
+```powershell
+bun run dev
+```
+
+Open **http://localhost:3000/display** in a browser to see the rendered display. The framebuffer is cached for 5 minutes by default; click **Re-fetch OWM** to force a refresh, or set `REFRESH_TTL` (milliseconds) in the environment to change the cache duration.
+
+The simulator writes 259,200 raw bytes (960 × 540 px, 4bpp packed grayscale) to stdout and exits. The Bun server spawns it on demand and converts the framebuffer to a PNG for the browser canvas.
+
+### How it tracks `main.cpp`
+
+The simulator `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef PC_SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_pc.cpp`. If you add new weather fields to `DecodeWeather`, update the PC version in `main_pc.cpp` to match.
