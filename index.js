@@ -1,5 +1,18 @@
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
+function git(args) {
+  try {
+    return execSync(`git ${args}`, { encoding: "utf8" }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+const sha = git("rev-parse --short HEAD");
+const branch = git("rev-parse --abbrev-ref HEAD");
+const dirty = git("status --porcelain") !== "";
+const buildTime = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const webDir = join(import.meta.dir, "web");
@@ -39,6 +52,7 @@ const mock = {
   __SLEEPDURATION__: "30",
   __WAKEUPHOUR__: "7",
   __SLEEPHOUR__: "23",
+  __BUILD__: `${branch}@${sha}${dirty ? "*" : ""} &bull; ${buildTime} (dev server)`,
 };
 
 const server = Bun.serve({
@@ -64,6 +78,56 @@ const server = Bun.serve({
           "<p><a href='/'>Back</a></p></body></html>",
         { headers: { "Content-Type": "text/html; charset=utf-8" } },
       );
+    }
+
+    if (req.method === "GET" && pathname === "/update") {
+      const devScript = `
+    <script>
+      // Dev-server preview: simulate upload progress with a fake XHR
+      window.addEventListener("DOMContentLoaded", () => {
+        const OrigXHR = window.XMLHttpRequest;
+        function FakeXHR() {
+          this.upload = { _listeners: {}, addEventListener(e, fn) { this._listeners[e] = fn; } };
+          this._listeners = {};
+        }
+        FakeXHR.prototype.open = function(m, u) { this._url = u; };
+        FakeXHR.prototype.setRequestHeader = function() {};
+        FakeXHR.prototype.addEventListener = function(e, fn) { this._listeners[e] = fn; };
+        FakeXHR.prototype.send = function(fd) {
+          const file = fd.get("firmware");
+          const size = file ? file.size : 1024 * 1024;
+          const uploadMs = 4000;
+          const flashMs = 1500;
+          const interval = 100;
+          let elapsed = 0;
+          const tick = setInterval(() => {
+            elapsed += interval;
+            const pct = Math.min(elapsed / uploadMs, 1);
+            const fn = this.upload._listeners["progress"];
+            if (fn) fn({ lengthComputable: true, loaded: Math.round(pct * size), total: size });
+            if (elapsed >= uploadMs) {
+              clearInterval(tick);
+              setTimeout(() => {
+                this.status = 200;
+                const loadFn = this._listeners["load"];
+                if (loadFn) loadFn();
+              }, flashMs);
+            }
+          }, interval);
+        };
+        window.XMLHttpRequest = FakeXHR;
+      });
+    </script>`;
+      let html = readFileSync(join(webDir, "update.html"), "utf8").replace("</head>", `${devScript}\n  </head>`);
+      html = html.replace("__BUILD__", mock.__BUILD__);
+      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+
+    if (req.method === "POST" && pathname === "/update") {
+      const formData = await req.formData();
+      const file = formData.get("firmware");
+      console.log(`POST /update (preview mode): filename=${file?.name} size=${file?.size}`);
+      return new Response("OK", { status: 200 });
     }
 
     return new Response("Not Found", { status: 404 });

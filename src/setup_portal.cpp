@@ -1,10 +1,13 @@
 #include "setup_portal.h"
 #include "config.h"
 #include "config_html.h"
+#include "update_html.h"
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
+#include <Update.h>
 
 static WebServer httpServer(80);
 static DNSServer dnsServer;
@@ -135,8 +138,56 @@ static void handleSave() {
   ESP.restart();
 }
 
+// ---------------------------------------------------------------------------
+// OTA update handlers
+// ---------------------------------------------------------------------------
+
+static void handleOTAPage() {
+  httpServer.send(200, "text/html", FPSTR(UPDATE_HTML));
+}
+
+static void handleOTAUpload() {
+  static uint32_t lastLogged = 0;
+  HTTPUpload& upload = httpServer.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    lastLogged = 0;
+    Serial.printf("OTA upload start: %s\n", upload.filename.c_str());
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) Update.printError(Serial);
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+      Update.printError(Serial);
+    } else if (upload.totalSize - lastLogged >= 65536) {
+      Serial.printf("OTA progress: %u bytes\n", upload.totalSize);
+      lastLogged = upload.totalSize;
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (Update.end(true)) {
+      Serial.printf("OTA success: %u bytes written\n", upload.totalSize);
+    } else {
+      Update.printError(Serial);
+    }
+  }
+}
+
+static void handleOTADone() {
+  if (Update.hasError()) {
+    httpServer.send(500, "text/plain", Update.errorString());
+  } else {
+    httpServer.send(200, "text/plain", "OK");
+    delay(500);
+    ESP.restart();
+  }
+}
+
+// ---------------------------------------------------------------------------
+
 // Redirect all unknown URLs to root (captive portal behaviour)
 static void handleNotFound() {
+  Serial.printf("404: %s %s\n", httpServer.method() == HTTP_GET ? "GET" : "POST", httpServer.uri().c_str());
+  if (httpServer.method() == HTTP_POST) {
+    httpServer.send(404, "text/plain", "Not Found");
+    return;
+  }
   httpServer.sendHeader("Location", "http://192.168.4.1/", true);
   httpServer.send(302, "text/plain", "");
 }
@@ -162,6 +213,8 @@ void enterSetupMode() {
 
   httpServer.on("/", HTTP_GET, handleRoot);
   httpServer.on("/save", HTTP_POST, handleSave);
+  httpServer.on("/update", HTTP_GET, handleOTAPage);
+  httpServer.on("/update", HTTP_POST, handleOTADone, handleOTAUpload);
 #ifdef ENABLE_CONFIG_DOWNLOAD
   httpServer.on("/config.json", HTTP_GET, handleConfigJson);
 #endif
@@ -169,7 +222,17 @@ void enterSetupMode() {
   httpServer.begin();
   Serial.println("Web server started on http://192.168.4.1");
 
+  ArduinoOTA.setHostname("WeatherDisplay");
+  ArduinoOTA.onStart([]() { Serial.println("ArduinoOTA start"); });
+  ArduinoOTA.onEnd([]() { Serial.println("\nArduinoOTA complete"); });
+  ArduinoOTA.onProgress(
+      [](unsigned int progress, unsigned int total) { Serial.printf("OTA: %u%%\r", progress / (total / 100)); });
+  ArduinoOTA.onError([](ota_error_t error) { Serial.printf("ArduinoOTA error[%u]\n", error); });
+  ArduinoOTA.begin();
+  Serial.println("ArduinoOTA listening (hostname: WeatherDisplay)");
+
   while (true) {
+    ArduinoOTA.handle();
     dnsServer.processNextRequest();
     httpServer.handleClient();
     yield();
