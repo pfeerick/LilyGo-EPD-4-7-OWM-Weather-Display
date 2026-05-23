@@ -96,4 +96,4 @@ The build writes `simulator.js` and `simulator.wasm` straight into `simulator/wa
 
 ### How it tracks `main.cpp`
 
-The WASM module `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef PC_SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub version in `main_wasm.cpp` to match.
+The WASM module `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub version in `main_wasm.cpp` to match.

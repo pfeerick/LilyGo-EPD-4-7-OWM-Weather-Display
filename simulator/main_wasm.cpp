@@ -1,6 +1,6 @@
 // WASM entry point for the weather display simulator.
 // OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
-#define PC_SIMULATOR_BUILD 1
+#define SIMULATOR_BUILD 1
 
 #include "pc_stubs.h"
 #include "epdiy_pc/epdiy_pc.h"

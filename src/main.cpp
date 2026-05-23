@@ -1,4 +1,4 @@
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 #include <Arduino.h>            // In-built
 #include <esp_task_wdt.h>       // In-built
 #include "freertos/FreeRTOS.h"  // In-built
@@ -33,7 +33,7 @@ enum alignment { LEFT, RIGHT, CENTER };
 #define barchart_on true
 #define barchart_off false
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 boolean LargeIcon = true;
 boolean SmallIcon = false;
 #define Large 20  // For icon drawing
@@ -78,7 +78,7 @@ long Delta =
 EpdFont currentFont;
 uint8_t* framebuffer;
 static EpdiyHighlevelState hl;
-#endif  // PC_SIMULATOR_BUILD
+#endif  // SIMULATOR_BUILD
 
 #pragma region Function Prototypes
 void BeginSleep();
@@ -160,7 +160,7 @@ void setFont(EpdFont const& font);
 void edp_update();
 #pragma endregion
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 void BeginSleep() {
   epd_poweroff();
   UpdateLocalTime();
@@ -392,7 +392,7 @@ void DisplaySetupScreen(const char* apName) {
   epd_poweroff();
 }
 
-#endif  // PC_SIMULATOR_BUILD
+#endif  // SIMULATOR_BUILD
 
 void Convert_Readings_to_Imperial(int count) {
   WxConditions[0].Pressure = hPa_to_inHg(WxConditions[0].Pressure);
@@ -402,7 +402,7 @@ void Convert_Readings_to_Imperial(int count) {
   }
 }
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.print(F("\nCreating object..."));
   JsonDocument doc;                                         // allocate the JsonDocument
@@ -506,7 +506,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
-#endif  // PC_SIMULATOR_BUILD
+#endif  // SIMULATOR_BUILD
 
 //#########################################################################################
 String ConvertUnixTime(int unix_time) {
@@ -522,7 +522,7 @@ String ConvertUnixTime(int unix_time) {
   return output;
 }
 //#########################################################################################
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
   const String units = (strcmp(cfg.units, "M") == 0 ? "metric" : "imperial");
   client.stop();  // close connection before sending a new request
@@ -545,7 +545,7 @@ bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
   http.end();
   return true;
 }
-#endif  // PC_SIMULATOR_BUILD
+#endif  // SIMULATOR_BUILD
 
 float mm_to_inches(float value_mm) {
   return 0.0393701 * value_mm;
@@ -949,7 +949,7 @@ void DrawRSSI(int x, int y, int rssi) {
   }
 }
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 boolean UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
@@ -976,9 +976,9 @@ boolean UpdateLocalTime() {
   Time_str = time_output;
   return true;
 }
-#endif  // PC_SIMULATOR_BUILD
+#endif  // SIMULATOR_BUILD
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 void DrawBattery(int x, int y) {
   uint8_t percentage = 100;
   esp_adc_cal_characteristics_t adc_chars;
@@ -1001,7 +1001,7 @@ void DrawBattery(int x, int y) {
     drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
   }
 }
-#endif  // PC_SIMULATOR_BUILD — DrawBattery uses ADC; PC version defined in simulator/main_pc.cpp
+#endif  // SIMULATOR_BUILD — DrawBattery uses ADC; PC version defined in simulator/main_pc.cpp
 
 // Symbols are drawn on a relative 10x10grid and 1 scale unit = 1 drawing unit
 void addcloud(int x, int y, int scale, int linesize) {
@@ -1365,7 +1365,7 @@ void setFont(EpdFont const& font) {
   currentFont = font;
 }
 
-#ifndef PC_SIMULATOR_BUILD
+#ifndef SIMULATOR_BUILD
 void edp_update() {
   epd_hl_update_screen(&hl, MODE_GL16, (int)epd_ambient_temperature());
 }

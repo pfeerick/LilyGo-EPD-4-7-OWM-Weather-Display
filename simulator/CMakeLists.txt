@@ -34,7 +34,7 @@ target_include_directories(simulator PRIVATE
   ${ROOT}/.pio/libdeps/display/ArduinoJson/src  # ArduinoJson.h
 )
 
-target_compile_definitions(simulator PRIVATE PC_SIMULATOR_BUILD=1)
+target_compile_definitions(simulator PRIVATE SIMULATOR_BUILD=1)
 
 if(EMSCRIPTEN)
   set_target_properties(simulator PROPERTIES
