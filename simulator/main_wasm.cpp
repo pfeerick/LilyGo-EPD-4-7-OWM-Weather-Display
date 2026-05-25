@@ -130,10 +130,12 @@ void edp_update() {}
 #include "../src/main.cpp"
 
 void DrawBattery(int x, int y) {
+  const uint8_t percentage = 85;
+  const float voltage = 4.1f;
   drawRect(x + 25, y - 14, 40, 15, (uint16_t)0x00);
   fillRect(x + 65, y - 10, 4, 7, (uint16_t)0x00);
-  fillRect(x + 27, y - 12, 36, 11, (uint16_t)0x00);
-  drawString(x + 85, y - 14, String("USB"), LEFT);
+  fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, (uint16_t)0x00);
+  drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
 }
 
 bool DecodeWeather(const std::string& json, String Type) {

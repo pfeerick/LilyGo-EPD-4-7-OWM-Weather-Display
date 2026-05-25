@@ -102,6 +102,10 @@
         <input type="checkbox" id="halfScale" />
         50% scale
       </label>
+      <label>
+        <input type="checkbox" id="maskCity" />
+        Mask city
+      </label>
       <span id="status">—</span>
     </div>
     <script>
@@ -113,6 +117,7 @@
       let autoTimer = null;
       let wasmModule = null;
       let wasmReady = false;
+      let owmCfg = { city: "", units: "M", lang: "EN", hemisphere: "north", maskCity: "Simulator" };
 
       // Pixel unpacking: 4bpp packed grayscale.
       //   odd x  → upper nibble: (byte >> 4) & 0xF
@@ -140,6 +145,14 @@
         ctx.putImageData(imgData, 0, 0);
       }
 
+      function applyCity() {
+        const masked = document.getElementById("maskCity").checked;
+        const city = masked ? owmCfg.maskCity : owmCfg.city;
+        wasmModule.ccall("wasm_set_config", null,
+          ["string", "string", "string", "string"],
+          [city, owmCfg.units, owmCfg.lang, owmCfg.hemisphere]);
+      }
+
       async function ensureWasm() {
         if (wasmReady) return true;
         statusEl.textContent = "Loading WASM…";
@@ -153,10 +166,8 @@
           });
           wasmModule = await SimulatorModule({ locateFile: f => `/wasm/${f}` });
           wasmModule.ccall("wasm_init", null, [], []);
-          const cfg = await (await fetch("/owm-config")).json();
-          wasmModule.ccall("wasm_set_config", null,
-            ["string", "string", "string", "string"],
-            [cfg.city, cfg.units, cfg.lang, cfg.hemisphere]);
+          owmCfg = await (await fetch("/owm-config")).json();
+          applyCity();
           wasmReady = true;
           return true;
         } catch (e) {
@@ -226,6 +237,12 @@
 
       document.getElementById("interval").addEventListener("change", () => {
         if (document.getElementById("autoRefresh").checked) startAuto();
+      });
+
+      document.getElementById("maskCity").addEventListener("change", async () => {
+        if (!await ensureWasm()) return;
+        applyCity();
+        fetchAndRender(false);
       });
 
       document.getElementById("halfScale").addEventListener("change", (e) => {
