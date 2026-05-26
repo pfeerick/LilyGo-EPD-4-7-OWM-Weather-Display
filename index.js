@@ -177,7 +177,6 @@ const server = Bun.serve({
           units: process.env.OWM_UNITS ?? "M",
           lang: process.env.OWM_LANG ?? "EN",
           hemisphere: process.env.OWM_HEMISPHERE ?? "north",
-          maskCity: process.env.OWM_MASK_CITY ?? "Simulator",
         }),
         { headers: { "Content-Type": "application/json" } },
       );

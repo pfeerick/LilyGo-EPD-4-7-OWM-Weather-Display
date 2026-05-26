@@ -103,8 +103,8 @@
         50% scale
       </label>
       <label>
-        <input type="checkbox" id="maskCity" />
-        Mask city
+        <input type="checkbox" id="showCity" />
+        Show city
       </label>
       <span id="status">—</span>
     </div>
@@ -117,7 +117,7 @@
       let autoTimer = null;
       let wasmModule = null;
       let wasmReady = false;
-      let owmCfg = { city: "", units: "M", lang: "EN", hemisphere: "north", maskCity: "Simulator" };
+      let owmCfg = { city: "", units: "M", lang: "EN", hemisphere: "north" };
 
       // Pixel unpacking: 4bpp packed grayscale.
       //   odd x  → upper nibble: (byte >> 4) & 0xF
@@ -146,8 +146,8 @@
       }
 
       function applyCity() {
-        const masked = document.getElementById("maskCity").checked;
-        const city = masked ? owmCfg.maskCity : owmCfg.city;
+        const revealed = document.getElementById("showCity").checked;
+        const city = revealed ? owmCfg.city : "Simulator";
         wasmModule.ccall("wasm_set_config", null,
           ["string", "string", "string", "string"],
           [city, owmCfg.units, owmCfg.lang, owmCfg.hemisphere]);
@@ -239,7 +239,7 @@
         if (document.getElementById("autoRefresh").checked) startAuto();
       });
 
-      document.getElementById("maskCity").addEventListener("change", async () => {
+      document.getElementById("showCity").addEventListener("change", async () => {
         if (!await ensureWasm()) return;
         applyCity();
         fetchAndRender(false);
