@@ -1,4 +1,4 @@
-#include "weather_api.h"
+﻿#include "weather_api.h"
 
 #ifndef SIMULATOR_BUILD
 #include <ArduinoJson.h>
@@ -6,22 +6,22 @@
 #include <WiFi.h>
 #include "defaults.h"
 
-Forecast_record_type WxConditions;
-Forecast_record_type WxForecast[kMaxReadings];
+ForecastRecord WxConditions;
+ForecastRecord WxForecast[kMaxReadings];
 #endif
 
 void Convert_Readings_to_Imperial(int count) {
-  WxConditions.Pressure = hPa_to_inHg(WxConditions.Pressure);
+  WxConditions.pressure = hPa_to_inHg(WxConditions.pressure);
   for (int i = 0; i < count; i++) {
-    WxForecast[i].Rainfall = mm_to_inches(WxForecast[i].Rainfall);
-    WxForecast[i].Snowfall = mm_to_inches(WxForecast[i].Snowfall);
+    WxForecast[i].rainfall = mm_to_inches(WxForecast[i].rainfall);
+    WxForecast[i].snowfall = mm_to_inches(WxForecast[i].snowfall);
   }
 }
 
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
-  time_t tm = unix_time + cfg.gmtOffset_sec + cfg.daylightOffset_sec;
+  time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
   if (isMetric) {
@@ -79,46 +79,46 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     return false;
   }
   Serial.printf(" Decoding %s data\n", Type.c_str());
-  WxConditions.High = -50;  // Sentinel: replaced by daily[0] max below
-  WxConditions.Low = 50;    // Sentinel: replaced by daily[0] min below
+  WxConditions.high = -50;  // Sentinel: replaced by daily[0] max below
+  WxConditions.low = 50;    // Sentinel: replaced by daily[0] min below
   JsonObject current = doc["current"];
-  WxConditions.Sunrise = current["sunrise"];
-  Serial.printf("SRis: %d\n", WxConditions.Sunrise);
-  WxConditions.Sunset = current["sunset"];
-  Serial.printf("SSet: %d\n", WxConditions.Sunset);
-  WxConditions.Temperature = current["temp"];
-  Serial.printf("Temp: %f\n", WxConditions.Temperature);
-  WxConditions.FeelsLike = current["feels_like"];
-  Serial.printf("FLik: %f\n", WxConditions.FeelsLike);
-  WxConditions.Pressure = current["pressure"];
-  Serial.printf("Pres: %f\n", WxConditions.Pressure);
-  WxConditions.Humidity = current["humidity"];
-  Serial.printf("Humi: %f\n", WxConditions.Humidity);
-  WxConditions.DewPoint = current["dew_point"];
-  Serial.printf("DPoi: %f\n", WxConditions.DewPoint);
-  WxConditions.UVI = current["uvi"];
-  Serial.printf("UVin: %f\n", WxConditions.UVI);
-  WxConditions.Cloudcover = current["clouds"];
-  Serial.printf("CCov: %d\n", WxConditions.Cloudcover);
-  WxConditions.Visibility = current["visibility"];
-  Serial.printf("Visi: %d\n", WxConditions.Visibility);
-  WxConditions.Windspeed = current["wind_speed"];
-  Serial.printf("WSpd: %f\n", WxConditions.Windspeed);
-  WxConditions.Winddir = current["wind_deg"];
-  Serial.printf("WDir: %d\n", WxConditions.Winddir);
+  WxConditions.sunrise = current["sunrise"];
+  Serial.printf("SRis: %d\n", WxConditions.sunrise);
+  WxConditions.sunset = current["sunset"];
+  Serial.printf("SSet: %d\n", WxConditions.sunset);
+  WxConditions.temperature = current["temp"];
+  Serial.printf("Temp: %f\n", WxConditions.temperature);
+  WxConditions.feels_like = current["feels_like"];
+  Serial.printf("FLik: %f\n", WxConditions.feels_like);
+  WxConditions.pressure = current["pressure"];
+  Serial.printf("Pres: %f\n", WxConditions.pressure);
+  WxConditions.humidity = current["humidity"];
+  Serial.printf("Humi: %f\n", WxConditions.humidity);
+  WxConditions.dew_point = current["dew_point"];
+  Serial.printf("DPoi: %f\n", WxConditions.dew_point);
+  WxConditions.uvi = current["uvi"];
+  Serial.printf("UVin: %f\n", WxConditions.uvi);
+  WxConditions.cloud_cover = current["clouds"];
+  Serial.printf("CCov: %d\n", WxConditions.cloud_cover);
+  WxConditions.visibility = current["visibility"];
+  Serial.printf("Visi: %d\n", WxConditions.visibility);
+  WxConditions.wind_speed = current["wind_speed"];
+  Serial.printf("WSpd: %f\n", WxConditions.wind_speed);
+  WxConditions.wind_dir = current["wind_deg"];
+  Serial.printf("WDir: %d\n", WxConditions.wind_dir);
   JsonObject current_weather = current["weather"][0];
-  strlcpy(WxConditions.Forecast0, current_weather["description"] | "", sizeof(WxConditions.Forecast0));
-  Serial.printf("Fore: %s\n", WxConditions.Forecast0);
-  strlcpy(WxConditions.Icon, current_weather["icon"] | "", sizeof(WxConditions.Icon));
-  Serial.printf("Icon: %s\n", WxConditions.Icon);
+  strlcpy(WxConditions.forecast0, current_weather["description"] | "", sizeof(WxConditions.forecast0));
+  Serial.printf("Fore: %s\n", WxConditions.forecast0);
+  strlcpy(WxConditions.icon, current_weather["icon"] | "", sizeof(WxConditions.icon));
+  Serial.printf("Icon: %s\n", WxConditions.icon);
 
   Serial.printf("\nReceiving Forecast period - ");
 
   JsonArray daily = doc["daily"];
-  WxConditions.Low = daily[0]["temp"]["min"].as<float>();
-  Serial.printf("TLow: %f\n", WxConditions.Low);
-  WxConditions.High = daily[0]["temp"]["max"].as<float>();
-  Serial.printf("High: %f\n", WxConditions.High);
+  WxConditions.low = daily[0]["temp"]["min"].as<float>();
+  Serial.printf("TLow: %f\n", WxConditions.low);
+  WxConditions.high = daily[0]["temp"]["max"].as<float>();
+  Serial.printf("High: %f\n", WxConditions.high);
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
@@ -127,36 +127,36 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   Serial.printf("hourly list size: %u\n", list.size());
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
     Serial.printf("\nPeriod-%u--------------\n", r);
-    WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
-    WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
-    Serial.printf("Temp: %f\n", WxForecast[wxIndex].Temperature);
-    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    WxForecast[wxIndex].High = max(max(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.printf("High: %f\n", WxForecast[wxIndex].High);
-    WxForecast[wxIndex].Low = min(min(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.printf("Low: %f\n", WxForecast[wxIndex].Low);
-    WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
-    Serial.printf("Pres: %f\n", WxForecast[wxIndex].Pressure);
-    WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    Serial.printf("Humi: %f\n", WxForecast[wxIndex].Humidity);
-    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
-    Serial.printf("Icon: %s\n", WxForecast[wxIndex].Icon);
-    WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
-    Serial.printf("Rain: %f\n", WxForecast[wxIndex].Rainfall);
-    WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
-    Serial.printf("Snow: %f\n", WxForecast[wxIndex].Snowfall);
+    WxForecast[wxIndex].dt = list[r]["dt"].as<int>();
+    WxForecast[wxIndex].temperature = list[r]["temp"].as<float>();
+    Serial.printf("Temp: %f\n", WxForecast[wxIndex].temperature);
+    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].temperature;
+    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].temperature;
+    WxForecast[wxIndex].high = max(max(WxForecast[wxIndex].temperature, t1), t2);
+    Serial.printf("High: %f\n", WxForecast[wxIndex].high);
+    WxForecast[wxIndex].low = min(min(WxForecast[wxIndex].temperature, t1), t2);
+    Serial.printf("Low: %f\n", WxForecast[wxIndex].low);
+    WxForecast[wxIndex].pressure = list[r]["pressure"].as<float>();
+    Serial.printf("Pres: %f\n", WxForecast[wxIndex].pressure);
+    WxForecast[wxIndex].humidity = list[r]["humidity"].as<float>();
+    Serial.printf("Humi: %f\n", WxForecast[wxIndex].humidity);
+    strlcpy(WxForecast[wxIndex].icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].icon));
+    Serial.printf("Icon: %s\n", WxForecast[wxIndex].icon);
+    WxForecast[wxIndex].rainfall = list[r]["rain"]["1h"].as<float>();
+    Serial.printf("Rain: %f\n", WxForecast[wxIndex].rainfall);
+    WxForecast[wxIndex].snowfall = list[r]["snow"]["1h"].as<float>();
+    Serial.printf("Snow: %f\n", WxForecast[wxIndex].snowfall);
     wxIndex++;
   }
   if (wxIndex >= 3) {
-    float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure;
+    float pressure_trend = WxForecast[0].pressure - WxForecast[2].pressure;
     pressure_trend = ((int)(pressure_trend * 10)) / 10.0;
-    WxConditions.Trend = '=';
-    if (pressure_trend > 0) WxConditions.Trend = '+';
-    if (pressure_trend < 0) WxConditions.Trend = '-';
-    if (pressure_trend == 0) WxConditions.Trend = '0';
+    WxConditions.trend = '=';
+    if (pressure_trend > 0) WxConditions.trend = '+';
+    if (pressure_trend < 0) WxConditions.trend = '-';
+    if (pressure_trend == 0) WxConditions.trend = '0';
   } else {
-    WxConditions.Trend = '0';
+    WxConditions.trend = '0';
   }
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;

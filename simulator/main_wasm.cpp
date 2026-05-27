@@ -1,4 +1,4 @@
-// WASM entry point for the weather display simulator.
+﻿// WASM entry point for the weather display simulator.
 // OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
 #define SIMULATOR_BUILD 1
 
@@ -50,8 +50,8 @@ String Date_str = "-- --- ----";
 int wifi_signal = -55;
 int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0;
 
-Forecast_record_type WxConditions;
-Forecast_record_type WxForecast[kMaxReadings];
+ForecastRecord WxConditions;
+ForecastRecord WxForecast[kMaxReadings];
 
 long SleepDuration = 30;
 int WakeupHour = 7;
@@ -141,56 +141,56 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonObject root = doc.as<JsonObject>();
   fprintf(stderr, "Decoding %s data\n", Type.c_str());
 
-  WxConditions.High = -50;
-  WxConditions.Low = 50;
+  WxConditions.high = -50;
+  WxConditions.low = 50;
 
   JsonObject current = doc["current"];
-  WxConditions.Sunrise = current["sunrise"];
-  WxConditions.Sunset = current["sunset"];
-  WxConditions.Temperature = current["temp"];
-  WxConditions.FeelsLike = current["feels_like"];
-  WxConditions.Pressure = current["pressure"];
-  WxConditions.Humidity = current["humidity"];
-  WxConditions.DewPoint = current["dew_point"];
-  WxConditions.UVI = current["uvi"];
-  WxConditions.Cloudcover = current["clouds"];
-  WxConditions.Visibility = current["visibility"];
-  WxConditions.Windspeed = current["wind_speed"];
-  WxConditions.Winddir = current["wind_deg"];
+  WxConditions.sunrise = current["sunrise"];
+  WxConditions.sunset = current["sunset"];
+  WxConditions.temperature = current["temp"];
+  WxConditions.feels_like = current["feels_like"];
+  WxConditions.pressure = current["pressure"];
+  WxConditions.humidity = current["humidity"];
+  WxConditions.dew_point = current["dew_point"];
+  WxConditions.uvi = current["uvi"];
+  WxConditions.cloud_cover = current["clouds"];
+  WxConditions.visibility = current["visibility"];
+  WxConditions.wind_speed = current["wind_speed"];
+  WxConditions.wind_dir = current["wind_deg"];
 
-  strlcpy(WxConditions.Forecast0, current["weather"][0]["description"] | "", sizeof(WxConditions.Forecast0));
-  strlcpy(WxConditions.Icon, current["weather"][0]["icon"] | "", sizeof(WxConditions.Icon));
+  strlcpy(WxConditions.forecast0, current["weather"][0]["description"] | "", sizeof(WxConditions.forecast0));
+  strlcpy(WxConditions.icon, current["weather"][0]["icon"] | "", sizeof(WxConditions.icon));
 
   JsonArray daily = root["daily"];
-  WxConditions.Low = daily[0]["temp"]["min"].as<float>();
-  WxConditions.High = daily[0]["temp"]["max"].as<float>();
+  WxConditions.low = daily[0]["temp"]["min"].as<float>();
+  WxConditions.high = daily[0]["temp"]["max"].as<float>();
 
   JsonArray list = root["hourly"];
   byte wxIndex = 0;
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
-    WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
-    WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
-    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float temps[3] = {WxForecast[wxIndex].Temperature, t1, t2};
-    WxForecast[wxIndex].High = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
+    WxForecast[wxIndex].dt = list[r]["dt"].as<int>();
+    WxForecast[wxIndex].temperature = list[r]["temp"].as<float>();
+    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].temperature;
+    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].temperature;
+    float temps[3] = {WxForecast[wxIndex].temperature, t1, t2};
+    WxForecast[wxIndex].high = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
                                                     : (temps[1] > temps[2] ? temps[1] : temps[2]));
-    WxForecast[wxIndex].Low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
+    WxForecast[wxIndex].low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
-    WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
-    WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
-    WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
-    WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
+    WxForecast[wxIndex].pressure = list[r]["pressure"].as<float>();
+    WxForecast[wxIndex].humidity = list[r]["humidity"].as<float>();
+    strlcpy(WxForecast[wxIndex].icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].icon));
+    WxForecast[wxIndex].rainfall = list[r]["rain"]["1h"].as<float>();
+    WxForecast[wxIndex].snowfall = list[r]["snow"]["1h"].as<float>();
 
     wxIndex++;
   }
   if (wxIndex >= 3) {
-    float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
+    float pt = WxForecast[0].pressure - WxForecast[2].pressure;
     pt = ((int)(pt * 10)) / 10.0f;
-    WxConditions.Trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
+    WxConditions.trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
   } else {
-    WxConditions.Trend = '0';
+    WxConditions.trend = '0';
   }
   if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;

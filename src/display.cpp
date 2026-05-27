@@ -1,4 +1,4 @@
-#include "display.h"
+﻿#include "display.h"
 #include "icons.h"
 #include "translations/lang_en.h"
 
@@ -32,7 +32,7 @@ EpdiyHighlevelState hl;
 void DisplayWeather() {
   DisplayStatusSection(kLayoutStatusX, kLayoutStatusY, wifi_signal);
   DisplayGeneralInfoSection();
-  DisplayWindSection(kLayoutWindX, kLayoutWindY, WxConditions.Winddir, WxConditions.Windspeed, kLayoutWindRadius);
+  DisplayWindSection(kLayoutWindX, kLayoutWindY, WxConditions.wind_dir, WxConditions.wind_speed, kLayoutWindRadius);
   DisplayAstronomySection(kLayoutAstronomyX, kLayoutAstronomyY);
   DisplayMainWeatherSection(kLayoutMainWeatherX, kLayoutMainWeatherY);
   DisplayWeatherIcon(kLayoutWeatherIconX, kLayoutWeatherIconY);
@@ -48,7 +48,7 @@ void DisplayGeneralInfoSection() {
 }
 
 void DisplayWeatherIcon(int x, int y) {
-  DisplayConditionsSection(x, y, WxConditions.Icon, LargeIcon);
+  DisplayConditionsSection(x, y, WxConditions.icon, LargeIcon);
 }
 
 void DisplayMainWeatherSection(int x, int y) {
@@ -117,22 +117,22 @@ String WindDegToOrdinalDirection(float winddirection) {
 
 void DisplayTempHumiPressSection(int x, int y) {
   setFont(OpenSans18B);
-  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%", Alignment::kLeft);
+  drawString(x - 30, y, String(WxConditions.temperature, 1) + "°   " + String(WxConditions.humidity, 0) + "%", Alignment::kLeft);
   setFont(OpenSans12B);
-  DrawPressureAndTrend(x + 195, y + 15, WxConditions.Pressure, WxConditions.Trend);
+  DrawPressureAndTrend(x + 195, y + 15, WxConditions.pressure, WxConditions.trend);
   int Yoffset = 42;
-  if (WxConditions.Windspeed > 0) {
-    drawString(x - 30, y + Yoffset, String(WxConditions.FeelsLike, 1) + "° FL", Alignment::kLeft);
+  if (WxConditions.wind_speed > 0) {
+    drawString(x - 30, y + Yoffset, String(WxConditions.feels_like, 1) + "° FL", Alignment::kLeft);
     Yoffset += 30;
   }
-  drawString(x - 30, y + Yoffset, String(WxConditions.High, 0) + "° | " + String(WxConditions.Low, 0) + "° Hi/Lo", Alignment::kLeft);
+  drawString(x - 30, y + Yoffset, String(WxConditions.high, 0) + "° | " + String(WxConditions.low, 0) + "° Hi/Lo", Alignment::kLeft);
 }
 
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
   setFont(OpenSans12B);
-  String Wx_Description = WxConditions.Forecast0;
+  String Wx_Description = WxConditions.forecast0;
   Wx_Description.replace(".", "");
   int spaceRemaining = 0, p = 0, charCount = 0;
   while (p < Wx_Description.length()) {
@@ -144,8 +144,8 @@ void DisplayForecastTextSection(int x, int y) {
     p++;
     charCount++;
   }
-  if (WxForecast[0].Rainfall > 0)
-    Wx_Description += " (" + String(WxForecast[0].Rainfall, 1) + String((isMetric ? "mm" : "in")) + ")";
+  if (WxForecast[0].rainfall > 0)
+    Wx_Description += " (" + String(WxForecast[0].rainfall, 1) + String((isMetric ? "mm" : "in")) + ")";
   int sep = Wx_Description.indexOf("~");
   String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
   String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
@@ -155,9 +155,9 @@ void DisplayForecastTextSection(int x, int y) {
 
 void DisplayVisiCCoverUVISection(int x, int y) {
   setFont(OpenSans12B);
-  Visibility(x + 5, y, String(WxConditions.Visibility) + "M");
-  CloudCover(x + 155, y, WxConditions.Cloudcover);
-  Display_UVIndexLevel(x + 265, y, WxConditions.UVI);
+  Visibility(x + 5, y, String(WxConditions.visibility) + "M");
+  CloudCover(x + 155, y, WxConditions.cloud_cover);
+  Display_UVIndexLevel(x + 265, y, WxConditions.uvi);
 }
 
 void Display_UVIndexLevel(int x, int y, float UVI) {
@@ -173,11 +173,11 @@ void Display_UVIndexLevel(int x, int y, float UVI) {
 
 void DisplayForecastWeather(int x, int y, int index, int fwidth) {
   x = x + fwidth * index;
-  DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, WxForecast[index].Icon, SmallIcon);
+  DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, WxForecast[index].icon, SmallIcon);
   setFont(OpenSans10B);
-  drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].Dt).substring(0, 5)), Alignment::kCenter);
+  drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].dt).substring(0, 5)), Alignment::kCenter);
   drawString(x + fwidth / 2, y + 130,
-             String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", Alignment::kCenter);
+             String(WxForecast[index].high, 0) + "°/" + String(WxForecast[index].low, 0) + "°", Alignment::kCenter);
 }
 
 static inline bool isSouthernHemisphere() {
@@ -192,8 +192,8 @@ void DisplayAstronomySection(int x, int y) {
   DrawMoonImage(x + 10, y + 23);
   DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900,
            isSouthernHemisphere());
-  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions.Sunrise).substring(0, 5), Alignment::kLeft);
-  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions.Sunset).substring(0, 5), Alignment::kLeft);
+  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions.sunrise).substring(0, 5), Alignment::kLeft);
+  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions.sunset).substring(0, 5), Alignment::kLeft);
   DrawSunriseImage(x + 180, y + 20);
   DrawSunsetImage(x + 180, y + 60);
 }
@@ -288,11 +288,11 @@ void DisplayGraphSection(int x, int y) {
   static float snow_readings[kMaxReadings]         = {0};
   int r = 0;
   do {
-    pressure_readings[r]    = WxForecast[r].Pressure;
-    rain_readings[r]        = WxForecast[r].Rainfall;
-    snow_readings[r]        = WxForecast[r].Snowfall;
-    temperature_readings[r] = WxForecast[r].Temperature;
-    humidity_readings[r]    = WxForecast[r].Humidity;
+    pressure_readings[r]    = WxForecast[r].pressure;
+    rain_readings[r]        = WxForecast[r].rainfall;
+    snow_readings[r]        = WxForecast[r].snowfall;
+    temperature_readings[r] = WxForecast[r].temperature;
+    humidity_readings[r]    = WxForecast[r].humidity;
     r++;
   } while (r < kMaxGraphReadings);
   int gwidth = 175, gheight = 100;
@@ -428,15 +428,15 @@ static void calculateGraphYScale(const float* data, int count, float& yMin, floa
 }
 
 void DrawGraph(GraphConfig gcfg, float DataArray[]) {
-  if (gcfg.autoscale) calculateGraphYScale(DataArray, gcfg.readings, gcfg.yMin, gcfg.yMax);
+  if (gcfg.autoscale) calculateGraphYScale(DataArray, gcfg.readings, gcfg.y_min, gcfg.y_max);
   setFont(OpenSans10B);
   int last_x = gcfg.x + 1;
-  int last_y = gcfg.y + (gcfg.yMax - constrain(DataArray[0], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h;
+  int last_y = gcfg.y + (gcfg.y_max - constrain(DataArray[0], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h;
   drawRect(gcfg.x, gcfg.y, gcfg.w + 3, gcfg.h + 2, kGrey);
   drawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, Alignment::kCenter);
   for (int i = 0; i < gcfg.readings; i++) {
     float x2 = gcfg.x + i * gcfg.w / (gcfg.readings - 1) - 1;
-    float y2 = gcfg.y + (gcfg.yMax - constrain(DataArray[i], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h + 1;
+    float y2 = gcfg.y + (gcfg.y_max - constrain(DataArray[i], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h + 1;
     if (gcfg.barchart) {
       fillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, kBlack);
     } else {
@@ -452,12 +452,12 @@ void DrawGraph(GraphConfig gcfg, float DataArray[]) {
         drawFastHLine((gcfg.x + 3 + j * gcfg.w / kGraphDashes), gcfg.y + (gcfg.h * spacing / kGraphYDivisions),
                       gcfg.w / (2 * kGraphDashes), kGrey);
     }
-    float axisVal = gcfg.yMax - (float)(gcfg.yMax - gcfg.yMin) / kGraphYDivisions * spacing + 0.01f;
+    float axisVal = gcfg.y_max - (float)(gcfg.y_max - gcfg.y_min) / kGraphYDivisions * spacing + 0.01f;
     int labelX, decimalPlaces;
     if (axisVal < 5 || strcmp(gcfg.title, TXT_PRESSURE_IN.c_str()) == 0) {
       labelX = gcfg.x - 10;
       decimalPlaces = 1;
-    } else if (gcfg.yMin < 1 && gcfg.yMax < 10) {
+    } else if (gcfg.y_min < 1 && gcfg.y_max < 10) {
       labelX = gcfg.x - 3;
       decimalPlaces = 1;
     } else {

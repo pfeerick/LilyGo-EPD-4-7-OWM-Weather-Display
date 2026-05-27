@@ -1,4 +1,4 @@
-#include "setup_portal.h"
+﻿#include "setup_portal.h"
 #include "config.h"
 #include "config_html.h"
 #include "update_html.h"
@@ -60,12 +60,12 @@ static String buildPage() {
   }
 
   page.replace("__TIMEZONE__", htmlEscape(cfg.timezone));
-  page.replace("__NTPSERVER__", htmlEscape(cfg.ntpServer));
-  page.replace("__GMTOFFSET__", String(cfg.gmtOffset_sec));
-  page.replace("__DSTOFFSET__", String(cfg.daylightOffset_sec));
-  page.replace("__SLEEPDURATION__", String(cfg.sleepDuration));
-  page.replace("__WAKEUPHOUR__", String(cfg.wakeupHour));
-  page.replace("__SLEEPHOUR__", String(cfg.sleepHour));
+  page.replace("__NTPSERVER__", htmlEscape(cfg.ntp_server));
+  page.replace("__GMTOFFSET__", String(cfg.gmt_offset_sec));
+  page.replace("__DSTOFFSET__", String(cfg.daylight_offset_sec));
+  page.replace("__SLEEPDURATION__", String(cfg.sleep_duration));
+  page.replace("__WAKEUPHOUR__", String(cfg.wakeup_hour));
+  page.replace("__SLEEPHOUR__", String(cfg.sleep_hour));
   return page;
 }
 
@@ -86,13 +86,13 @@ static void handleConfigJson() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntpServer"] = cfg.ntp_server;
+  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
+  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["sleepDuration"] = cfg.sleep_duration;
+  doc["wakeupHour"] = cfg.wakeup_hour;
+  doc["sleepHour"] = cfg.sleep_hour;
+  doc["debugDisplayUpdate"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
   httpServer.send(200, "application/json", body);

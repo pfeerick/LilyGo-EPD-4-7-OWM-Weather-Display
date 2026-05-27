@@ -23,7 +23,7 @@ constexpr uint8_t kSmall = 10;
 
 struct GraphConfig {
   int x, y, w, h;
-  float yMin, yMax;
+  float y_min, y_max;
   const char* title;
   bool autoscale;
   bool barchart;

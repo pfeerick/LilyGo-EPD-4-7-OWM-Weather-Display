@@ -1,4 +1,4 @@
-#include "config.h"
+﻿#include "config.h"
 #include "defaults.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -82,13 +82,13 @@ void saveConfig() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntpServer"] = cfg.ntp_server;
+  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
+  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["sleepDuration"] = cfg.sleep_duration;
+  doc["wakeupHour"] = cfg.wakeup_hour;
+  doc["sleepHour"] = cfg.sleep_hour;
+  doc["debugDisplayUpdate"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
     Serial.println("Failed to open config.json for writing");
