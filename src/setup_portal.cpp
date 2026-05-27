@@ -86,13 +86,13 @@ static void handleConfigJson() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntp_server;
-  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
-  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
   doc["sleep_duration"] = cfg.sleep_duration;
   doc["wakeup_hour"] = cfg.wakeup_hour;
   doc["sleep_hour"] = cfg.sleep_hour;
-  doc["debugDisplayUpdate"] = cfg.debug_display_update;
+  doc["debug_display_update"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
   httpServer.send(200, "application/json", body);

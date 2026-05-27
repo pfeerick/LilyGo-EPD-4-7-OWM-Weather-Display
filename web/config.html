@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -186,15 +186,15 @@
       />
       <p class="note">Find yours at <em>github.com/nayarsystems/posix_tz_db</em></p>
       <label>NTP Server</label>
-      <input name="ntpServer" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org" />
+      <input name="ntp_server" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org" />
       <div class="row">
         <div>
           <label>GMT Offset (seconds)</label>
-          <input name="gmtOffset_sec" type="number" value="__GMTOFFSET__" maxlength="7" />
+          <input name="gmt_offset_sec" type="number" value="__GMTOFFSET__" maxlength="7" />
         </div>
         <div>
           <label>DST Offset (seconds)</label>
-          <input name="daylightOffset_sec" type="number" value="__DSTOFFSET__" maxlength="7" />
+          <input name="daylight_offset_sec" type="number" value="__DSTOFFSET__" maxlength="7" />
         </div>
       </div>
 
@@ -202,15 +202,15 @@
       <div class="row">
         <div>
           <label>Update Interval (minutes)</label>
-          <input name="sleepDuration" type="number" min="5" max="720" value="__SLEEPDURATION__" />
+          <input name="sleep_duration" type="number" min="5" max="720" value="__SLEEPDURATION__" />
         </div>
         <div>
           <label>Wake Hour (0–23)</label>
-          <input name="wakeupHour" type="number" min="0" max="23" value="__WAKEUPHOUR__" />
+          <input name="wakeup_hour" type="number" min="0" max="23" value="__WAKEUPHOUR__" />
         </div>
       </div>
       <label>Sleep Hour (0–23)</label>
-      <input name="sleepHour" type="number" min="0" max="23" value="__SLEEPHOUR__" />
+      <input name="sleep_hour" type="number" min="0" max="23" value="__SLEEPHOUR__" />
 
       <button type="submit">Save &amp; Restart</button>
     </form>
