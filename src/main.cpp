@@ -33,6 +33,19 @@ constexpr bool autoscale_off = false;
 constexpr bool barchart_on = true;
 constexpr bool barchart_off = false;
 
+constexpr uint8_t kGraphYDivisions = 5;   // Number of y-axis division markers
+constexpr uint8_t kGraphDashes = 20;      // Dashes per horizontal grid line
+constexpr uint8_t kGraphDaySections = 2;  // Day-boundary vertical lines
+
+struct GraphConfig {
+  int x, y, w, h;
+  float yMin, yMax;
+  const char* title;
+  bool autoscale;
+  bool barchart;
+  int readings;
+};
+
 #ifndef SIMULATOR_BUILD
 bool LargeIcon = true;
 bool SmallIcon = false;
@@ -143,8 +156,7 @@ void DrawMoonImage(int x, int y);
 void DrawSunriseImage(int x, int y);
 void DrawSunsetImage(int x, int y);
 void DrawUVI(int x, int y);
-void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[],
-               int readings, bool auto_scale, bool barchart_mode);
+void DrawGraph(GraphConfig gcfg, float DataArray[]);
 void drawString(int x, int y, String text, alignment align);
 void fillCircle(int x, int y, int r, uint8_t color);
 void drawFastHLine(int16_t x0, int16_t y0, int length, uint16_t color);
@@ -851,19 +863,23 @@ void DisplayGraphSection(int x, int y) {
   int gx = (epd_width() - gwidth * 4) / 5 + 8;
   int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
-  // (x,y,width,height,MinValue, MaxValue, Title, Data Array, AutoScale, ChartMode)
-  DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, isMetric ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN,
-            pressure_readings, max_graph_readings, autoscale_on, barchart_off);
-  DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30, isMetric ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F,
-            temperature_readings, max_graph_readings, autoscale_on, barchart_off);
-  DrawGraph(gx + 2 * gap, gy, gwidth, gheight, 0, 100, TXT_HUMIDITY_PERCENT, humidity_readings, max_graph_readings,
-            autoscale_off, barchart_off);
+  DrawGraph({gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
+             isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(), autoscale_on, barchart_off, max_graph_readings},
+            pressure_readings);
+  DrawGraph({gx + 1 * gap, gy, gwidth, gheight, 10, 30,
+             isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(), autoscale_on, barchart_off, max_graph_readings},
+            temperature_readings);
+  DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100,
+             TXT_HUMIDITY_PERCENT.c_str(), autoscale_off, barchart_off, max_graph_readings},
+            humidity_readings);
   if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings,
-              max_graph_readings, autoscale_on, barchart_on);
+    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
+               isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
+              rain_readings);
   else
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings,
-              max_graph_readings, autoscale_on, barchart_on);
+    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
+               isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
+              snow_readings);
 }
 
 void DisplayConditionsSection(int x, int y, const char* IconName, bool IconSize) {
@@ -1242,41 +1258,29 @@ void DrawUVI(int x, int y) {
     auto_scale    - true: adjust Y axis to fit the data; false: use Y1Min/Y1Max
     barchart_mode - true: draw filled bars; false: draw a line graph
 */
-void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[],
-               int readings, bool auto_scale, bool barchart_mode) {
-  constexpr float auto_scale_margin = 0;  // Sets the autoscale increment, so axis steps up after a change of e.g. 3
-  constexpr uint8_t y_minor_axis = 5;     // 5 y-axis division markers
-  setFont(OpenSans10B);
-  float maxYscale = -10000;
-  float minYscale = 10000;
-  int last_x, last_y;
-  float x2, y2;
-  if (auto_scale) {
-    for (int i = 1; i < readings; i++) {
-      if (DataArray[i] >= maxYscale) maxYscale = DataArray[i];
-      if (DataArray[i] <= minYscale) minYscale = DataArray[i];
-    }
-    maxYscale =
-        round(maxYscale +
-              auto_scale_margin);  // Auto scale the graph and round to the nearest value defined, default was Y1Max
-    Y1Max = round(maxYscale + 0.5);
-    if (minYscale != 0)
-      minYscale =
-          round(minYscale -
-                auto_scale_margin);  // Auto scale the graph and round to the nearest value defined, default was Y1Min
-    Y1Min = round(minYscale);
+static void calculateGraphYScale(const float* data, int count, float& yMin, float& yMax) {
+  yMax = -10000;
+  yMin = 10000;
+  for (int i = 1; i < count; i++) {
+    if (data[i] >= yMax) yMax = data[i];
+    if (data[i] <= yMin) yMin = data[i];
   }
-  // Draw the graph
-  last_x = x_pos + 1;
-  last_y = y_pos + (Y1Max - constrain(DataArray[0], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
-  drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, Grey);
-  drawString(x_pos - 20 + gwidth / 2, y_pos - 28, title, CENTER);
-  for (int gx = 0; gx < readings; gx++) {
-    x2 = x_pos + gx * gwidth / (readings - 1) -
-         1;  // max_readings is the global variable that sets the maximum data that can be plotted
-    y2 = y_pos + (Y1Max - constrain(DataArray[gx], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight + 1;
-    if (barchart_mode) {
-      fillRect(last_x + 2, y2, (gwidth / readings) - 1, y_pos + gheight - y2 + 2, Black);
+  yMax = round(yMax + 0.5f);
+  if (yMin != 0) yMin = round(yMin);
+}
+
+void DrawGraph(GraphConfig gcfg, float DataArray[]) {
+  if (gcfg.autoscale) calculateGraphYScale(DataArray, gcfg.readings, gcfg.yMin, gcfg.yMax);
+  setFont(OpenSans10B);
+  int last_x = gcfg.x + 1;
+  int last_y = gcfg.y + (gcfg.yMax - constrain(DataArray[0], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h;
+  drawRect(gcfg.x, gcfg.y, gcfg.w + 3, gcfg.h + 2, Grey);
+  drawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, CENTER);
+  for (int i = 0; i < gcfg.readings; i++) {
+    float x2 = gcfg.x + i * gcfg.w / (gcfg.readings - 1) - 1;
+    float y2 = gcfg.y + (gcfg.yMax - constrain(DataArray[i], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h + 1;
+    if (gcfg.barchart) {
+      fillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, Black);
     } else {
       drawLine(last_x, last_y - 1, x2, y2 - 1, Black);  // Two lines for hi-res display
       drawLine(last_x, last_y, x2, y2, Black);
@@ -1284,32 +1288,32 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
     last_x = x2;
     last_y = y2;
   }
-  //Draw the Y-axis scale
-  constexpr uint8_t number_of_dashes = 20;
-  for (int spacing = 0; spacing <= y_minor_axis; spacing++) {
-    for (int j = 0; j < number_of_dashes; j++) {  // Draw dashed graph grid lines
-      if (spacing < y_minor_axis)
-        drawFastHLine((x_pos + 3 + j * gwidth / number_of_dashes), y_pos + (gheight * spacing / y_minor_axis),
-                      gwidth / (2 * number_of_dashes), Grey);
+  // Draw the Y-axis scale
+  for (int spacing = 0; spacing <= kGraphYDivisions; spacing++) {
+    for (int j = 0; j < kGraphDashes; j++) {  // Draw dashed graph grid lines
+      if (spacing < kGraphYDivisions)
+        drawFastHLine((gcfg.x + 3 + j * gcfg.w / kGraphDashes), gcfg.y + (gcfg.h * spacing / kGraphYDivisions),
+                      gcfg.w / (2 * kGraphDashes), Grey);
     }
-    if ((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing) < 5 || title == TXT_PRESSURE_IN) {
-      drawString(x_pos - 10, y_pos + gheight * spacing / y_minor_axis - 5,
-                 String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+    float axisVal = gcfg.yMax - (float)(gcfg.yMax - gcfg.yMin) / kGraphYDivisions * spacing + 0.01f;
+    int labelX;
+    int decimalPlaces;
+    if (axisVal < 5 || strcmp(gcfg.title, TXT_PRESSURE_IN.c_str()) == 0) {
+      labelX = gcfg.x - 10;
+      decimalPlaces = 1;
+    } else if (gcfg.yMin < 1 && gcfg.yMax < 10) {
+      labelX = gcfg.x - 3;
+      decimalPlaces = 1;
     } else {
-      if (Y1Min < 1 && Y1Max < 10) {
-        drawString(x_pos - 3, y_pos + gheight * spacing / y_minor_axis - 5,
-                   String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
-      } else {
-        drawString(x_pos - 7, y_pos + gheight * spacing / y_minor_axis - 5,
-                   String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
-      }
+      labelX = gcfg.x - 7;
+      decimalPlaces = 0;
     }
+    drawString(labelX, gcfg.y + gcfg.h * spacing / kGraphYDivisions - 5, String(axisVal, decimalPlaces), RIGHT);
   }
-  constexpr uint8_t number_of_sections = 2;
-  for (int i = 0; i < number_of_sections; i++) {
-    drawString(20 + x_pos + gwidth / number_of_sections * i, y_pos + gheight + 10, String(i) + "d", LEFT);
+  for (int i = 0; i < kGraphDaySections; i++) {
+    drawString(20 + gcfg.x + gcfg.w / kGraphDaySections * i, gcfg.y + gcfg.h + 10, String(i) + "d", LEFT);
     if (i < 2)
-      drawFastVLine(x_pos + gwidth / number_of_sections * i + gwidth / number_of_sections, y_pos, gheight, LightGrey);
+      drawFastVLine(gcfg.x + gcfg.w / kGraphDaySections * i + gcfg.w / kGraphDaySections, gcfg.y, gcfg.h, LightGrey);
   }
 }
 
