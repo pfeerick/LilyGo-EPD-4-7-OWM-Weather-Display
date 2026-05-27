@@ -26,6 +26,8 @@
 #include "../include/images/sunset.h"
 #include "../include/images/uvi.h"
 
+#include "../include/display.h"
+
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -42,24 +44,13 @@
 
 boolean LargeIcon = true;
 boolean SmallIcon = false;
-#define Large 20
-#define Small 10
 String Time_str = "--:--:--";
 String Date_str = "-- --- ----";
 int wifi_signal = -55;
-int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
-
-#define max_readings 24
-#define max_graph_readings 16
+int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0;
 
 Forecast_record_type WxConditions;
 Forecast_record_type WxForecast[max_readings];
-
-float pressure_readings[max_readings] = {0};
-float temperature_readings[max_readings] = {0};
-float humidity_readings[max_readings] = {0};
-float rain_readings[max_readings] = {0};
-float snow_readings[max_readings] = {0};
 
 long SleepDuration = 30;
 int WakeupHour = 7;
@@ -126,7 +117,9 @@ boolean UpdateLocalTime() {
 
 void edp_update() {}
 
-#include "../src/main.cpp"
+#include "../src/weather_api.cpp"
+#include "../src/display.cpp"
+#include "../src/icons.cpp"
 
 void DrawBattery(int x, int y) {
   const uint8_t percentage = 85;

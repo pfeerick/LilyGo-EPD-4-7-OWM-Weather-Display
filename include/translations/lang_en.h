@@ -1,3 +1,4 @@
+#pragma once
 #define FONT(x) x##_tf
 
 //Temperature - Humidity - Forecast
