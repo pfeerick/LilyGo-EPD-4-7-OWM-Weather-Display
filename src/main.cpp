@@ -45,7 +45,7 @@ int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 constexpr uint8_t max_readings = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
 constexpr uint8_t max_graph_readings = 16;
 
-Forecast_record_type WxConditions[1];
+Forecast_record_type WxConditions;
 Forecast_record_type WxForecast[max_readings];
 
 float pressure_readings[max_readings] = {0};
@@ -182,7 +182,6 @@ bool SetupTime() {
 
 uint8_t StartWiFi() {
   Serial.printf("\r\nConnecting to: %s\n", cfg.ssid);
-  IPAddress dns(8, 8, 8, 8);  // Use Google DNS
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);  // switch off AP
   WiFi.setAutoConnect(true);
@@ -286,14 +285,16 @@ void setup() {
         if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
-      Serial.printf("Received all weather data...\n");
+      StopWiFi();
       if (RxWeather) {
-        StopWiFi();
+        Serial.printf("Received all weather data, updating display...\n");
         epd_poweron();
         epd_fullclear(&hl, (int)epd_ambient_temperature());
         DisplayWeather();
         edp_update();
         epd_poweroff();
+      } else {
+        Serial.printf("Failed to receive weather data, skipping display update.\n");
       }
     }
   }
@@ -394,7 +395,7 @@ void DisplaySetupScreen(const char* apName) {
 #endif  // SIMULATOR_BUILD
 
 void Convert_Readings_to_Imperial(int count) {
-  WxConditions[0].Pressure = hPa_to_inHg(WxConditions[0].Pressure);
+  WxConditions.Pressure = hPa_to_inHg(WxConditions.Pressure);
   for (int i = 0; i < count; i++) {
     WxForecast[i].Rainfall = mm_to_inches(WxForecast[i].Rainfall);
     WxForecast[i].Snowfall = mm_to_inches(WxForecast[i].Snowfall);
@@ -413,49 +414,49 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   // convert it to a JsonObject
   JsonObject root = doc.as<JsonObject>();
   Serial.printf(" Decoding %s data\n", Type.c_str());
-  WxConditions[0].High = -50;  // Sentinel: replaced by daily[0] max below
-  WxConditions[0].Low = 50;    // Sentinel: replaced by daily[0] min below
+  WxConditions.High = -50;  // Sentinel: replaced by daily[0] max below
+  WxConditions.Low = 50;    // Sentinel: replaced by daily[0] min below
   JsonObject current = doc["current"];
-  WxConditions[0].Sunrise = current["sunrise"];
-  Serial.printf("SRis: %d\n", WxConditions[0].Sunrise);
-  WxConditions[0].Sunset = current["sunset"];
-  Serial.printf("SSet: %d\n", WxConditions[0].Sunset);
-  WxConditions[0].Temperature = current["temp"];
-  Serial.printf("Temp: %f\n", WxConditions[0].Temperature);
-  WxConditions[0].FeelsLike = current["feels_like"];
-  Serial.printf("FLik: %f\n", WxConditions[0].FeelsLike);
-  WxConditions[0].Pressure = current["pressure"];
-  Serial.printf("Pres: %f\n", WxConditions[0].Pressure);
-  WxConditions[0].Humidity = current["humidity"];
-  Serial.printf("Humi: %f\n", WxConditions[0].Humidity);
-  WxConditions[0].DewPoint = current["dew_point"];
-  Serial.printf("DPoi: %f\n", WxConditions[0].DewPoint);
-  WxConditions[0].UVI = current["uvi"];
-  Serial.printf("UVin: %f\n", WxConditions[0].UVI);
-  WxConditions[0].Cloudcover = current["clouds"];
-  Serial.printf("CCov: %d\n", WxConditions[0].Cloudcover);
-  WxConditions[0].Visibility = current["visibility"];
-  Serial.printf("Visi: %d\n", WxConditions[0].Visibility);
-  WxConditions[0].Windspeed = current["wind_speed"];
-  Serial.printf("WSpd: %f\n", WxConditions[0].Windspeed);
-  WxConditions[0].Winddir = current["wind_deg"];
-  Serial.printf("WDir: %d\n", WxConditions[0].Winddir);
+  WxConditions.Sunrise = current["sunrise"];
+  Serial.printf("SRis: %d\n", WxConditions.Sunrise);
+  WxConditions.Sunset = current["sunset"];
+  Serial.printf("SSet: %d\n", WxConditions.Sunset);
+  WxConditions.Temperature = current["temp"];
+  Serial.printf("Temp: %f\n", WxConditions.Temperature);
+  WxConditions.FeelsLike = current["feels_like"];
+  Serial.printf("FLik: %f\n", WxConditions.FeelsLike);
+  WxConditions.Pressure = current["pressure"];
+  Serial.printf("Pres: %f\n", WxConditions.Pressure);
+  WxConditions.Humidity = current["humidity"];
+  Serial.printf("Humi: %f\n", WxConditions.Humidity);
+  WxConditions.DewPoint = current["dew_point"];
+  Serial.printf("DPoi: %f\n", WxConditions.DewPoint);
+  WxConditions.UVI = current["uvi"];
+  Serial.printf("UVin: %f\n", WxConditions.UVI);
+  WxConditions.Cloudcover = current["clouds"];
+  Serial.printf("CCov: %d\n", WxConditions.Cloudcover);
+  WxConditions.Visibility = current["visibility"];
+  Serial.printf("Visi: %d\n", WxConditions.Visibility);
+  WxConditions.Windspeed = current["wind_speed"];
+  Serial.printf("WSpd: %f\n", WxConditions.Windspeed);
+  WxConditions.Winddir = current["wind_deg"];
+  Serial.printf("WDir: %d\n", WxConditions.Winddir);
   JsonObject current_weather = current["weather"][0];
   String Description = current_weather["description"];  // "scattered clouds"
   String Icon = current_weather["icon"];                // "01n"
-  WxConditions[0].Forecast0 = Description;
-  Serial.printf("Fore: %s\n", WxConditions[0].Forecast0.c_str());
-  WxConditions[0].Icon = Icon;
-  Serial.printf("Icon: %s\n", WxConditions[0].Icon.c_str());
+  WxConditions.Forecast0 = Description;
+  Serial.printf("Fore: %s\n", WxConditions.Forecast0.c_str());
+  WxConditions.Icon = Icon;
+  Serial.printf("Icon: %s\n", WxConditions.Icon.c_str());
 
   Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
 
   // Daily
   JsonArray daily = root["daily"];
-  WxConditions[0].Low = daily[0]["temp"]["min"].as<float>();  // Get Lowest temperature for next 24Hrs
-  Serial.printf("TLow: %f\n", WxConditions[0].Low);
-  WxConditions[0].High = daily[0]["temp"]["max"].as<float>();  // Get Highest temperature for next 24Hrs
-  Serial.printf("High: %f\n", WxConditions[0].High);
+  WxConditions.Low = daily[0]["temp"]["min"].as<float>();  // Get Lowest temperature for next 24Hrs
+  Serial.printf("TLow: %f\n", WxConditions.Low);
+  WxConditions.High = daily[0]["temp"]["max"].as<float>();  // Get Highest temperature for next 24Hrs
+  Serial.printf("High: %f\n", WxConditions.High);
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
@@ -485,20 +486,18 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
     Serial.printf("Snow: %f\n", WxForecast[wxIndex].Snowfall);
 
-    //------------------------------------------
-    if (wxIndex >= 2) {
-      float pressure_trend =
-          WxForecast[0].Pressure - WxForecast[2].Pressure;   // Measure pressure slope between ~now and later
-      pressure_trend = ((int)(pressure_trend * 10)) / 10.0;  // Remove any small variations less than 0.1
-      WxConditions[0].Trend = "=";
-      if (pressure_trend > 0) WxConditions[0].Trend = "+";
-      if (pressure_trend < 0) WxConditions[0].Trend = "-";
-      if (pressure_trend == 0) WxConditions[0].Trend = "0";
-    } else {
-      WxConditions[0].Trend = "0";  // Default if insufficient data
-    }
-
     wxIndex++;  // Increment WxForecast index for sequential population
+  }
+  if (wxIndex >= 3) {
+    float pressure_trend =
+        WxForecast[0].Pressure - WxForecast[2].Pressure;   // Measure pressure slope between ~now and later
+    pressure_trend = ((int)(pressure_trend * 10)) / 10.0;  // Remove any small variations less than 0.1
+    WxConditions.Trend = "=";
+    if (pressure_trend > 0) WxConditions.Trend = "+";
+    if (pressure_trend < 0) WxConditions.Trend = "-";
+    if (pressure_trend == 0) WxConditions.Trend = "0";
+  } else {
+    WxConditions.Trend = "0";  // Default if insufficient data
   }
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
@@ -587,7 +586,7 @@ String TitleCase(const String& text) {
 void DisplayWeather() {                        // 4.7" e-paper display is 960x540 resolution
   DisplayStatusSection(600, 20, wifi_signal);  // Wi-Fi signal strength and Battery voltage
   DisplayGeneralInfoSection();                 // Top line of the display
-  DisplayWindSection(137, 150, WxConditions[0].Winddir, WxConditions[0].Windspeed, 100);
+  DisplayWindSection(137, 150, WxConditions.Winddir, WxConditions.Windspeed, 100);
   DisplayAstronomySection(5, 252);  // Astronomy section Sun rise/set, Moon phase and Moon icon
   DisplayMainWeatherSection(
       320, 110);  // Centre section of display for Location, temperature, Weather report, current Wx Symbol
@@ -604,7 +603,7 @@ void DisplayGeneralInfoSection() {
 }
 
 void DisplayWeatherIcon(int x, int y) {
-  DisplayConditionsSection(x, y, WxConditions[0].Icon, LargeIcon);
+  DisplayConditionsSection(x, y, WxConditions.Icon, LargeIcon);
 }
 
 void DisplayMainWeatherSection(int x, int y) {
@@ -673,17 +672,17 @@ String WindDegToOrdinalDirection(float winddirection) {
 
 void DisplayTempHumiPressSection(int x, int y) {
   setFont(OpenSans18B);
-  drawString(x - 30, y, String(WxConditions[0].Temperature, 1) + "°   " + String(WxConditions[0].Humidity, 0) + "%",
+  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%",
              LEFT);
   setFont(OpenSans12B);
-  DrawPressureAndTrend(x + 195, y + 15, WxConditions[0].Pressure, WxConditions[0].Trend);
+  DrawPressureAndTrend(x + 195, y + 15, WxConditions.Pressure, WxConditions.Trend);
   int Yoffset = 42;
-  if (WxConditions[0].Windspeed > 0) {
-    drawString(x - 30, y + Yoffset, String(WxConditions[0].FeelsLike, 1) + "° FL",
+  if (WxConditions.Windspeed > 0) {
+    drawString(x - 30, y + Yoffset, String(WxConditions.FeelsLike, 1) + "° FL",
                LEFT);  // Show FeelsLike temperature if windspeed > 0
     Yoffset += 30;
   }
-  drawString(x - 30, y + Yoffset, String(WxConditions[0].High, 0) + "° | " + String(WxConditions[0].Low, 0) + "° Hi/Lo",
+  drawString(x - 30, y + Yoffset, String(WxConditions.High, 0) + "° | " + String(WxConditions.Low, 0) + "° Hi/Lo",
              LEFT);  // Show forecast high and Low
 }
 
@@ -691,7 +690,7 @@ void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
   setFont(OpenSans12B);
-  String Wx_Description = WxConditions[0].Forecast0;
+  String Wx_Description = WxConditions.Forecast0;
   Wx_Description.replace(".", "");  // remove any '.'
   int spaceRemaining = 0, p = 0, charCount = 0;
   while (p < Wx_Description.length()) {
@@ -714,9 +713,9 @@ void DisplayForecastTextSection(int x, int y) {
 
 void DisplayVisiCCoverUVISection(int x, int y) {
   setFont(OpenSans12B);
-  Visibility(x + 5, y, String(WxConditions[0].Visibility) + "M");
-  CloudCover(x + 155, y, WxConditions[0].Cloudcover);
-  Display_UVIndexLevel(x + 265, y, WxConditions[0].UVI);
+  Visibility(x + 5, y, String(WxConditions.Visibility) + "M");
+  CloudCover(x + 155, y, WxConditions.Cloudcover);
+  Display_UVIndexLevel(x + 265, y, WxConditions.UVI);
 }
 
 void Display_UVIndexLevel(int x, int y, float UVI) {
@@ -752,8 +751,8 @@ void DisplayAstronomySection(int x, int y) {
   DrawMoonImage(x + 10, y + 23);  // Different references!
   DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900,
            isSouthernHemisphere());  // Spaced at 1/2 moon size, so 10 - 75/2 = -28
-  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions[0].Sunrise).substring(0, 5), LEFT);  // Sunrise
-  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions[0].Sunset).substring(0, 5), LEFT);   // Sunset
+  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions.Sunrise).substring(0, 5), LEFT);  // Sunrise
+  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions.Sunset).substring(0, 5), LEFT);   // Sunset
   DrawSunriseImage(x + 180, y + 20);
   DrawSunsetImage(x + 180, y + 60);
 }

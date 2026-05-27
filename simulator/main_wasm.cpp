@@ -52,7 +52,7 @@ int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 #define max_readings 24
 #define max_graph_readings 16
 
-Forecast_record_type WxConditions[1];
+Forecast_record_type WxConditions;
 Forecast_record_type WxForecast[max_readings];
 
 float pressure_readings[max_readings] = {0};
@@ -147,31 +147,31 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonObject root = doc.as<JsonObject>();
   fprintf(stderr, "Decoding %s data\n", Type.c_str());
 
-  WxConditions[0].High = -50;
-  WxConditions[0].Low = 50;
+  WxConditions.High = -50;
+  WxConditions.Low = 50;
 
   JsonObject current = doc["current"];
-  WxConditions[0].Sunrise = current["sunrise"];
-  WxConditions[0].Sunset = current["sunset"];
-  WxConditions[0].Temperature = current["temp"];
-  WxConditions[0].FeelsLike = current["feels_like"];
-  WxConditions[0].Pressure = current["pressure"];
-  WxConditions[0].Humidity = current["humidity"];
-  WxConditions[0].DewPoint = current["dew_point"];
-  WxConditions[0].UVI = current["uvi"];
-  WxConditions[0].Cloudcover = current["clouds"];
-  WxConditions[0].Visibility = current["visibility"];
-  WxConditions[0].Windspeed = current["wind_speed"];
-  WxConditions[0].Winddir = current["wind_deg"];
+  WxConditions.Sunrise = current["sunrise"];
+  WxConditions.Sunset = current["sunset"];
+  WxConditions.Temperature = current["temp"];
+  WxConditions.FeelsLike = current["feels_like"];
+  WxConditions.Pressure = current["pressure"];
+  WxConditions.Humidity = current["humidity"];
+  WxConditions.DewPoint = current["dew_point"];
+  WxConditions.UVI = current["uvi"];
+  WxConditions.Cloudcover = current["clouds"];
+  WxConditions.Visibility = current["visibility"];
+  WxConditions.Windspeed = current["wind_speed"];
+  WxConditions.Winddir = current["wind_deg"];
 
   const char* desc = current["weather"][0]["description"];
   const char* icon = current["weather"][0]["icon"];
-  WxConditions[0].Forecast0 = String(desc ? desc : "");
-  WxConditions[0].Icon = String(icon ? icon : "");
+  WxConditions.Forecast0 = String(desc ? desc : "");
+  WxConditions.Icon = String(icon ? icon : "");
 
   JsonArray daily = root["daily"];
-  WxConditions[0].Low = daily[0]["temp"]["min"].as<float>();
-  WxConditions[0].High = daily[0]["temp"]["max"].as<float>();
+  WxConditions.Low = daily[0]["temp"]["min"].as<float>();
+  WxConditions.High = daily[0]["temp"]["max"].as<float>();
 
   JsonArray list = root["hourly"];
   byte wxIndex = 0;
@@ -195,9 +195,9 @@ bool DecodeWeather(const std::string& json, String Type) {
     if (wxIndex >= 2) {
       float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
       pt = ((int)(pt * 10)) / 10.0f;
-      WxConditions[0].Trend = (pt > 0) ? "+" : (pt < 0) ? "-" : "0";
+      WxConditions.Trend = (pt > 0) ? "+" : (pt < 0) ? "-" : "0";
     } else {
-      WxConditions[0].Trend = "0";
+      WxConditions.Trend = "0";
     }
     wxIndex++;
   }
