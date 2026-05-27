@@ -771,8 +771,8 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisph
   double Phase = jd;
   b = (int)(Phase * 8 + 0.5) & 7;
   hemisphere.toLowerCase();
-  if (hemisphere == "south") Phase = 1 - Phase;
-  int octant = (int)(Phase * 8 + 0.5) & 7;
+  if (hemisphere == "south") b = 7 - b;
+  int octant = b;
   // Draw dark part of moon
   fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, DarkGrey);
   const int number_of_lines = 90;
