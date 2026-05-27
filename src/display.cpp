@@ -42,9 +42,9 @@ void DisplayWeather() {
 
 void DisplayGeneralInfoSection() {
   setFont(OpenSans10B);
-  drawString(5, 2, String(cfg.city), LEFT);
+  drawString(5, 2, String(cfg.city), Alignment::kLeft);
   setFont(OpenSans8B);
-  drawString(500, 2, Date_str + "  @   " + Time_str, LEFT);
+  drawString(500, 2, Date_str + "  @   " + Time_str, Alignment::kLeft);
 }
 
 void DisplayWeatherIcon(int x, int y) {
@@ -62,37 +62,37 @@ void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius)
   arrow(x, y, Cradius - 22, angle, 18, 33);
   setFont(OpenSans8B);
   int dxo, dyo, dxi, dyi;
-  drawCircle(x, y, Cradius, Black);
-  drawCircle(x, y, Cradius + 1, Black);
-  drawCircle(x, y, Cradius * 0.7, Black);
+  drawCircle(x, y, Cradius, kBlack);
+  drawCircle(x, y, Cradius + 1, kBlack);
+  drawCircle(x, y, Cradius * 0.7, kBlack);
   for (float a = 0; a < 360; a = a + 22.5) {
     dxo = Cradius * cos((a - 90) * PI / 180);
     dyo = Cradius * sin((a - 90) * PI / 180);
-    if (a == 45) drawString(dxo + x + 15, dyo + y - 18, TXT_NE, CENTER);
-    if (a == 135) drawString(dxo + x + 20, dyo + y - 2, TXT_SE, CENTER);
-    if (a == 225) drawString(dxo + x - 20, dyo + y - 2, TXT_SW, CENTER);
-    if (a == 315) drawString(dxo + x - 15, dyo + y - 18, TXT_NW, CENTER);
+    if (a == 45) drawString(dxo + x + 15, dyo + y - 18, TXT_NE, Alignment::kCenter);
+    if (a == 135) drawString(dxo + x + 20, dyo + y - 2, TXT_SE, Alignment::kCenter);
+    if (a == 225) drawString(dxo + x - 20, dyo + y - 2, TXT_SW, Alignment::kCenter);
+    if (a == 315) drawString(dxo + x - 15, dyo + y - 18, TXT_NW, Alignment::kCenter);
     dxi = dxo * 0.9;
     dyi = dyo * 0.9;
-    drawLine(dxo + x, dyo + y, dxi + x, dyi + y, Black);
+    drawLine(dxo + x, dyo + y, dxi + x, dyi + y, kBlack);
     dxo = dxo * 0.7;
     dyo = dyo * 0.7;
     dxi = dxo * 0.9;
     dyi = dyo * 0.9;
-    drawLine(dxo + x, dyo + y, dxi + x, dyi + y, Black);
+    drawLine(dxo + x, dyo + y, dxi + x, dyi + y, kBlack);
   }
-  drawString(x, y - Cradius - 20, TXT_N, CENTER);
-  drawString(x, y + Cradius + 10, TXT_S, CENTER);
-  drawString(x - Cradius - 15, y - 5, TXT_W, CENTER);
-  drawString(x + Cradius + 10, y - 5, TXT_E, CENTER);
-  drawString(x + 3, y + 50, String(angle, 0) + "°", CENTER);
+  drawString(x, y - Cradius - 20, TXT_N, Alignment::kCenter);
+  drawString(x, y + Cradius + 10, TXT_S, Alignment::kCenter);
+  drawString(x - Cradius - 15, y - 5, TXT_W, Alignment::kCenter);
+  drawString(x + Cradius + 10, y - 5, TXT_E, Alignment::kCenter);
+  drawString(x + 3, y + 50, String(angle, 0) + "°", Alignment::kCenter);
   setFont(OpenSans12B);
-  drawString(x, y - 50, WindDegToOrdinalDirection(angle), CENTER);
+  drawString(x, y - 50, WindDegToOrdinalDirection(angle), Alignment::kCenter);
   setFont(OpenSans24B);
-  drawString(x + 3, y - 18, String(windspeed, 1), CENTER);
+  drawString(x + 3, y - 18, String(windspeed, 1), Alignment::kCenter);
   setFont(OpenSans12B);
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
-  drawString(x, y + 25, (isMetric ? "m/s" : "mph"), CENTER);
+  drawString(x, y + 25, (isMetric ? "m/s" : "mph"), Alignment::kCenter);
 }
 
 String WindDegToOrdinalDirection(float winddirection) {
@@ -117,15 +117,15 @@ String WindDegToOrdinalDirection(float winddirection) {
 
 void DisplayTempHumiPressSection(int x, int y) {
   setFont(OpenSans18B);
-  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%", LEFT);
+  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%", Alignment::kLeft);
   setFont(OpenSans12B);
   DrawPressureAndTrend(x + 195, y + 15, WxConditions.Pressure, WxConditions.Trend);
   int Yoffset = 42;
   if (WxConditions.Windspeed > 0) {
-    drawString(x - 30, y + Yoffset, String(WxConditions.FeelsLike, 1) + "° FL", LEFT);
+    drawString(x - 30, y + Yoffset, String(WxConditions.FeelsLike, 1) + "° FL", Alignment::kLeft);
     Yoffset += 30;
   }
-  drawString(x - 30, y + Yoffset, String(WxConditions.High, 0) + "° | " + String(WxConditions.Low, 0) + "° Hi/Lo", LEFT);
+  drawString(x - 30, y + Yoffset, String(WxConditions.High, 0) + "° | " + String(WxConditions.Low, 0) + "° Hi/Lo", Alignment::kLeft);
 }
 
 void DisplayForecastTextSection(int x, int y) {
@@ -149,8 +149,8 @@ void DisplayForecastTextSection(int x, int y) {
   int sep = Wx_Description.indexOf("~");
   String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
   String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
-  drawString(x + 30, y + 5, TitleCase(Line1), LEFT);
-  if (Line2.length() > 0) drawString(x + 30, y + 30, Line2, LEFT);
+  drawString(x + 30, y + 5, TitleCase(Line1), Alignment::kLeft);
+  if (Line2.length() > 0) drawString(x + 30, y + 30, Line2, Alignment::kLeft);
 }
 
 void DisplayVisiCCoverUVISection(int x, int y) {
@@ -167,7 +167,7 @@ void Display_UVIndexLevel(int x, int y, float UVI) {
   if (UVI >= 6 && UVI <= 7) Level = " (H)";
   if (UVI >= 8 && UVI <= 10) Level = " (VH)";
   if (UVI >= 11) Level = " (EX)";
-  drawString(x + 20, y - 5, String(UVI, (UVI < 0 ? 1 : 0)) + Level, LEFT);
+  drawString(x + 20, y - 5, String(UVI, (UVI < 0 ? 1 : 0)) + Level, Alignment::kLeft);
   DrawUVI(x - 10, y - 5);
 }
 
@@ -175,9 +175,9 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
   x = x + fwidth * index;
   DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, WxForecast[index].Icon, SmallIcon);
   setFont(OpenSans10B);
-  drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].Dt).substring(0, 5)), CENTER);
+  drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].Dt).substring(0, 5)), Alignment::kCenter);
   drawString(x + fwidth / 2, y + 130,
-             String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
+             String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", Alignment::kCenter);
 }
 
 static inline bool isSouthernHemisphere() {
@@ -188,12 +188,12 @@ void DisplayAstronomySection(int x, int y) {
   setFont(OpenSans10B);
   time_t now = time(NULL);
   struct tm* now_utc = gmtime(&now);
-  drawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900), LEFT);
+  drawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900), Alignment::kLeft);
   DrawMoonImage(x + 10, y + 23);
   DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900,
            isSouthernHemisphere());
-  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions.Sunrise).substring(0, 5), LEFT);
-  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions.Sunset).substring(0, 5), LEFT);
+  drawString(x + 115, y + 40, ConvertUnixTime(WxConditions.Sunrise).substring(0, 5), Alignment::kLeft);
+  drawString(x + 115, y + 80, ConvertUnixTime(WxConditions.Sunset).substring(0, 5), Alignment::kLeft);
   DrawSunriseImage(x + 180, y + 20);
   DrawSunsetImage(x + 180, y + 60);
 }
@@ -216,7 +216,7 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
   b = (int)(Phase * 8 + 0.5) & 7;
   if (southernHemisphere) Phase = 1 - Phase;
   int octant = (int)(Phase * 8 + 0.5) & 7;
-  fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, DarkGrey);
+  fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, kDarkGrey);
   const int number_of_lines = 90;
   for (double Ypos = 0; Ypos <= number_of_lines / 2; Ypos++) {
     double Xpos = sqrt(number_of_lines / 2 * number_of_lines / 2 - Ypos * Ypos);
@@ -237,10 +237,10 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
     double pW3y = (Ypos + number_of_lines) / number_of_lines * diameter + y;
     double pW4x = (Xpos2 + number_of_lines) / number_of_lines * diameter + x;
     double pW4y = (Ypos + number_of_lines) / number_of_lines * diameter + y;
-    drawLine(pW1x, pW1y, pW2x, pW2y, White);
-    drawLine(pW3x, pW3y, pW4x, pW4y, White);
+    drawLine(pW1x, pW1y, pW2x, pW2y, kWhite);
+    drawLine(pW3x, pW3y, pW4x, pW4y, kWhite);
   }
-  drawCircle(x + diameter - 1, y + diameter, diameter / 2, Black);
+  drawCircle(x + diameter - 1, y + diameter, diameter / 2, kBlack);
 }
 
 String MoonPhase(int d, int m, int y) {
@@ -281,11 +281,11 @@ void DisplayForecastSection(int x, int y) {
 
 void DisplayGraphSection(int x, int y) {
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
-  static float pressure_readings[max_readings]    = {0};
-  static float temperature_readings[max_readings] = {0};
-  static float humidity_readings[max_readings]    = {0};
-  static float rain_readings[max_readings]         = {0};
-  static float snow_readings[max_readings]         = {0};
+  static float pressure_readings[kMaxReadings]    = {0};
+  static float temperature_readings[kMaxReadings] = {0};
+  static float humidity_readings[kMaxReadings]    = {0};
+  static float rain_readings[kMaxReadings]         = {0};
+  static float snow_readings[kMaxReadings]         = {0};
   int r = 0;
   do {
     pressure_readings[r]    = WxForecast[r].Pressure;
@@ -294,27 +294,27 @@ void DisplayGraphSection(int x, int y) {
     temperature_readings[r] = WxForecast[r].Temperature;
     humidity_readings[r]    = WxForecast[r].Humidity;
     r++;
-  } while (r < max_graph_readings);
+  } while (r < kMaxGraphReadings);
   int gwidth = 175, gheight = 100;
   int gx = (epd_width() - gwidth * 4) / 5 + 8;
   int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
   DrawGraph({gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
-             isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(), autoscale_on, barchart_off, max_graph_readings},
+             isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(), kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
             pressure_readings);
   DrawGraph({gx + 1 * gap, gy, gwidth, gheight, 10, 30,
-             isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(), autoscale_on, barchart_off, max_graph_readings},
+             isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(), kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
             temperature_readings);
   DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100,
-             TXT_HUMIDITY_PERCENT.c_str(), autoscale_off, barchart_off, max_graph_readings},
+             TXT_HUMIDITY_PERCENT.c_str(), kAutoscaleOff, kBarchartOff, kMaxGraphReadings},
             humidity_readings);
-  if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
+  if (SumOfPrecip(rain_readings, kMaxGraphReadings) >= SumOfPrecip(snow_readings, kMaxGraphReadings))
     DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
+               isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(), kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
               rain_readings);
   else
     DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
+               isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(), kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
               snow_readings);
 }
 
@@ -353,17 +353,17 @@ void arrow(int x, int y, int asize, float aangle, int pwidth, int plength) {
   float yy2 = y2 * cos(angle) + x2 * sin(angle) + dy;
   float xx3 = x3 * cos(angle) - y3 * sin(angle) + dx;
   float yy3 = y3 * cos(angle) + x3 * sin(angle) + dy;
-  fillTriangle(xx1, yy1, xx3, yy3, xx2, yy2, Black);
+  fillTriangle(xx1, yy1, xx3, yy3, xx2, yy2, kBlack);
 }
 
 void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12, int o13, int o14) {
-  drawLine(x + o1, y + o2, x + o3, y + o4, Black);
-  drawLine(x + o11, y + o12, x + o13, y + o14, Black);
+  drawLine(x + o1, y + o2, x + o3, y + o4, kBlack);
+  drawLine(x + o11, y + o12, x + o13, y + o14, kBlack);
 }
 
 void DrawPressureAndTrend(int x, int y, float pressure, char slope) {
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
-  drawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), LEFT);
+  drawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), Alignment::kLeft);
   if (slope == '+') {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
     DrawSegment(x - 1, y, 0, 0, 8, -8, 8, -8, 16, 0);
@@ -391,7 +391,7 @@ void DrawRSSI(int x, int y, int rssi) {
     if (_rssi <= -60) WIFIsignal = 18;
     if (_rssi <= -80) WIFIsignal = 12;
     if (_rssi <= -100) WIFIsignal = 6;
-    fillRect(x + xpos * 8, y - WIFIsignal, 6, WIFIsignal, Black);
+    fillRect(x + xpos * 8, y - WIFIsignal, 6, WIFIsignal, kBlack);
     xpos++;
   }
 }
@@ -432,16 +432,16 @@ void DrawGraph(GraphConfig gcfg, float DataArray[]) {
   setFont(OpenSans10B);
   int last_x = gcfg.x + 1;
   int last_y = gcfg.y + (gcfg.yMax - constrain(DataArray[0], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h;
-  drawRect(gcfg.x, gcfg.y, gcfg.w + 3, gcfg.h + 2, Grey);
-  drawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, CENTER);
+  drawRect(gcfg.x, gcfg.y, gcfg.w + 3, gcfg.h + 2, kGrey);
+  drawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, Alignment::kCenter);
   for (int i = 0; i < gcfg.readings; i++) {
     float x2 = gcfg.x + i * gcfg.w / (gcfg.readings - 1) - 1;
     float y2 = gcfg.y + (gcfg.yMax - constrain(DataArray[i], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h + 1;
     if (gcfg.barchart) {
-      fillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, Black);
+      fillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, kBlack);
     } else {
-      drawLine(last_x, last_y - 1, x2, y2 - 1, Black);
-      drawLine(last_x, last_y, x2, y2, Black);
+      drawLine(last_x, last_y - 1, x2, y2 - 1, kBlack);
+      drawLine(last_x, last_y, x2, y2, kBlack);
     }
     last_x = x2;
     last_y = y2;
@@ -450,7 +450,7 @@ void DrawGraph(GraphConfig gcfg, float DataArray[]) {
     for (int j = 0; j < kGraphDashes; j++) {
       if (spacing < kGraphYDivisions)
         drawFastHLine((gcfg.x + 3 + j * gcfg.w / kGraphDashes), gcfg.y + (gcfg.h * spacing / kGraphYDivisions),
-                      gcfg.w / (2 * kGraphDashes), Grey);
+                      gcfg.w / (2 * kGraphDashes), kGrey);
     }
     float axisVal = gcfg.yMax - (float)(gcfg.yMax - gcfg.yMin) / kGraphYDivisions * spacing + 0.01f;
     int labelX, decimalPlaces;
@@ -464,23 +464,23 @@ void DrawGraph(GraphConfig gcfg, float DataArray[]) {
       labelX = gcfg.x - 7;
       decimalPlaces = 0;
     }
-    drawString(labelX, gcfg.y + gcfg.h * spacing / kGraphYDivisions - 5, String(axisVal, decimalPlaces), RIGHT);
+    drawString(labelX, gcfg.y + gcfg.h * spacing / kGraphYDivisions - 5, String(axisVal, decimalPlaces), Alignment::kRight);
   }
   for (int i = 0; i < kGraphDaySections; i++) {
-    drawString(20 + gcfg.x + gcfg.w / kGraphDaySections * i, gcfg.y + gcfg.h + 10, String(i) + "d", LEFT);
+    drawString(20 + gcfg.x + gcfg.w / kGraphDaySections * i, gcfg.y + gcfg.h + 10, String(i) + "d", Alignment::kLeft);
     if (i < 2)
-      drawFastVLine(gcfg.x + gcfg.w / kGraphDaySections * i + gcfg.w / kGraphDaySections, gcfg.y, gcfg.h, LightGrey);
+      drawFastVLine(gcfg.x + gcfg.w / kGraphDaySections * i + gcfg.w / kGraphDaySections, gcfg.y, gcfg.h, kLightGrey);
   }
 }
 
-void drawString(int x, int y, String text, alignment align) {
+void drawString(int x, int y, String text, Alignment align) {
   char* data = const_cast<char*>(text.c_str());
   int x1, y1, w, h;
   int xx = x, yy = y;
   EpdFontProperties props = epd_font_properties_default();
   epd_get_text_bounds(&currentFont, data, &xx, &yy, &x1, &y1, &w, &h, &props);
-  if (align == RIGHT) x = x - w;
-  if (align == CENTER) x = x - w / 2;
+  if (align == Alignment::kRight) x = x - w;
+  if (align == Alignment::kCenter) x = x - w / 2;
   int cursor_y = y + h;
   epd_write_default(&currentFont, data, &x, &cursor_y, framebuffer);
 }
@@ -568,10 +568,10 @@ void DrawBattery(int x, int y) {
                  656689.7123 * voltage + 632041.7303;
     if (voltage >= 4.20) percentage = 100;
     if (voltage <= 3.20) percentage = 0;
-    drawRect(x + 25, y - 14, 40, 15, Black);
-    fillRect(x + 65, y - 10, 4, 7, Black);
-    fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, Black);
-    drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
+    drawRect(x + 25, y - 14, 40, 15, kBlack);
+    fillRect(x + 65, y - 10, 4, 7, kBlack);
+    fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, kBlack);
+    drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", Alignment::kLeft);
   }
 }
 

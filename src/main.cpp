@@ -263,11 +263,11 @@ static int drawQR(const char* text, int originX, int originY, int moduleSize, in
             int size = esp_qrcode_get_size(qrcode);
             _renderedPx = size * _ms;
             int border = _ms * 2;
-            fillRect(_ox - border, _oy - border, _renderedPx + border * 2, _renderedPx + border * 2, White);
+            fillRect(_ox - border, _oy - border, _renderedPx + border * 2, _renderedPx + border * 2, kWhite);
             for (int y = 0; y < size; y++) {
               for (int x = 0; x < size; x++) {
                 if (esp_qrcode_get_module(qrcode, x, y)) {
-                  fillRect(_ox + x * _ms, _oy + y * _ms, _ms, _ms, Black);
+                  fillRect(_ox + x * _ms, _oy + y * _ms, _ms, _ms, kBlack);
                 }
               }
             }
@@ -304,28 +304,28 @@ void DisplaySetupScreen(const char* apName) {
   int labelGap = 24;
   int wifiGap = 34;
   int portalGap = 28;
-  drawString(qrCxL, pad + wifiQRpx + labelGap, "Scan to join", CENTER);
-  drawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap, "WiFi network", CENTER);
-  drawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", CENTER);
-  drawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", CENTER);
+  drawString(qrCxL, pad + wifiQRpx + labelGap, "Scan to join", Alignment::kCenter);
+  drawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap, "WiFi network", Alignment::kCenter);
+  drawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", Alignment::kCenter);
+  drawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", Alignment::kCenter);
 
   int blockH = 270;
   int textY = (epd_height() - blockH) / 2;
 
   setFont(OpenSans18B);
-  drawString(cx, textY - 48, "SETUP MODE", CENTER);
+  drawString(cx, textY - 48, "SETUP MODE", Alignment::kCenter);
   setFont(OpenSans12B);
-  drawString(cx, textY + 48, "Connect to WiFi network:", CENTER);
+  drawString(cx, textY + 48, "Connect to WiFi network:", Alignment::kCenter);
   setFont(OpenSans18B);
-  drawString(cx, textY + 80, String(apName), CENTER);
+  drawString(cx, textY + 80, String(apName), Alignment::kCenter);
   setFont(OpenSans12B);
-  drawString(cx, textY + 140, "Then open in a browser:", CENTER);
+  drawString(cx, textY + 140, "Then open in a browser:", Alignment::kCenter);
   setFont(OpenSans18B);
-  drawString(cx, textY + 172, "http://192.168.4.1", CENTER);
+  drawString(cx, textY + 172, "http://192.168.4.1", Alignment::kCenter);
   setFont(OpenSans12B);
-  drawString(cx, textY + 228, "To update firmware:", CENTER);
+  drawString(cx, textY + 228, "To update firmware:", Alignment::kCenter);
   setFont(OpenSans18B);
-  drawString(cx, textY + 260, "http://192.168.4.1/update", CENTER);
+  drawString(cx, textY + 260, "http://192.168.4.1/update", Alignment::kCenter);
 
   edp_update();
   epd_poweroff();
