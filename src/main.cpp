@@ -961,7 +961,7 @@ bool UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise
-    Serial.println("Failed to obtain time");
+    Serial.printf("Failed to obtain time\n");
     return false;
   }
   CurrentHour = timeinfo.tm_hour;
@@ -970,14 +970,14 @@ bool UpdateLocalTime() {
   //See http://www.cplusplus.com/reference/ctime/strftime/
   Serial.println(&timeinfo, "%a %b %d %Y   %H:%M:%S");  // Displays: Saturday, June 24 2017 14:05:49
   if (strcmp(cfg.units, "M") == 0) {
-    sprintf(day_output, "%s, %02u %s %04u", weekday_D[timeinfo.tm_wday], timeinfo.tm_mday, month_M[timeinfo.tm_mon],
-            (timeinfo.tm_year) + 1900);
+    snprintf(day_output, sizeof(day_output), "%s, %02u %s %04u", weekday_D[timeinfo.tm_wday], timeinfo.tm_mday,
+             month_M[timeinfo.tm_mon], (timeinfo.tm_year) + 1900);
     strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
-    sprintf(time_output, "%s", update_time);
+    snprintf(time_output, sizeof(time_output), "%s", update_time);
   } else {
     strftime(day_output, sizeof(day_output), "%a %b-%d-%Y", &timeinfo);  // Creates  'Sat May-31-2019'
     strftime(update_time, sizeof(update_time), "%r", &timeinfo);         // Creates: '@ 02:05:49pm'
-    sprintf(time_output, "%s", update_time);
+    snprintf(time_output, sizeof(time_output), "%s", update_time);
   }
   Date_str = day_output;
   Time_str = time_output;
