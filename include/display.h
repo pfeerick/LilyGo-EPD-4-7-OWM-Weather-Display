@@ -2,24 +2,24 @@
 #include "epdiy.h"
 #include "weather_api.h"
 
-enum alignment { LEFT, RIGHT, CENTER };
-constexpr uint8_t White     = 0xFF;
-constexpr uint8_t LightGrey = 0xBB;
-constexpr uint8_t Grey      = 0x88;
-constexpr uint8_t DarkGrey  = 0x44;
-constexpr uint8_t Black     = 0x00;
+enum class Alignment { kLeft, kRight, kCenter };
+constexpr uint8_t kWhite     = 0xFF;
+constexpr uint8_t kLightGrey = 0xBB;
+constexpr uint8_t kGrey      = 0x88;
+constexpr uint8_t kDarkGrey  = 0x44;
+constexpr uint8_t kBlack     = 0x00;
 
-constexpr bool autoscale_on  = true;
-constexpr bool autoscale_off = false;
-constexpr bool barchart_on   = true;
-constexpr bool barchart_off  = false;
+constexpr bool kAutoscaleOn  = true;
+constexpr bool kAutoscaleOff = false;
+constexpr bool kBarchartOn   = true;
+constexpr bool kBarchartOff  = false;
 
 constexpr uint8_t kGraphYDivisions  = 5;
 constexpr uint8_t kGraphDashes      = 20;
 constexpr uint8_t kGraphDaySections = 2;
 
-constexpr uint8_t Large = 20;
-constexpr uint8_t Small = 10;
+constexpr uint8_t kLarge = 20;
+constexpr uint8_t kSmall = 10;
 
 struct GraphConfig {
   int x, y, w, h;
@@ -71,7 +71,7 @@ void DrawSunsetImage(int x, int y);
 void DrawUVI(int x, int y);
 void DrawGraph(GraphConfig gcfg, float DataArray[]);
 
-void drawString(int x, int y, String text, alignment align);
+void drawString(int x, int y, String text, Alignment align);
 void fillCircle(int x, int y, int r, uint8_t color);
 void drawFastHLine(int16_t x0, int16_t y0, int length, uint16_t color);
 void drawFastVLine(int16_t x0, int16_t y0, int length, uint16_t color);

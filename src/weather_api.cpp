@@ -7,7 +7,7 @@
 #include "defaults.h"
 
 Forecast_record_type WxConditions;
-Forecast_record_type WxForecast[max_readings];
+Forecast_record_type WxForecast[kMaxReadings];
 #endif
 
 void Convert_Readings_to_Imperial(int count) {

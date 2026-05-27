@@ -2,8 +2,8 @@
 #include "forecast_record.h"
 #include "config.h"
 
-constexpr uint8_t max_readings       = 24;
-constexpr uint8_t max_graph_readings = 16;
+constexpr uint8_t kMaxReadings      = 24;
+constexpr uint8_t kMaxGraphReadings = 16;
 
 extern Forecast_record_type WxConditions;
 extern Forecast_record_type WxForecast[];
