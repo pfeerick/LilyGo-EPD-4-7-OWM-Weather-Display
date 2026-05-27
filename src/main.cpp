@@ -718,7 +718,7 @@ void DisplayVisiCCoverUVISection(int x, int y) {
 }
 
 void Display_UVIndexLevel(int x, int y, float UVI) {
-  String Level = "";
+  const char* Level = "";
   if (UVI <= 2) Level = " (L)";
   if (UVI >= 3 && UVI <= 5) Level = " (M)";
   if (UVI >= 6 && UVI <= 7) Level = " (H)";
