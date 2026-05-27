@@ -14,6 +14,7 @@
 #include <LittleFS.h>
 #include "qrcode.h"
 #include "config.h"
+#include "defaults.h"
 #include "setup_portal.h"
 #include "forecast_record.h"
 #include "translations/lang_en.h"
@@ -185,7 +186,7 @@ void BeginSleep() {
 }
 
 bool SetupTime() {
-  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, "time.nist.gov");
+  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, kDefaultNtpFallback);
   setenv("TZ", cfg.timezone, 1);
   tzset();  // Set the TZ environment variable
   delay(100);
