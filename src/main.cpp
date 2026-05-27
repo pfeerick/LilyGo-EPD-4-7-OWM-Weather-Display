@@ -448,7 +448,6 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   WxConditions[0].Icon = Icon;
   Serial.printf("Icon: %s\n", WxConditions[0].Icon.c_str());
 
-  Serial.println(json);
   Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
 
   // Daily
