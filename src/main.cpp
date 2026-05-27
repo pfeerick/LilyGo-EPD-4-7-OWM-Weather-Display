@@ -54,7 +54,7 @@ constexpr uint8_t Large = 20;  // For icon drawing
 constexpr uint8_t Small = 10;  // For icon drawing
 String Time_str = "--:--:--";
 String Date_str = "-- --- ----";
-int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
+int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = kDefaultVref;
 //################ PROGRAM VARIABLES and OBJECTS ##########################################
 constexpr uint8_t max_readings = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
 constexpr uint8_t max_graph_readings = 16;
@@ -592,16 +592,15 @@ String TitleCase(const String& text) {
     return text;
 }
 
-void DisplayWeather() {                        // 4.7" e-paper display is 960x540 resolution
-  DisplayStatusSection(600, 20, wifi_signal);  // Wi-Fi signal strength and Battery voltage
-  DisplayGeneralInfoSection();                 // Top line of the display
-  DisplayWindSection(137, 150, WxConditions.Winddir, WxConditions.Windspeed, 100);
-  DisplayAstronomySection(5, 252);  // Astronomy section Sun rise/set, Moon phase and Moon icon
-  DisplayMainWeatherSection(
-      320, 110);  // Centre section of display for Location, temperature, Weather report, current Wx Symbol
-  DisplayWeatherIcon(835, 140);      // Display weather icon scale = Large;
-  DisplayForecastSection(285, 220);  // 3hr forecast boxes
-  DisplayGraphSection(320, 220);     // Graphs of pressure, temperature, humidity and rain or snowfall
+void DisplayWeather() {  // 4.7" e-paper display is 960x540 resolution
+  DisplayStatusSection(kLayoutStatusX, kLayoutStatusY, wifi_signal);
+  DisplayGeneralInfoSection();
+  DisplayWindSection(kLayoutWindX, kLayoutWindY, WxConditions.Winddir, WxConditions.Windspeed, kLayoutWindRadius);
+  DisplayAstronomySection(kLayoutAstronomyX, kLayoutAstronomyY);
+  DisplayMainWeatherSection(kLayoutMainWeatherX, kLayoutMainWeatherY);
+  DisplayWeatherIcon(kLayoutWeatherIconX, kLayoutWeatherIconY);
+  DisplayForecastSection(kLayoutForecastX, kLayoutForecastY);
+  DisplayGraphSection(kLayoutGraphX, kLayoutGraphY);
 }
 
 void DisplayGeneralInfoSection() {
@@ -1002,12 +1001,13 @@ void DrawBattery(int x, int y) {
   uint8_t percentage = 100;
   esp_adc_cal_characteristics_t adc_chars;
   esp_adc_cal_value_t val_type =
-      esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+      esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, kDefaultVref, &adc_chars);
   if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
     Serial.printf("eFuse Vref:%u mV", adc_chars.vref);
     vref = adc_chars.vref;
   }
-  float voltage = analogRead(36) / 4096.0 * 6.566 * (vref / 1000.0);
+  // kBatteryVoltageDiv is the resistor divider ratio on ADC pin kBatteryAdcPin
+  float voltage = analogRead(kBatteryAdcPin) / (float)kBatteryAdcBits * kBatteryVoltageDiv * (vref / 1000.0);
   if (voltage > 1) {  // Only display if there is a valid reading
     Serial.printf("\nVoltage = %.2f\n", voltage);
     percentage = 2836.9625 * pow(voltage, 4) - 43987.4889 * pow(voltage, 3) + 255233.8134 * pow(voltage, 2) -
