@@ -281,8 +281,8 @@ void setup() {
       byte Attempts = 1;
       bool RxWeather = false;
       WiFiClient client;
-      while ((RxWeather == false) && Attempts <= 2) {
-        if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
+      while (!RxWeather && Attempts <= 2) {
+        if (!RxWeather) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
       StopWiFi();
@@ -1254,7 +1254,7 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   float minYscale = 10000;
   int last_x, last_y;
   float x2, y2;
-  if (auto_scale == true) {
+  if (auto_scale) {
     for (int i = 1; i < readings; i++) {
       if (DataArray[i] >= maxYscale) maxYscale = DataArray[i];
       if (DataArray[i] <= minYscale) minYscale = DataArray[i];
