@@ -249,25 +249,25 @@ void setup() {
   BeginSleep();
 }
 
-static int _ox, _oy, _ms, _renderedPx;
+static int qr_origin_x, qr_origin_y, qr_mod_size, qr_rendered_px;
 
-static int drawQR(const char* text, int originX, int originY, int moduleSize, int eccLevel = ESP_QRCODE_ECC_LOW) {
-  _ox = originX;
-  _oy = originY;
-  _ms = moduleSize;
-  _renderedPx = 0;
+static int DrawQR(const char* text, int originX, int originY, int moduleSize, int eccLevel = ESP_QRCODE_ECC_LOW) {
+  qr_origin_x = originX;
+  qr_origin_y = originY;
+  qr_mod_size = moduleSize;
+  qr_rendered_px = 0;
 
   esp_qrcode_config_t cfg = {
       .display_func =
           [](esp_qrcode_handle_t qrcode) {
             int size = esp_qrcode_get_size(qrcode);
-            _renderedPx = size * _ms;
-            int border = _ms * 2;
-            fillRect(_ox - border, _oy - border, _renderedPx + border * 2, _renderedPx + border * 2, kWhite);
+            qr_rendered_px = size * qr_mod_size;
+            int border = qr_mod_size * 2;
+            FillRect(qr_origin_x - border, qr_origin_y - border, qr_rendered_px + border * 2, qr_rendered_px + border * 2, kWhite);
             for (int y = 0; y < size; y++) {
               for (int x = 0; x < size; x++) {
                 if (esp_qrcode_get_module(qrcode, x, y)) {
-                  fillRect(_ox + x * _ms, _oy + y * _ms, _ms, _ms, kBlack);
+                  FillRect(qr_origin_x + x * qr_mod_size, qr_origin_y + y * qr_mod_size, qr_mod_size, qr_mod_size, kBlack);
                 }
               }
             }
@@ -277,12 +277,12 @@ static int drawQR(const char* text, int originX, int originY, int moduleSize, in
   };
 
   esp_qrcode_generate(&cfg, text);
-  return _renderedPx;
+  return qr_rendered_px;
 }
 
-void DisplaySetupScreen(const char* apName) {
+void DisplaySetupScreen(const char* ap_name) {
   epd_poweron();
-  epd_fullclear(&hl, (int)epd_ambient_temperature());
+  epd_fullclear(&epd_hl, (int)epd_ambient_temperature());
 
   int cx = epd_width() / 2;
   int w = epd_width();
@@ -294,40 +294,40 @@ void DisplaySetupScreen(const char* apName) {
   int qrCxR = w - pad - qrPx / 2;
 
   char wifiQR[64];
-  snprintf(wifiQR, sizeof(wifiQR), "WIFI:S:%s;T:nopass;;", apName);
-  int wifiQRpx = drawQR(wifiQR, pad, pad, ms, ESP_QRCODE_ECC_LOW);
+  snprintf(wifiQR, sizeof(wifiQR), "WIFI:S:%s;T:nopass;;", ap_name);
+  int wifiQRpx = DrawQR(wifiQR, pad, pad, ms, ESP_QRCODE_ECC_LOW);
 
   int rightQRx = w - pad - qrPx + (ms * 2);
-  int portalQRpx = drawQR("http://192.168.4.1", rightQRx, pad, ms, ESP_QRCODE_ECC_HIGH);
+  int portalQRpx = DrawQR("http://192.168.4.1", rightQRx, pad, ms, ESP_QRCODE_ECC_HIGH);
 
-  setFont(OpenSans12B);
+  SetFont(OpenSans12B);
   int labelGap = 24;
   int wifiGap = 34;
   int portalGap = 28;
-  drawString(qrCxL, pad + wifiQRpx + labelGap, "Scan to join", Alignment::kCenter);
-  drawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap, "WiFi network", Alignment::kCenter);
-  drawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", Alignment::kCenter);
-  drawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", Alignment::kCenter);
+  DrawString(qrCxL, pad + wifiQRpx + labelGap, "Scan to join", Alignment::kCenter);
+  DrawString(qrCxL, pad + wifiQRpx + labelGap + wifiGap, "WiFi network", Alignment::kCenter);
+  DrawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", Alignment::kCenter);
+  DrawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", Alignment::kCenter);
 
   int blockH = 270;
   int textY = (epd_height() - blockH) / 2;
 
-  setFont(OpenSans18B);
-  drawString(cx, textY - 48, "SETUP MODE", Alignment::kCenter);
-  setFont(OpenSans12B);
-  drawString(cx, textY + 48, "Connect to WiFi network:", Alignment::kCenter);
-  setFont(OpenSans18B);
-  drawString(cx, textY + 80, String(apName), Alignment::kCenter);
-  setFont(OpenSans12B);
-  drawString(cx, textY + 140, "Then open in a browser:", Alignment::kCenter);
-  setFont(OpenSans18B);
-  drawString(cx, textY + 172, "http://192.168.4.1", Alignment::kCenter);
-  setFont(OpenSans12B);
-  drawString(cx, textY + 228, "To update firmware:", Alignment::kCenter);
-  setFont(OpenSans18B);
-  drawString(cx, textY + 260, "http://192.168.4.1/update", Alignment::kCenter);
+  SetFont(OpenSans18B);
+  DrawString(cx, textY - 48, "SETUP MODE", Alignment::kCenter);
+  SetFont(OpenSans12B);
+  DrawString(cx, textY + 48, "Connect to WiFi network:", Alignment::kCenter);
+  SetFont(OpenSans18B);
+  DrawString(cx, textY + 80, String(ap_name), Alignment::kCenter);
+  SetFont(OpenSans12B);
+  DrawString(cx, textY + 140, "Then open in a browser:", Alignment::kCenter);
+  SetFont(OpenSans18B);
+  DrawString(cx, textY + 172, "http://192.168.4.1", Alignment::kCenter);
+  SetFont(OpenSans12B);
+  DrawString(cx, textY + 228, "To update firmware:", Alignment::kCenter);
+  SetFont(OpenSans18B);
+  DrawString(cx, textY + 260, "http://192.168.4.1/update", Alignment::kCenter);
 
-  edp_update();
+  EdpUpdate();
   epd_poweroff();
 }
 
@@ -338,44 +338,44 @@ void loop() {}
 void setup() {
   InitialiseSystem();
 
-  bool forceConfig = false;
+  bool force_config = false;
   pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
   if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
     delay(CONFIG_BUTTON_HOLD_MS);
     if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
       Serial.println("Config button held — entering setup mode");
-      forceConfig = true;
+      force_config = true;
     }
   }
 
-  if (!loadConfig() || !isConfigValid()) {
-    if (!seedConfigFromHeader() || !isConfigValid()) {
+  if (!LoadConfig() || !IsConfigValid()) {
+    if (!SeedConfigFromHeader() || !IsConfigValid()) {
       Serial.println("No valid config found — entering setup mode");
-      forceConfig = true;
+      force_config = true;
     }
   }
 
-  SleepDuration = cfg.sleep_duration;
-  WakeupHour    = cfg.wakeup_hour;
-  SleepHour     = cfg.sleep_hour;
+  sleep_duration = cfg.sleep_duration;
+  wakeup_hour    = cfg.wakeup_hour;
+  sleep_hour     = cfg.sleep_hour;
 
-  if (forceConfig) {
+  if (force_config) {
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    char apName[24];
-    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
-    DisplaySetupScreen(apName);
-    enterSetupMode();
+    char ap_name[24];
+    snprintf(ap_name, sizeof(ap_name), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(ap_name);
+    EnterSetupMode();
   }
 
   if (StartWiFi() != WL_CONNECTED) {
     Serial.println("WiFi failed — entering setup mode");
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    char apName[24];
-    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
-    DisplaySetupScreen(apName);
-    enterSetupMode();
+    char ap_name[24];
+    snprintf(ap_name, sizeof(ap_name), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(ap_name);
+    EnterSetupMode();
   }
   if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;

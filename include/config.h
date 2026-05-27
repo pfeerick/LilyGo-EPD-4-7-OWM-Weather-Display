@@ -37,7 +37,7 @@ struct AppConfig {
 
 extern AppConfig cfg;
 
-bool loadConfig();
-void saveConfig();
-bool isConfigValid();
-bool seedConfigFromHeader();
+bool LoadConfig();
+void SaveConfig();
+bool IsConfigValid();
+bool SeedConfigFromHeader();

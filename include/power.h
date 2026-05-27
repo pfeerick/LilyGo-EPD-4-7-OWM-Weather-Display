@@ -2,10 +2,10 @@
 
 #ifndef SIMULATOR_BUILD
 
-extern long SleepDuration;
-extern int WakeupHour;
-extern int SleepHour;
-extern long StartTime;
+extern long sleep_duration;
+extern int wakeup_hour;
+extern int sleep_hour;
+extern long start_time;
 
 void BeginSleep();
 bool SetupTime();

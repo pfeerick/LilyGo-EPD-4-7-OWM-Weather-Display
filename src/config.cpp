@@ -22,13 +22,13 @@ AppConfig cfg = {
     "pool.ntp.org",            // ntpServer
     0,                         // gmtOffset_sec
     0,                         // daylightOffset_sec
-    60,                        // sleepDuration
-    8,                         // wakeupHour
-    23,                        // sleepHour
+    60,                        // sleep_duration
+    8,                         // wakeup_hour
+    23,                        // sleep_hour
     false                      // debugDisplayUpdate
 };
 
-bool loadConfig() {
+bool LoadConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed");
     return false;
@@ -66,7 +66,7 @@ bool loadConfig() {
   return true;
 }
 
-void saveConfig() {
+void SaveConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed — config not saved");
     return;
@@ -85,9 +85,9 @@ void saveConfig() {
   doc["ntpServer"] = cfg.ntp_server;
   doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
   doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
-  doc["sleepDuration"] = cfg.sleep_duration;
-  doc["wakeupHour"] = cfg.wakeup_hour;
-  doc["sleepHour"] = cfg.sleep_hour;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
   doc["debugDisplayUpdate"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
@@ -104,7 +104,7 @@ bool isConfigValid() {
          !cfg.timezone.empty();
 }
 
-bool seedConfigFromHeader() {
+bool SeedConfigFromHeader() {
 #ifdef OWM_CREDENTIALS_AVAILABLE
   cfg.ssid = ssid;
   cfg.password = password;
@@ -121,7 +121,7 @@ bool seedConfigFromHeader() {
   cfg.daylightOffset_sec = daylightOffset_sec;
   cfg.debugDisplayUpdate = DebugDisplayUpdate;
   Serial.println("Config seeded from owm_credentials.h");
-  saveConfig();
+  SaveConfig();
   return true;
 #else
   return false;
