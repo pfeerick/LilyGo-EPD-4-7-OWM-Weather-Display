@@ -86,13 +86,13 @@ static void handleConfigJson() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntp_server;
-  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
-  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
   doc["sleep_duration"] = cfg.sleep_duration;
   doc["wakeup_hour"] = cfg.wakeup_hour;
   doc["sleep_hour"] = cfg.sleep_hour;
-  doc["debugDisplayUpdate"] = cfg.debug_display_update;
+  doc["debug_display_update"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
   httpServer.send(200, "application/json", body);
@@ -123,7 +123,7 @@ static void handleSave() {
   CHECK_FIELD_LEN("language", cfg.language)
   CHECK_FIELD_LEN("units", cfg.units)
   CHECK_FIELD_LEN("timezone", cfg.timezone)
-  CHECK_FIELD_LEN("ntpServer", cfg.ntp_server)
+  CHECK_FIELD_LEN("ntp_server", cfg.ntp_server)
 
   arg("ssid").toCharArray(cfg.ssid, sizeof(cfg.ssid));
 
@@ -145,9 +145,9 @@ static void handleSave() {
   arg("language").toCharArray(cfg.language, sizeof(cfg.language));
   arg("units").toCharArray(cfg.units, sizeof(cfg.units));
   arg("timezone").toCharArray(cfg.timezone, sizeof(cfg.timezone));
-  arg("ntpServer").toCharArray(cfg.ntp_server, sizeof(cfg.ntp_server));
-  cfg.gmt_offset_sec = arg("gmtOffset_sec").toInt();
-  cfg.daylight_offset_sec = arg("daylightOffset_sec").toInt();
+  arg("ntp_server").toCharArray(cfg.ntp_server, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
+  cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
   cfg.sleep_duration = arg("sleep_duration").toInt();
   cfg.wakeup_hour = arg("wakeup_hour").toInt();
   cfg.sleep_hour = arg("sleep_hour").toInt();

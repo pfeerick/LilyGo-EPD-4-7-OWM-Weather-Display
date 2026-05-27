@@ -55,13 +55,13 @@ bool LoadConfig() {
   strlcpy(cfg.language, doc["language"] | kDefaultLanguage, sizeof(cfg.language));
   strlcpy(cfg.units, doc["units"] | kDefaultUnits, sizeof(cfg.units));
   strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
-  strlcpy(cfg.ntp_server, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntp_server));
-  cfg.gmt_offset_sec = doc["gmtOffset_sec"] | 0;
-  cfg.daylight_offset_sec = doc["daylightOffset_sec"] | 0;
+  strlcpy(cfg.ntp_server, doc["ntp_server"] | kDefaultNtpServer, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = doc["gmt_offset_sec"] | 0;
+  cfg.daylight_offset_sec = doc["daylight_offset_sec"] | 0;
   cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
   cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
   cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
-  cfg.debug_display_update = doc["debugDisplayUpdate"] | false;
+  cfg.debug_display_update = doc["debug_display_update"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
 }
@@ -82,13 +82,13 @@ void SaveConfig() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntp_server;
-  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
-  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
   doc["sleep_duration"] = cfg.sleep_duration;
   doc["wakeup_hour"] = cfg.wakeup_hour;
   doc["sleep_hour"] = cfg.sleep_hour;
-  doc["debugDisplayUpdate"] = cfg.debug_display_update;
+  doc["debug_display_update"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
     Serial.println("Failed to open config.json for writing");
