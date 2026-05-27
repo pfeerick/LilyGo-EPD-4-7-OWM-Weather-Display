@@ -960,7 +960,7 @@ bool UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise
-    Serial.println("Failed to obtain time");
+    Serial.printf("Failed to obtain time\n");
     return false;
   }
   CurrentHour = timeinfo.tm_hour;
