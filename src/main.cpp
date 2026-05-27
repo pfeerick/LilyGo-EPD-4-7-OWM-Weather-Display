@@ -18,7 +18,7 @@
 #include "forecast_record.h"
 #include "translations/lang_en.h"
 #else
-// PC build: includes provided by main_pc.cpp before including this file
+// Simulator build: includes provided by simulator/main_wasm.cpp before including this file
 #endif
 
 enum alignment { LEFT, RIGHT, CENTER };
@@ -1010,7 +1010,7 @@ void DrawBattery(int x, int y) {
     drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
   }
 }
-#endif  // SIMULATOR_BUILD — DrawBattery uses ADC; PC version defined in simulator/main_pc.cpp
+#endif  // SIMULATOR_BUILD — DrawBattery uses ADC; stub defined in simulator/main_wasm.cpp
 
 // Symbols are drawn on a relative 10x10grid and 1 scale unit = 1 drawing unit
 void addcloud(int x, int y, int scale, int linesize) {

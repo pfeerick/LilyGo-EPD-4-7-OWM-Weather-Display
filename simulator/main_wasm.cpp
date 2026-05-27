@@ -2,7 +2,7 @@
 // OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
 #define SIMULATOR_BUILD 1
 
-#include "pc_stubs.h"
+#include "simulator_stubs.h"
 #include "epdiy_pc/epdiy_pc.h"
 
 #ifdef min
