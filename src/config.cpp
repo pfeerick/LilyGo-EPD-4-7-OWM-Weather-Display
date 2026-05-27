@@ -16,7 +16,6 @@ AppConfig cfg = {
     "",                        // latitude
     "",                        // longitude
     "EN",                      // language
-    "north",                   // hemisphere
     "M",                       // units
     "",                        // timezone
     "pool.ntp.org",            // ntpServer
@@ -53,7 +52,6 @@ bool loadConfig() {
   strlcpy(cfg.latitude, doc["latitude"] | "", sizeof(cfg.latitude));
   strlcpy(cfg.longitude, doc["longitude"] | "", sizeof(cfg.longitude));
   strlcpy(cfg.language, doc["language"] | "EN", sizeof(cfg.language));
-  strlcpy(cfg.hemisphere, doc["hemisphere"] | "north", sizeof(cfg.hemisphere));
   strlcpy(cfg.units, doc["units"] | "M", sizeof(cfg.units));
   strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
   strlcpy(cfg.ntpServer, doc["ntpServer"] | "pool.ntp.org", sizeof(cfg.ntpServer));
@@ -81,7 +79,6 @@ void saveConfig() {
   doc["latitude"] = cfg.latitude;
   doc["longitude"] = cfg.longitude;
   doc["language"] = cfg.language;
-  doc["hemisphere"] = cfg.hemisphere;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
   doc["ntpServer"] = cfg.ntpServer;
@@ -116,7 +113,6 @@ bool seedConfigFromHeader() {
   strlcpy(cfg.latitude, Latitude.c_str(), sizeof(cfg.latitude));
   strlcpy(cfg.longitude, Longitude.c_str(), sizeof(cfg.longitude));
   strlcpy(cfg.language, Language.c_str(), sizeof(cfg.language));
-  strlcpy(cfg.hemisphere, Hemisphere.c_str(), sizeof(cfg.hemisphere));
   strlcpy(cfg.units, Units.c_str(), sizeof(cfg.units));
   strlcpy(cfg.timezone, Timezone, sizeof(cfg.timezone));
   strlcpy(cfg.ntpServer, ntpServer, sizeof(cfg.ntpServer));

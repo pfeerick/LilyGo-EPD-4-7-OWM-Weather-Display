@@ -23,7 +23,6 @@ struct AppConfig {
   char latitude[16];
   char longitude[16];
   char language[8];
-  char hemisphere[8];
   char units[4];
   char timezone[80];
   char ntpServer[64];

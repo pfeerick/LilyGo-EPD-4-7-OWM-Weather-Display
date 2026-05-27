@@ -107,8 +107,8 @@ void DisplayVisiCCoverUVISection(int x, int y);
 void Display_UVIndexLevel(int x, int y, float UVI);
 void DisplayForecastWeather(int x, int y, int index, int fwidth);
 void DisplayAstronomySection(int x, int y);
-void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisphere);
-String MoonPhase(int d, int m, int y, String hemisphere);
+void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernHemisphere);
+String MoonPhase(int d, int m, int y);
 void DisplayForecastSection(int x, int y);
 void DisplayGraphSection(int x, int y);
 void DisplayConditionsSection(int x, int y, String IconName, bool IconSize);
@@ -739,22 +739,25 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
 }
 
 
+static inline bool isSouthernHemisphere() {
+  return atof(cfg.latitude) < 0.0;
+}
+
 void DisplayAstronomySection(int x, int y) {
   setFont(OpenSans10B);
   time_t now = time(NULL);
   struct tm* now_utc = gmtime(&now);
-  drawString(x + 5, y + 102,
-             MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, String(cfg.hemisphere)), LEFT);
+  drawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900), LEFT);
   DrawMoonImage(x + 10, y + 23);  // Different references!
   DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900,
-           String(cfg.hemisphere));  // Spaced at 1/2 moon size, so 10 - 75/2 = -28
+           isSouthernHemisphere());  // Spaced at 1/2 moon size, so 10 - 75/2 = -28
   drawString(x + 115, y + 40, ConvertUnixTime(WxConditions[0].Sunrise).substring(0, 5), LEFT);  // Sunrise
   drawString(x + 115, y + 80, ConvertUnixTime(WxConditions[0].Sunset).substring(0, 5), LEFT);   // Sunset
   DrawSunriseImage(x + 180, y + 20);
   DrawSunsetImage(x + 180, y + 60);
 }
 
-void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisphere) {
+void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernHemisphere) {
   int c, e;
   double jd;
   if (mm < 3) {
@@ -770,8 +773,7 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisph
   jd -= b;  // fractional part 0.0–1.0
   double Phase = jd;
   b = (int)(Phase * 8 + 0.5) & 7;
-  hemisphere.toLowerCase();
-  if (hemisphere == "south") Phase = 1 - Phase;
+  if (southernHemisphere) Phase = 1 - Phase;
   int octant = (int)(Phase * 8 + 0.5) & 7;
   // Draw dark part of moon
   fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, DarkGrey);
@@ -803,7 +805,7 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisph
   drawCircle(x + diameter - 1, y + diameter, diameter / 2, Black);
 }
 
-String MoonPhase(int d, int m, int y, String hemisphere) {
+String MoonPhase(int d, int m, int y) {
   int c, e;
   double jd;
   int b;
