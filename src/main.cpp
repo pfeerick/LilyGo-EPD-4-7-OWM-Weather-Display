@@ -22,28 +22,28 @@
 #endif
 
 enum alignment { LEFT, RIGHT, CENTER };
-#define White 0xFF
-#define LightGrey 0xBB
-#define Grey 0x88
-#define DarkGrey 0x44
-#define Black 0x00
+constexpr uint8_t White     = 0xFF;
+constexpr uint8_t LightGrey = 0xBB;
+constexpr uint8_t Grey      = 0x88;
+constexpr uint8_t DarkGrey  = 0x44;
+constexpr uint8_t Black     = 0x00;
 
-#define autoscale_on true
-#define autoscale_off false
-#define barchart_on true
-#define barchart_off false
+constexpr bool autoscale_on  = true;
+constexpr bool autoscale_off = false;
+constexpr bool barchart_on   = true;
+constexpr bool barchart_off  = false;
 
 #ifndef SIMULATOR_BUILD
 boolean LargeIcon = true;
 boolean SmallIcon = false;
-#define Large 20  // For icon drawing
-#define Small 10  // For icon drawing
+constexpr uint8_t Large = 20;  // For icon drawing
+constexpr uint8_t Small = 10;  // For icon drawing
 String Time_str = "--:--:--";
 String Date_str = "-- --- ----";
 int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 //################ PROGRAM VARIABLES and OBJECTS ##########################################
-#define max_readings 24  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
-#define max_graph_readings 16
+constexpr uint8_t max_readings       = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
+constexpr uint8_t max_graph_readings = 16;
 
 Forecast_record_type WxConditions[1];
 Forecast_record_type WxForecast[max_readings];
@@ -166,9 +166,9 @@ void BeginSleep() {
   SleepTimer = (SleepDuration * 60 - ((CurrentMin % SleepDuration) * 60 + CurrentSec)) +
                Delta;  //Some ESP32 have a RTC that is too fast to maintain accurate time, so add an offset
   esp_sleep_enable_timer_wakeup(SleepTimer * 1000000LL);  // in Secs, 1000000LL converts to Secs as unit = 1uSec
-  Serial.println("Awake for : " + String((millis() - StartTime) / 1000.0, 3) + "-secs");
-  Serial.println("Entering " + String(SleepTimer) + " (secs) of sleep time");
-  Serial.println("Starting deep-sleep period...");
+  Serial.printf("Awake for : %.3f-secs\n", (millis() - StartTime) / 1000.0);
+  Serial.printf("Entering %ld (secs) of sleep time\n", SleepTimer);
+  Serial.printf("Starting deep-sleep period...\n");
   esp_deep_sleep_start();  // Sleep for e.g. 30 minutes
 }
 
@@ -181,7 +181,7 @@ boolean SetupTime() {
 }
 
 uint8_t StartWiFi() {
-  Serial.println("\r\nConnecting to: " + String(cfg.ssid));
+  Serial.printf("\r\nConnecting to: %s\n", cfg.ssid);
   IPAddress dns(8, 8, 8, 8);  // Use Google DNS
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);  // switch off AP
@@ -196,16 +196,16 @@ uint8_t StartWiFi() {
   }
   if (WiFi.status() == WL_CONNECTED) {
     wifi_signal = WiFi.RSSI();  // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
-    Serial.println("WiFi connected at: " + WiFi.localIP().toString());
+    Serial.printf("WiFi connected at: %s\n", WiFi.localIP().toString().c_str());
   } else
-    Serial.println("WiFi connection *** FAILED ***");
+    Serial.printf("WiFi connection *** FAILED ***\n");
   return WiFi.status();
 }
 
 void StopWiFi() {
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);
-  Serial.println("WiFi switched Off");
+  Serial.printf("WiFi switched Off\n");
 }
 
 void InitialiseSystem() {
@@ -213,7 +213,7 @@ void InitialiseSystem() {
   Serial.begin(115200);
   while (!Serial)
     ;
-  Serial.println(String(__FILE__) + "\nStarting...");
+  Serial.printf("%s\nStarting...\n", __FILE__);
   epd_init(&epd_board_lilygo_t5_47, &ED047TC2, EPD_LUT_64K);
   epd_set_vcom(1560);
   hl = epd_hl_init(EPD_BUILTIN_WAVEFORM);
@@ -286,7 +286,7 @@ void setup() {
         if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
-      Serial.println("Received all weather data...");
+      Serial.printf("Received all weather data...\n");
       if (RxWeather) {
         StopWiFi();
         epd_poweron();
@@ -403,89 +403,88 @@ void Convert_Readings_to_Imperial(int count) {
 
 #ifndef SIMULATOR_BUILD
 bool DecodeWeather(WiFiClient& json, String Type) {
-  Serial.print(F("\nCreating object..."));
+  Serial.printf("\nCreating object...");
   JsonDocument doc;                                         // allocate the JsonDocument
   DeserializationError error = deserializeJson(doc, json);  // Deserialize the JSON document
   if (error) {                                              // Test if parsing succeeds.
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.c_str());
+    Serial.printf("deserializeJson() failed: %s\n", error.c_str());
     return false;
   }
   // convert it to a JsonObject
   JsonObject root = doc.as<JsonObject>();
-  Serial.println(" Decoding " + Type + " data");
+  Serial.printf(" Decoding %s data\n", Type.c_str());
   WxConditions[0].High = -50;  // Sentinel: replaced by daily[0] max below
   WxConditions[0].Low = 50;    // Sentinel: replaced by daily[0] min below
   JsonObject current = doc["current"];
   WxConditions[0].Sunrise = current["sunrise"];
-  Serial.println("SRis: " + String(WxConditions[0].Sunrise));
+  Serial.printf("SRis: %d\n", WxConditions[0].Sunrise);
   WxConditions[0].Sunset = current["sunset"];
-  Serial.println("SSet: " + String(WxConditions[0].Sunset));
+  Serial.printf("SSet: %d\n", WxConditions[0].Sunset);
   WxConditions[0].Temperature = current["temp"];
-  Serial.println("Temp: " + String(WxConditions[0].Temperature));
+  Serial.printf("Temp: %f\n", WxConditions[0].Temperature);
   WxConditions[0].FeelsLike = current["feels_like"];
-  Serial.println("FLik: " + String(WxConditions[0].FeelsLike));
+  Serial.printf("FLik: %f\n", WxConditions[0].FeelsLike);
   WxConditions[0].Pressure = current["pressure"];
-  Serial.println("Pres: " + String(WxConditions[0].Pressure));
+  Serial.printf("Pres: %f\n", WxConditions[0].Pressure);
   WxConditions[0].Humidity = current["humidity"];
-  Serial.println("Humi: " + String(WxConditions[0].Humidity));
+  Serial.printf("Humi: %f\n", WxConditions[0].Humidity);
   WxConditions[0].DewPoint = current["dew_point"];
-  Serial.println("DPoi: " + String(WxConditions[0].DewPoint));
+  Serial.printf("DPoi: %f\n", WxConditions[0].DewPoint);
   WxConditions[0].UVI = current["uvi"];
-  Serial.println("UVin: " + String(WxConditions[0].UVI));
+  Serial.printf("UVin: %f\n", WxConditions[0].UVI);
   WxConditions[0].Cloudcover = current["clouds"];
-  Serial.println("CCov: " + String(WxConditions[0].Cloudcover));
+  Serial.printf("CCov: %d\n", WxConditions[0].Cloudcover);
   WxConditions[0].Visibility = current["visibility"];
-  Serial.println("Visi: " + String(WxConditions[0].Visibility));
+  Serial.printf("Visi: %d\n", WxConditions[0].Visibility);
   WxConditions[0].Windspeed = current["wind_speed"];
-  Serial.println("WSpd: " + String(WxConditions[0].Windspeed));
+  Serial.printf("WSpd: %f\n", WxConditions[0].Windspeed);
   WxConditions[0].Winddir = current["wind_deg"];
-  Serial.println("WDir: " + String(WxConditions[0].Winddir));
+  Serial.printf("WDir: %d\n", WxConditions[0].Winddir);
   JsonObject current_weather = current["weather"][0];
   String Description = current_weather["description"];  // "scattered clouds"
   String Icon = current_weather["icon"];                // "01n"
   WxConditions[0].Forecast0 = Description;
-  Serial.println("Fore: " + String(WxConditions[0].Forecast0));
+  Serial.printf("Fore: %s\n", WxConditions[0].Forecast0.c_str());
   WxConditions[0].Icon = Icon;
-  Serial.println("Icon: " + String(WxConditions[0].Icon));
+  Serial.printf("Icon: %s\n", WxConditions[0].Icon.c_str());
 
   Serial.println(json);
-  Serial.print(F("\nReceiving Forecast period - "));  //------------------------------------------------
+  Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
 
   // Daily
   JsonArray daily = root["daily"];
   WxConditions[0].Low = daily[0]["temp"]["min"].as<float>();  // Get Lowest temperature for next 24Hrs
-  Serial.println("TLow: " + String(WxConditions[0].Low));
+  Serial.printf("TLow: %f\n", WxConditions[0].Low);
   WxConditions[0].High = daily[0]["temp"]["max"].as<float>();  // Get Highest temperature for next 24Hrs
-  Serial.println("High: " + String(WxConditions[0].High));
+  Serial.printf("High: %f\n", WxConditions[0].High);
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
   JsonArray list = root["hourly"];
-  byte wxIndex = 0;                                          // Index to populate WxForecast sequentially
-  Serial.println("hourly list size" + String(list.size()));  // 48 hours of hourly data is returned by the API
+  byte wxIndex = 0;                                              // Index to populate WxForecast sequentially
+  Serial.printf("hourly list size: %u\n", list.size());  // 48 hours of hourly data is returned by the API
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
-    Serial.println("\nPeriod-" + String(r) + "--------------");
+    Serial.printf("\nPeriod-%u--------------\n", r);
 
     WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
     WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
-    Serial.println("Temp: " + String(WxForecast[wxIndex].Temperature));
+    Serial.printf("Temp: %f\n", WxForecast[wxIndex].Temperature);
     float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
     float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
     WxForecast[wxIndex].High = max(max(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.println("High: " + String(WxForecast[wxIndex].High));
+    Serial.printf("High: %f\n", WxForecast[wxIndex].High);
     WxForecast[wxIndex].Low = min(min(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.println("Low: " + String(WxForecast[wxIndex].Low));
+    Serial.printf("Low: %f\n", WxForecast[wxIndex].Low);
     WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
-    Serial.println("Pres: " + String(WxForecast[wxIndex].Pressure));
+    Serial.printf("Pres: %f\n", WxForecast[wxIndex].Pressure);
     WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    Serial.println("Humi: " + String(WxForecast[wxIndex].Humidity));
+    Serial.printf("Humi: %f\n", WxForecast[wxIndex].Humidity);
     WxForecast[wxIndex].Icon = list[r]["weather"][0]["icon"].as<const char*>();
-    Serial.println("Icon: " + String(WxForecast[wxIndex].Icon));
+    Serial.printf("Icon: %s\n", WxForecast[wxIndex].Icon.c_str());
     WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
-    Serial.println("Rain: " + String(WxForecast[wxIndex].Rainfall));
+    Serial.printf("Rain: %f\n", WxForecast[wxIndex].Rainfall);
     WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
-    Serial.println("Snow: " + String(WxForecast[wxIndex].Snowfall));
+    Serial.printf("Snow: %f\n", WxForecast[wxIndex].Snowfall);
 
     //------------------------------------------
     if (wxIndex >= 2) {
@@ -687,7 +686,7 @@ void DisplayTempHumiPressSection(int x, int y) {
 }
 
 void DisplayForecastTextSection(int x, int y) {
-#define lineWidth 34
+  constexpr uint8_t lineWidth = 34;
   setFont(OpenSans12B);
   String Wx_Description = WxConditions[0].Forecast0;
   Wx_Description.replace(".", "");  // remove any '.'
@@ -875,7 +874,7 @@ void DisplayGraphSection(int x, int y) {
 }
 
 void DisplayConditionsSection(int x, int y, String IconName, bool IconSize) {
-  Serial.println("Icon name: " + IconName);
+  Serial.printf("Icon name: %s\n", IconName.c_str());
   if (IconName == "01d" || IconName == "01n")
     ClearSky(x, y, IconSize, IconName);
   else if (IconName == "02d" || IconName == "02n")
@@ -999,7 +998,7 @@ void DrawBattery(int x, int y) {
   }
   float voltage = analogRead(36) / 4096.0 * 6.566 * (vref / 1000.0);
   if (voltage > 1) {  // Only display if there is a valid reading
-    Serial.println("\nVoltage = " + String(voltage));
+    Serial.printf("\nVoltage = %.2f\n", voltage);
     percentage = 2836.9625 * pow(voltage, 4) - 43987.4889 * pow(voltage, 3) + 255233.8134 * pow(voltage, 2) -
                  656689.7123 * voltage + 632041.7303;
     if (voltage >= 4.20) percentage = 100;
@@ -1252,8 +1251,8 @@ void DrawUVI(int x, int y) {
 */
 void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[],
                int readings, boolean auto_scale, boolean barchart_mode) {
-#define auto_scale_margin 0  // Sets the autoscale increment, so axis steps up after a change of e.g. 3
-#define y_minor_axis 5       // 5 y-axis division markers
+  constexpr float   auto_scale_margin = 0;  // Sets the autoscale increment, so axis steps up after a change of e.g. 3
+  constexpr uint8_t y_minor_axis      = 5;  // 5 y-axis division markers
   setFont(OpenSans10B);
   float maxYscale = -10000;
   float minYscale = 10000;
@@ -1293,7 +1292,7 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
     last_y = y2;
   }
   //Draw the Y-axis scale
-#define number_of_dashes 20
+  constexpr uint8_t number_of_dashes = 20;
   for (int spacing = 0; spacing <= y_minor_axis; spacing++) {
     for (int j = 0; j < number_of_dashes; j++) {  // Draw dashed graph grid lines
       if (spacing < y_minor_axis)
@@ -1313,7 +1312,7 @@ void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
       }
     }
   }
-#define number_of_sections 2
+  constexpr uint8_t number_of_sections = 2;
   for (int i = 0; i < number_of_sections; i++) {
     drawString(20 + x_pos + gwidth / number_of_sections * i, y_pos + gheight + 10, String(i) + "d", LEFT);
     if (i < 2)
