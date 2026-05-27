@@ -181,7 +181,7 @@ void BeginSleep() {
   esp_sleep_enable_timer_wakeup(SleepTimer * 1000000LL);  // in Secs, 1000000LL converts to Secs as unit = 1uSec
   Serial.printf("Awake for : %.3f-secs\n", (millis() - StartTime) / 1000.0);
   Serial.printf("Entering %ld (secs) of sleep time\n", SleepTimer);
-  Serial.println("Starting deep-sleep period...");
+  Serial.printf("Starting deep-sleep period...\n");
   esp_deep_sleep_start();  // Sleep for e.g. 30 minutes
 }
 
