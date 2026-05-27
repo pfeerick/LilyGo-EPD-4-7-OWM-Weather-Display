@@ -22,13 +22,13 @@ AppConfig cfg = {
     "pool.ntp.org",            // ntpServer
     0,                         // gmtOffset_sec
     0,                         // daylightOffset_sec
-    60,                        // sleepDuration
-    8,                         // wakeupHour
-    23,                        // sleepHour
+    60,                        // sleep_duration
+    8,                         // wakeup_hour
+    23,                        // sleep_hour
     false                      // debugDisplayUpdate
 };
 
-bool loadConfig() {
+bool LoadConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed");
     return false;
@@ -58,15 +58,15 @@ bool loadConfig() {
   strlcpy(cfg.ntp_server, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntp_server));
   cfg.gmt_offset_sec = doc["gmtOffset_sec"] | 0;
   cfg.daylight_offset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleep_duration = doc["sleepDuration"] | kDefaultSleepDuration;
-  cfg.wakeup_hour = doc["wakeupHour"] | kDefaultWakeupHour;
-  cfg.sleep_hour = doc["sleepHour"] | kDefaultSleepHour;
+  cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
+  cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
+  cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
   cfg.debug_display_update = doc["debugDisplayUpdate"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
 }
 
-void saveConfig() {
+void SaveConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed — config not saved");
     return;
@@ -85,9 +85,9 @@ void saveConfig() {
   doc["ntpServer"] = cfg.ntp_server;
   doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
   doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
-  doc["sleepDuration"] = cfg.sleep_duration;
-  doc["wakeupHour"] = cfg.wakeup_hour;
-  doc["sleepHour"] = cfg.sleep_hour;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
   doc["debugDisplayUpdate"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
@@ -99,12 +99,12 @@ void saveConfig() {
   Serial.println("Config saved to LittleFS");
 }
 
-bool isConfigValid() {
+bool IsConfigValid() {
   return cfg.ssid[0] != '\0' && cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0' &&
          cfg.timezone[0] != '\0';
 }
 
-bool seedConfigFromHeader() {
+bool SeedConfigFromHeader() {
 #ifdef OWM_CREDENTIALS_AVAILABLE
   strlcpy(cfg.ssid, ssid, sizeof(cfg.ssid));
   strlcpy(cfg.password, password, sizeof(cfg.password));
@@ -121,7 +121,7 @@ bool seedConfigFromHeader() {
   cfg.daylight_offset_sec = daylightOffset_sec;
   cfg.debug_display_update = DebugDisplayUpdate;
   Serial.println("Config seeded from owm_credentials.h");
-  saveConfig();
+  SaveConfig();
   return true;
 #else
   return false;

@@ -5,19 +5,19 @@
 constexpr uint8_t kMaxReadings      = 24;
 constexpr uint8_t kMaxGraphReadings = 16;
 
-extern ForecastRecord WxConditions;
-extern ForecastRecord WxForecast[];
+extern ForecastRecord wx_conditions;
+extern ForecastRecord wx_forecast[];
 
 #ifndef SIMULATOR_BUILD
 #include <WiFiClient.h>
-bool obtainWeatherData(WiFiClient& client, const String& RequestType);
-bool DecodeWeather(WiFiClient& json, const String& Type);
+bool ObtainWeatherData(WiFiClient& client, const String& request_type);
+bool DecodeWeather(WiFiClient& json, const String& type);
 #endif
 
 String ConvertUnixTime(int unix_time);
-float mm_to_inches(float value_mm);
-float hPa_to_inHg(float value_hPa);
+float MmToInches(float value_mm);
+float HpaToInhg(float value_hpa);
 int JulianDate(int d, int m, int y);
-float SumOfPrecip(float DataArray[], int readings);
+float SumOfPrecip(float data_array[], int readings);
 String TitleCase(const String& text);
-void Convert_Readings_to_Imperial(int count);
+void ConvertReadingsToImperial(int count);

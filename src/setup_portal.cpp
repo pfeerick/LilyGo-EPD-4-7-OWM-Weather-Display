@@ -89,9 +89,9 @@ static void handleConfigJson() {
   doc["ntpServer"] = cfg.ntp_server;
   doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
   doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
-  doc["sleepDuration"] = cfg.sleep_duration;
-  doc["wakeupHour"] = cfg.wakeup_hour;
-  doc["sleepHour"] = cfg.sleep_hour;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
   doc["debugDisplayUpdate"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
@@ -148,11 +148,11 @@ static void handleSave() {
   arg("ntpServer").toCharArray(cfg.ntp_server, sizeof(cfg.ntp_server));
   cfg.gmt_offset_sec = arg("gmtOffset_sec").toInt();
   cfg.daylight_offset_sec = arg("daylightOffset_sec").toInt();
-  cfg.sleep_duration = arg("sleepDuration").toInt();
-  cfg.wakeup_hour = arg("wakeupHour").toInt();
-  cfg.sleep_hour = arg("sleepHour").toInt();
+  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.wakeup_hour = arg("wakeup_hour").toInt();
+  cfg.sleep_hour = arg("sleep_hour").toInt();
 
-  saveConfig();
+  SaveConfig();
 
   httpServer.send(200, "text/html",
                   "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>"
@@ -219,7 +219,7 @@ static void handleNotFound() {
 
 // ---------------------------------------------------------------------------
 
-void enterSetupMode() {
+void EnterSetupMode() {
   Serial.println("Entering setup mode");
 
   // Derive a unique AP name from the last 4 hex digits of MAC
