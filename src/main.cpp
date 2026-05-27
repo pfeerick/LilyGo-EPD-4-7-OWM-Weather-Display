@@ -198,14 +198,14 @@ uint8_t StartWiFi() {
     wifi_signal = WiFi.RSSI();  // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
     Serial.printf("WiFi connected at: %s\n", WiFi.localIP().toString().c_str());
   } else
-    Serial.println("WiFi connection *** FAILED ***");
+    Serial.printf("WiFi connection *** FAILED ***\n");
   return WiFi.status();
 }
 
 void StopWiFi() {
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);
-  Serial.println("WiFi switched Off");
+  Serial.printf("WiFi switched Off\n");
 }
 
 void InitialiseSystem() {
@@ -286,7 +286,7 @@ void setup() {
         if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
-      Serial.println("Received all weather data...");
+      Serial.printf("Received all weather data...\n");
       if (RxWeather) {
         StopWiFi();
         epd_poweron();
