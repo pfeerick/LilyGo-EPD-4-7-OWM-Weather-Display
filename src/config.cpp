@@ -1,4 +1,4 @@
-#include "config.h"
+﻿#include "config.h"
 #include "defaults.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -22,13 +22,13 @@ AppConfig cfg = {
     "pool.ntp.org",            // ntpServer
     0,                         // gmtOffset_sec
     0,                         // daylightOffset_sec
-    60,                        // sleepDuration
-    8,                         // wakeupHour
-    23,                        // sleepHour
+    60,                        // sleep_duration
+    8,                         // wakeup_hour
+    23,                        // sleep_hour
     false                      // debugDisplayUpdate
 };
 
-bool loadConfig() {
+bool LoadConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed");
     return false;
@@ -55,18 +55,18 @@ bool loadConfig() {
   strlcpy(cfg.language, doc["language"] | kDefaultLanguage, sizeof(cfg.language));
   strlcpy(cfg.units, doc["units"] | kDefaultUnits, sizeof(cfg.units));
   strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec = doc["gmtOffset_sec"] | 0;
-  cfg.daylightOffset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleepDuration = doc["sleepDuration"] | kDefaultSleepDuration;
-  cfg.wakeupHour = doc["wakeupHour"] | kDefaultWakeupHour;
-  cfg.sleepHour = doc["sleepHour"] | kDefaultSleepHour;
-  cfg.debugDisplayUpdate = doc["debugDisplayUpdate"] | false;
+  strlcpy(cfg.ntp_server, doc["ntp_server"] | kDefaultNtpServer, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = doc["gmt_offset_sec"] | 0;
+  cfg.daylight_offset_sec = doc["daylight_offset_sec"] | 0;
+  cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
+  cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
+  cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
+  cfg.debug_display_update = doc["debug_display_update"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
 }
 
-void saveConfig() {
+void SaveConfig() {
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed — config not saved");
     return;
@@ -82,13 +82,13 @@ void saveConfig() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
+  doc["debug_display_update"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
     Serial.println("Failed to open config.json for writing");
@@ -99,29 +99,29 @@ void saveConfig() {
   Serial.println("Config saved to LittleFS");
 }
 
-bool isConfigValid() {
+bool IsConfigValid() {
   return cfg.ssid[0] != '\0' && cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0' &&
          cfg.timezone[0] != '\0';
 }
 
-bool seedConfigFromHeader() {
+bool SeedConfigFromHeader() {
 #ifdef OWM_CREDENTIALS_AVAILABLE
   strlcpy(cfg.ssid, ssid, sizeof(cfg.ssid));
   strlcpy(cfg.password, password, sizeof(cfg.password));
   strlcpy(cfg.apikey, apikey.c_str(), sizeof(cfg.apikey));
   strlcpy(cfg.server, server, sizeof(cfg.server));
-  strlcpy(cfg.city, City.c_str(), sizeof(cfg.city));
-  strlcpy(cfg.latitude, Latitude.c_str(), sizeof(cfg.latitude));
-  strlcpy(cfg.longitude, Longitude.c_str(), sizeof(cfg.longitude));
-  strlcpy(cfg.language, Language.c_str(), sizeof(cfg.language));
-  strlcpy(cfg.units, Units.c_str(), sizeof(cfg.units));
-  strlcpy(cfg.timezone, Timezone, sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, ntpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec = gmtOffset_sec;
-  cfg.daylightOffset_sec = daylightOffset_sec;
-  cfg.debugDisplayUpdate = DebugDisplayUpdate;
+  strlcpy(cfg.city, city.c_str(), sizeof(cfg.city));
+  strlcpy(cfg.latitude, latitude.c_str(), sizeof(cfg.latitude));
+  strlcpy(cfg.longitude, longitude.c_str(), sizeof(cfg.longitude));
+  strlcpy(cfg.language, language.c_str(), sizeof(cfg.language));
+  strlcpy(cfg.units, units.c_str(), sizeof(cfg.units));
+  strlcpy(cfg.timezone, timezone, sizeof(cfg.timezone));
+  strlcpy(cfg.ntp_server, ntp_server, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = gmt_offset_sec;
+  cfg.daylight_offset_sec = daylight_offset_sec;
+  cfg.debug_display_update = debug_display_update;
   Serial.println("Config seeded from owm_credentials.h");
-  saveConfig();
+  SaveConfig();
   return true;
 #else
   return false;

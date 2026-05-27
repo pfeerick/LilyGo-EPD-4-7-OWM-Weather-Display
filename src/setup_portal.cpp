@@ -1,4 +1,4 @@
-#include "setup_portal.h"
+﻿#include "setup_portal.h"
 #include "config.h"
 #include "config_html.h"
 #include "update_html.h"
@@ -60,12 +60,12 @@ static String buildPage() {
   }
 
   page.replace("__TIMEZONE__", htmlEscape(cfg.timezone));
-  page.replace("__NTPSERVER__", htmlEscape(cfg.ntpServer));
-  page.replace("__GMTOFFSET__", String(cfg.gmtOffset_sec));
-  page.replace("__DSTOFFSET__", String(cfg.daylightOffset_sec));
-  page.replace("__SLEEPDURATION__", String(cfg.sleepDuration));
-  page.replace("__WAKEUPHOUR__", String(cfg.wakeupHour));
-  page.replace("__SLEEPHOUR__", String(cfg.sleepHour));
+  page.replace("__NTPSERVER__", htmlEscape(cfg.ntp_server));
+  page.replace("__GMTOFFSET__", String(cfg.gmt_offset_sec));
+  page.replace("__DSTOFFSET__", String(cfg.daylight_offset_sec));
+  page.replace("__SLEEPDURATION__", String(cfg.sleep_duration));
+  page.replace("__WAKEUPHOUR__", String(cfg.wakeup_hour));
+  page.replace("__SLEEPHOUR__", String(cfg.sleep_hour));
   return page;
 }
 
@@ -86,13 +86,13 @@ static void handleConfigJson() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
+  doc["debug_display_update"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
   httpServer.send(200, "application/json", body);
@@ -105,25 +105,25 @@ static void handleRoot() {
 
 // Reject and respond 400 if the named form field exceeds the target buffer.
 // String::toCharArray() does not null-terminate when src >= dest size.
-#define CHECK_FIELD_LEN(name, buf)                                        \
-  if (httpServer.arg(name).length() >= sizeof(buf)) {                     \
-    httpServer.send(400, "text/plain", "Field too long: " name);          \
-    return;                                                                \
+#define CHECK_FIELD_LEN(name, buf)                               \
+  if (httpServer.arg(name).length() >= sizeof(buf)) {            \
+    httpServer.send(400, "text/plain", "Field too long: " name); \
+    return;                                                      \
   }
 
 static void handleSave() {
   auto arg = [](const char* n) { return httpServer.arg(n); };
 
-  CHECK_FIELD_LEN("ssid",          cfg.ssid)
-  CHECK_FIELD_LEN("apikey",        cfg.apikey)
-  CHECK_FIELD_LEN("server",        cfg.server)
-  CHECK_FIELD_LEN("city",          cfg.city)
-  CHECK_FIELD_LEN("latitude",      cfg.latitude)
-  CHECK_FIELD_LEN("longitude",     cfg.longitude)
-  CHECK_FIELD_LEN("language",      cfg.language)
-  CHECK_FIELD_LEN("units",         cfg.units)
-  CHECK_FIELD_LEN("timezone",      cfg.timezone)
-  CHECK_FIELD_LEN("ntpServer",     cfg.ntpServer)
+  CHECK_FIELD_LEN("ssid", cfg.ssid)
+  CHECK_FIELD_LEN("apikey", cfg.apikey)
+  CHECK_FIELD_LEN("server", cfg.server)
+  CHECK_FIELD_LEN("city", cfg.city)
+  CHECK_FIELD_LEN("latitude", cfg.latitude)
+  CHECK_FIELD_LEN("longitude", cfg.longitude)
+  CHECK_FIELD_LEN("language", cfg.language)
+  CHECK_FIELD_LEN("units", cfg.units)
+  CHECK_FIELD_LEN("timezone", cfg.timezone)
+  CHECK_FIELD_LEN("ntp_server", cfg.ntp_server)
 
   arg("ssid").toCharArray(cfg.ssid, sizeof(cfg.ssid));
 
@@ -145,14 +145,14 @@ static void handleSave() {
   arg("language").toCharArray(cfg.language, sizeof(cfg.language));
   arg("units").toCharArray(cfg.units, sizeof(cfg.units));
   arg("timezone").toCharArray(cfg.timezone, sizeof(cfg.timezone));
-  arg("ntpServer").toCharArray(cfg.ntpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec = arg("gmtOffset_sec").toInt();
-  cfg.daylightOffset_sec = arg("daylightOffset_sec").toInt();
-  cfg.sleepDuration = arg("sleepDuration").toInt();
-  cfg.wakeupHour = arg("wakeupHour").toInt();
-  cfg.sleepHour = arg("sleepHour").toInt();
+  arg("ntp_server").toCharArray(cfg.ntp_server, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
+  cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
+  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.wakeup_hour = arg("wakeup_hour").toInt();
+  cfg.sleep_hour = arg("sleep_hour").toInt();
 
-  saveConfig();
+  SaveConfig();
 
   httpServer.send(200, "text/html",
                   "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>"
@@ -219,7 +219,7 @@ static void handleNotFound() {
 
 // ---------------------------------------------------------------------------
 
-void enterSetupMode() {
+void EnterSetupMode() {
   Serial.println("Entering setup mode");
 
   // Derive a unique AP name from the last 4 hex digits of MAC
