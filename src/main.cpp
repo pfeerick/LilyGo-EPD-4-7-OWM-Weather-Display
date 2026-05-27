@@ -22,27 +22,27 @@
 #endif
 
 enum alignment { LEFT, RIGHT, CENTER };
-constexpr uint8_t White     = 0xFF;
+constexpr uint8_t White = 0xFF;
 constexpr uint8_t LightGrey = 0xBB;
-constexpr uint8_t Grey      = 0x88;
-constexpr uint8_t DarkGrey  = 0x44;
-constexpr uint8_t Black     = 0x00;
+constexpr uint8_t Grey = 0x88;
+constexpr uint8_t DarkGrey = 0x44;
+constexpr uint8_t Black = 0x00;
 
-constexpr bool autoscale_on  = true;
+constexpr bool autoscale_on = true;
 constexpr bool autoscale_off = false;
-constexpr bool barchart_on   = true;
-constexpr bool barchart_off  = false;
+constexpr bool barchart_on = true;
+constexpr bool barchart_off = false;
 
 #ifndef SIMULATOR_BUILD
-boolean LargeIcon = true;
-boolean SmallIcon = false;
+bool LargeIcon = true;
+bool SmallIcon = false;
 constexpr uint8_t Large = 20;  // For icon drawing
 constexpr uint8_t Small = 10;  // For icon drawing
 String Time_str = "--:--:--";
 String Date_str = "-- --- ----";
 int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 //################ PROGRAM VARIABLES and OBJECTS ##########################################
-constexpr uint8_t max_readings       = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
+constexpr uint8_t max_readings = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
 constexpr uint8_t max_graph_readings = 16;
 
 Forecast_record_type WxConditions[1];
@@ -82,7 +82,7 @@ static EpdiyHighlevelState hl;
 
 #pragma region Function Prototypes
 void BeginSleep();
-boolean SetupTime();
+bool SetupTime();
 uint8_t StartWiFi();
 void StopWiFi();
 void InitialiseSystem();
@@ -117,7 +117,7 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
 void DrawPressureAndTrend(int x, int y, float pressure, String slope);
 void DisplayStatusSection(int x, int y, int rssi);
 void DrawRSSI(int x, int y, int rssi);
-boolean UpdateLocalTime();
+bool UpdateLocalTime();
 void DrawBattery(int x, int y);
 void addcloud(int x, int y, int scale, int linesize);
 void addrain(int x, int y, int scale, bool IconSize);
@@ -144,7 +144,7 @@ void DrawSunriseImage(int x, int y);
 void DrawSunsetImage(int x, int y);
 void DrawUVI(int x, int y);
 void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[],
-               int readings, boolean auto_scale, boolean barchart_mode);
+               int readings, bool auto_scale, bool barchart_mode);
 void drawString(int x, int y, String text, alignment align);
 void fillCircle(int x, int y, int r, uint8_t color);
 void drawFastHLine(int16_t x0, int16_t y0, int length, uint16_t color);
@@ -172,7 +172,7 @@ void BeginSleep() {
   esp_deep_sleep_start();  // Sleep for e.g. 30 minutes
 }
 
-boolean SetupTime() {
+bool SetupTime() {
   configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, "time.nist.gov");
   setenv("TZ", cfg.timezone, 1);
   tzset();  // Set the TZ environment variable
@@ -461,7 +461,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
   JsonArray list = root["hourly"];
-  byte wxIndex = 0;                                              // Index to populate WxForecast sequentially
+  byte wxIndex = 0;                                      // Index to populate WxForecast sequentially
   Serial.printf("hourly list size: %u\n", list.size());  // 48 hours of hourly data is returned by the API
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
     Serial.printf("\nPeriod-%u--------------\n", r);
@@ -958,7 +958,7 @@ void DrawRSSI(int x, int y, int rssi) {
 }
 
 #ifndef SIMULATOR_BUILD
-boolean UpdateLocalTime() {
+bool UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise
@@ -1250,9 +1250,9 @@ void DrawUVI(int x, int y) {
     barchart_mode - true: draw filled bars; false: draw a line graph
 */
 void DrawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[],
-               int readings, boolean auto_scale, boolean barchart_mode) {
-  constexpr float   auto_scale_margin = 0;  // Sets the autoscale increment, so axis steps up after a change of e.g. 3
-  constexpr uint8_t y_minor_axis      = 5;  // 5 y-axis division markers
+               int readings, bool auto_scale, bool barchart_mode) {
+  constexpr float auto_scale_margin = 0;  // Sets the autoscale increment, so axis steps up after a change of e.g. 3
+  constexpr uint8_t y_minor_axis = 5;     // 5 y-axis division markers
   setFont(OpenSans10B);
   float maxYscale = -10000;
   float minYscale = 10000;
