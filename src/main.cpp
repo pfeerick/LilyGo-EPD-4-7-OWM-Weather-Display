@@ -509,10 +509,11 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
 //#########################################################################################
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
   time_t tm = unix_time + cfg.gmtOffset_sec + cfg.daylightOffset_sec;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
-  if (strcmp(cfg.units, "M") == 0) {
+  if (isMetric) {
     strftime(output, sizeof(output), "%H:%M %d/%m/%y", now_tm);
   } else {
     strftime(output, sizeof(output), "%I:%M%P %m/%d/%y", now_tm);
@@ -522,7 +523,8 @@ String ConvertUnixTime(int unix_time) {
 //#########################################################################################
 #ifndef SIMULATOR_BUILD
 bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
-  const String units = (strcmp(cfg.units, "M") == 0 ? "metric" : "imperial");
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const String units = (isMetric ? "metric" : "imperial");
   client.stop();  // close connection before sending a new request
   HTTPClient http;
   //api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API key}
@@ -646,7 +648,8 @@ void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius)
   setFont(OpenSans24B);
   drawString(x + 3, y - 18, String(windspeed, 1), CENTER);
   setFont(OpenSans12B);
-  drawString(x, y + 25, (strcmp(cfg.units, "M") == 0 ? "m/s" : "mph"), CENTER);
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  drawString(x, y + 25, (isMetric ? "m/s" : "mph"), CENTER);
 }
 
 String WindDegToOrdinalDirection(float winddirection) {
@@ -687,6 +690,7 @@ void DisplayTempHumiPressSection(int x, int y) {
 
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
   setFont(OpenSans12B);
   String Wx_Description = WxConditions[0].Forecast0;
   Wx_Description.replace(".", "");  // remove any '.'
@@ -701,8 +705,7 @@ void DisplayForecastTextSection(int x, int y) {
     charCount++;
   }
   if (WxForecast[0].Rainfall > 0)
-    Wx_Description +=
-        " (" + String(WxForecast[0].Rainfall, 1) + String((strcmp(cfg.units, "M") == 0 ? "mm" : "in")) + ")";
+    Wx_Description += " (" + String(WxForecast[0].Rainfall, 1) + String((isMetric ? "mm" : "in")) + ")";
   int sep = Wx_Description.indexOf("~");
   String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
   String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
@@ -841,6 +844,7 @@ void DisplayForecastSection(int x, int y) {
 }
 
 void DisplayGraphSection(int x, int y) {
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
   int r = 0;
   do {  // Pre-load temporary arrays with data — values already in display units after DecodeWeather
     pressure_readings[r] = WxForecast[r].Pressure;
@@ -855,22 +859,18 @@ void DisplayGraphSection(int x, int y) {
   int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
   // (x,y,width,height,MinValue, MaxValue, Title, Data Array, AutoScale, ChartMode)
-  DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
-            strcmp(cfg.units, "M") == 0 ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN, pressure_readings, max_graph_readings,
-            autoscale_on, barchart_off);
-  DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30,
-            strcmp(cfg.units, "M") == 0 ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings,
-            max_graph_readings, autoscale_on, barchart_off);
+  DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, isMetric ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN,
+            pressure_readings, max_graph_readings, autoscale_on, barchart_off);
+  DrawGraph(gx + 1 * gap, gy, gwidth, gheight, 10, 30, isMetric ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F,
+            temperature_readings, max_graph_readings, autoscale_on, barchart_off);
   DrawGraph(gx + 2 * gap, gy, gwidth, gheight, 0, 100, TXT_HUMIDITY_PERCENT, humidity_readings, max_graph_readings,
             autoscale_off, barchart_off);
   if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-              strcmp(cfg.units, "M") == 0 ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, max_graph_readings,
-              autoscale_on, barchart_on);
+    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings,
+              max_graph_readings, autoscale_on, barchart_on);
   else
-    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-              strcmp(cfg.units, "M") == 0 ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, max_graph_readings,
-              autoscale_on, barchart_on);
+    DrawGraph(gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings,
+              max_graph_readings, autoscale_on, barchart_on);
 }
 
 void DisplayConditionsSection(int x, int y, const String& IconName, bool IconSize) {
@@ -922,9 +922,8 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
 }
 
 void DrawPressureAndTrend(int x, int y, float pressure, const String& slope) {
-  drawString(x + 25, y - 10,
-             String(pressure, (strcmp(cfg.units, "M") == 0 ? 0 : 1)) + (strcmp(cfg.units, "M") == 0 ? "hPa" : "in"),
-             LEFT);
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  drawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), LEFT);
   if (slope == "+") {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
     DrawSegment(x - 1, y, 0, 0, 8, -8, 8, -8, 16, 0);
@@ -959,6 +958,7 @@ void DrawRSSI(int x, int y, int rssi) {
 
 #ifndef SIMULATOR_BUILD
 bool UpdateLocalTime() {
+  const bool isMetric = (strcmp(cfg.units, "M") == 0);
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise
@@ -970,7 +970,7 @@ bool UpdateLocalTime() {
   CurrentSec = timeinfo.tm_sec;
   //See http://www.cplusplus.com/reference/ctime/strftime/
   Serial.println(&timeinfo, "%a %b %d %Y   %H:%M:%S");  // Displays: Saturday, June 24 2017 14:05:49
-  if (strcmp(cfg.units, "M") == 0) {
+  if (isMetric) {
     snprintf(day_output, sizeof(day_output), "%s, %02u %s %04u", weekday_D[timeinfo.tm_wday], timeinfo.tm_mday,
              month_M[timeinfo.tm_mon], (timeinfo.tm_year) + 1900);
     strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
