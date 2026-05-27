@@ -82,7 +82,6 @@ AppConfig cfg = {"",                        // ssid
                  "",                        // latitude
                  "",                        // longitude
                  "EN",                      // language
-                 "north",                   // hemisphere
                  "M",                       // units
                  "",                        // timezone
                  "pool.ntp.org",            // ntpServer
@@ -216,12 +215,12 @@ EMSCRIPTEN_KEEPALIVE void wasm_init() {
   epd_hl_set_all_white(&hl);
 }
 
-EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, const char* hemisphere,
+EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, float latitude,
                                           int gmt_offset_sec, int dst_offset_sec) {
   if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
   if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
   if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
-  if (hemisphere) strncpy(cfg.hemisphere, hemisphere, sizeof(cfg.hemisphere) - 1);
+  snprintf(cfg.latitude, sizeof(cfg.latitude), "%.6f", latitude);
   cfg.gmtOffset_sec = gmt_offset_sec;
   cfg.daylightOffset_sec = dst_offset_sec;
 }
