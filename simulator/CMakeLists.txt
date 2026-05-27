@@ -25,7 +25,7 @@ add_executable(simulator
 )
 
 target_include_directories(simulator PRIVATE
-  ${CMAKE_SOURCE_DIR}                           # pc_stubs.h
+  ${CMAKE_SOURCE_DIR}                           # simulator_stubs.h
   ${CMAKE_SOURCE_DIR}/esp_stubs                 # esp_attr.h, esp_err.h, xtensa/
   ${CMAKE_SOURCE_DIR}/miniz                     # miniz.h and split headers
   ${ROOT}/include                               # config.h, fonts/, images/

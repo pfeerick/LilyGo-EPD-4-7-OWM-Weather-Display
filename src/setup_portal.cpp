@@ -48,8 +48,6 @@ static String buildPage() {
   page.replace("__CITY__", htmlEscape(cfg.city));
   page.replace("__LATITUDE__", htmlEscape(cfg.latitude));
   page.replace("__LONGITUDE__", htmlEscape(cfg.longitude));
-  page.replace("__HEM_NORTH__", strcmp(cfg.hemisphere, "south") == 0 ? "" : "selected");
-  page.replace("__HEM_SOUTH__", strcmp(cfg.hemisphere, "south") == 0 ? "selected" : "");
   page.replace("__UNITS_M__", strcmp(cfg.units, "I") == 0 ? "" : "selected");
   page.replace("__UNITS_I__", strcmp(cfg.units, "I") == 0 ? "selected" : "");
 
@@ -84,7 +82,6 @@ static void handleConfigJson() {
   doc["latitude"] = cfg.latitude;
   doc["longitude"] = cfg.longitude;
   doc["language"] = cfg.language;
-  doc["hemisphere"] = cfg.hemisphere;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
   doc["ntpServer"] = cfg.ntpServer;
@@ -119,7 +116,6 @@ static void handleSave() {
   arg("latitude").toCharArray(cfg.latitude, sizeof(cfg.latitude));
   arg("longitude").toCharArray(cfg.longitude, sizeof(cfg.longitude));
   arg("language").toCharArray(cfg.language, sizeof(cfg.language));
-  arg("hemisphere").toCharArray(cfg.hemisphere, sizeof(cfg.hemisphere));
   arg("units").toCharArray(cfg.units, sizeof(cfg.units));
   arg("timezone").toCharArray(cfg.timezone, sizeof(cfg.timezone));
   arg("ntpServer").toCharArray(cfg.ntpServer, sizeof(cfg.ntpServer));

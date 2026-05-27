@@ -443,7 +443,7 @@ EpdRect epd_difference_image_cropped(const uint8_t* to, const uint8_t* from, Epd
   return r;
 }
 
-// Expose framebuffer directly for main_pc.cpp
+// Expose framebuffer directly for main_wasm.cpp
 uint8_t* epd_pc_get_framebuffer(void) {
   return pc_framebuffer;
 }

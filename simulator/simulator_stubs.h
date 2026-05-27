@@ -1,8 +1,8 @@
 #pragma once
 
 // ============================================================
-// PC simulation stubs — replaces Arduino.h, ESP-IDF headers,
-// WiFi/HTTP, and the EPDIY hardware layer.
+// Simulator stubs — replaces Arduino.h, ESP-IDF headers,
+// WiFi/HTTP, and the EPDIY hardware layer for WASM/native builds.
 // ============================================================
 
 #include <stdint.h>
@@ -290,7 +290,7 @@ inline uint8_t esp_read_mac(uint8_t* mac, int) {
 }
 #define ESP_MAC_WIFI_STA 0
 
-// getLocalTime — used in UpdateLocalTime(); we replace the whole function in main_pc.cpp
+// getLocalTime — used in UpdateLocalTime(); we replace the whole function in main_wasm.cpp
 // but need the declaration to compile
 struct tm;
 inline bool getLocalTime(struct tm* info, int timeout = 5000) {
