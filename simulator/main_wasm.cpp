@@ -174,9 +174,9 @@ bool DecodeWeather(const std::string& json, String Type) {
     float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
     float temps[3] = {wx_forecast[wxIndex].temperature, t1, t2};
     wx_forecast[wxIndex].high = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
-                                                    : (temps[1] > temps[2] ? temps[1] : temps[2]));
+                                                     : (temps[1] > temps[2] ? temps[1] : temps[2]));
     wx_forecast[wxIndex].low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
-                                                   : (temps[1] < temps[2] ? temps[1] : temps[2]));
+                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
     wx_forecast[wxIndex].pressure = list[r]["pressure"].as<float>();
     wx_forecast[wxIndex].humidity = list[r]["humidity"].as<float>();
     strlcpy(wx_forecast[wxIndex].icon, list[r]["weather"][0]["icon"] | "", sizeof(wx_forecast[wxIndex].icon));

@@ -3,19 +3,19 @@
 #include "weather_api.h"
 
 enum class Alignment { kLeft, kRight, kCenter };
-constexpr uint8_t kWhite     = 0xFF;
+constexpr uint8_t kWhite = 0xFF;
 constexpr uint8_t kLightGrey = 0xBB;
-constexpr uint8_t kGrey      = 0x88;
-constexpr uint8_t kDarkGrey  = 0x44;
-constexpr uint8_t kBlack     = 0x00;
+constexpr uint8_t kGrey = 0x88;
+constexpr uint8_t kDarkGrey = 0x44;
+constexpr uint8_t kBlack = 0x00;
 
-constexpr bool kAutoscaleOn  = true;
+constexpr bool kAutoscaleOn = true;
 constexpr bool kAutoscaleOff = false;
-constexpr bool kBarchartOn   = true;
-constexpr bool kBarchartOff  = false;
+constexpr bool kBarchartOn = true;
+constexpr bool kBarchartOff = false;
 
-constexpr uint8_t kGraphYDivisions  = 5;
-constexpr uint8_t kGraphDashes      = 20;
+constexpr uint8_t kGraphYDivisions = 5;
+constexpr uint8_t kGraphDashes = 20;
 constexpr uint8_t kGraphDaySections = 2;
 
 constexpr uint8_t kLarge = 20;

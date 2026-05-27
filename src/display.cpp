@@ -117,7 +117,8 @@ String WindDegToOrdinalDirection(float winddirection) {
 
 void DisplayTempHumiPressSection(int x, int y) {
   SetFont(OpenSans18B);
-  DrawString(x - 30, y, String(wx_conditions.temperature, 1) + "°   " + String(wx_conditions.humidity, 0) + "%", Alignment::kLeft);
+  DrawString(x - 30, y, String(wx_conditions.temperature, 1) + "°   " + String(wx_conditions.humidity, 0) + "%",
+             Alignment::kLeft);
   SetFont(OpenSans12B);
   DrawPressureAndTrend(x + 195, y + 15, wx_conditions.pressure, wx_conditions.trend);
   int Yoffset = 42;
@@ -125,7 +126,8 @@ void DisplayTempHumiPressSection(int x, int y) {
     DrawString(x - 30, y + Yoffset, String(wx_conditions.feels_like, 1) + "° FL", Alignment::kLeft);
     Yoffset += 30;
   }
-  DrawString(x - 30, y + Yoffset, String(wx_conditions.high, 0) + "° | " + String(wx_conditions.low, 0) + "° Hi/Lo", Alignment::kLeft);
+  DrawString(x - 30, y + Yoffset, String(wx_conditions.high, 0) + "° | " + String(wx_conditions.low, 0) + "° Hi/Lo",
+             Alignment::kLeft);
 }
 
 void DisplayForecastTextSection(int x, int y) {
@@ -175,7 +177,8 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
   x = x + fwidth * index;
   DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, wx_forecast[index].icon, small_icon);
   SetFont(OpenSans10B);
-  DrawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(wx_forecast[index].dt).substring(0, 5)), Alignment::kCenter);
+  DrawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(wx_forecast[index].dt).substring(0, 5)),
+             Alignment::kCenter);
   DrawString(x + fwidth / 2, y + 130,
              String(wx_forecast[index].high, 0) + "°/" + String(wx_forecast[index].low, 0) + "°", Alignment::kCenter);
 }
@@ -188,10 +191,10 @@ void DisplayAstronomySection(int x, int y) {
   SetFont(OpenSans10B);
   time_t now = time(NULL);
   struct tm* now_utc = gmtime(&now);
-  DrawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900), Alignment::kLeft);
+  DrawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900),
+             Alignment::kLeft);
   DrawMoonImage(x + 10, y + 23);
-  DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900,
-           isSouthernHemisphere());
+  DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, isSouthernHemisphere());
   DrawString(x + 115, y + 40, ConvertUnixTime(wx_conditions.sunrise).substring(0, 5), Alignment::kLeft);
   DrawString(x + 115, y + 80, ConvertUnixTime(wx_conditions.sunset).substring(0, 5), Alignment::kLeft);
   DrawSunriseImage(x + 180, y + 20);
@@ -281,41 +284,45 @@ void DisplayForecastSection(int x, int y) {
 
 void DisplayGraphSection(int x, int y) {
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
-  static float pressure_readings[kMaxReadings]    = {0};
+  static float pressure_readings[kMaxReadings] = {0};
   static float temperature_readings[kMaxReadings] = {0};
-  static float humidity_readings[kMaxReadings]    = {0};
-  static float rain_readings[kMaxReadings]         = {0};
-  static float snow_readings[kMaxReadings]         = {0};
+  static float humidity_readings[kMaxReadings] = {0};
+  static float rain_readings[kMaxReadings] = {0};
+  static float snow_readings[kMaxReadings] = {0};
   int r = 0;
   do {
-    pressure_readings[r]    = wx_forecast[r].pressure;
-    rain_readings[r]        = wx_forecast[r].rainfall;
-    snow_readings[r]        = wx_forecast[r].snowfall;
+    pressure_readings[r] = wx_forecast[r].pressure;
+    rain_readings[r] = wx_forecast[r].rainfall;
+    snow_readings[r] = wx_forecast[r].snowfall;
     temperature_readings[r] = wx_forecast[r].temperature;
-    humidity_readings[r]    = wx_forecast[r].humidity;
+    humidity_readings[r] = wx_forecast[r].humidity;
     r++;
   } while (r < kMaxGraphReadings);
   int gwidth = 175, gheight = 100;
   int gx = (epd_width() - gwidth * 4) / 5 + 8;
   int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
-  DrawGraph({gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
-             isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(), kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
-            pressure_readings);
-  DrawGraph({gx + 1 * gap, gy, gwidth, gheight, 10, 30,
-             isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(), kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
-            temperature_readings);
-  DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100,
-             TXT_HUMIDITY_PERCENT.c_str(), kAutoscaleOff, kBarchartOff, kMaxGraphReadings},
+  DrawGraph(
+      {gx + 0 * gap, gy, gwidth, gheight, 900, 1050, isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(),
+       kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
+      pressure_readings);
+  DrawGraph(
+      {gx + 1 * gap, gy, gwidth, gheight, 10, 30, isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(),
+       kAutoscaleOn, kBarchartOff, kMaxGraphReadings},
+      temperature_readings);
+  DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100, TXT_HUMIDITY_PERCENT.c_str(), kAutoscaleOff, kBarchartOff,
+             kMaxGraphReadings},
             humidity_readings);
   if (SumOfPrecip(rain_readings, kMaxGraphReadings) >= SumOfPrecip(snow_readings, kMaxGraphReadings))
-    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(), kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
-              rain_readings);
+    DrawGraph(
+        {gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(),
+         kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
+        rain_readings);
   else
-    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(), kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
-              snow_readings);
+    DrawGraph(
+        {gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(),
+         kAutoscaleOn, kBarchartOn, kMaxGraphReadings},
+        snow_readings);
 }
 
 void DisplayConditionsSection(int x, int y, const char* icon_name, bool icon_size) {
@@ -431,12 +438,14 @@ void DrawGraph(GraphConfig gcfg, float data_array[]) {
   if (gcfg.autoscale) calculateGraphYScale(data_array, gcfg.readings, gcfg.y_min, gcfg.y_max);
   SetFont(OpenSans10B);
   int last_x = gcfg.x + 1;
-  int last_y = gcfg.y + (gcfg.y_max - constrain(data_array[0], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h;
+  int last_y =
+      gcfg.y + (gcfg.y_max - constrain(data_array[0], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h;
   DrawRect(gcfg.x, gcfg.y, gcfg.w + 3, gcfg.h + 2, kGrey);
   DrawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, Alignment::kCenter);
   for (int i = 0; i < gcfg.readings; i++) {
     float x2 = gcfg.x + i * gcfg.w / (gcfg.readings - 1) - 1;
-    float y2 = gcfg.y + (gcfg.y_max - constrain(data_array[i], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h + 1;
+    float y2 = gcfg.y +
+               (gcfg.y_max - constrain(data_array[i], gcfg.y_min, gcfg.y_max)) / (gcfg.y_max - gcfg.y_min) * gcfg.h + 1;
     if (gcfg.barchart) {
       FillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, kBlack);
     } else {
@@ -464,7 +473,8 @@ void DrawGraph(GraphConfig gcfg, float data_array[]) {
       labelX = gcfg.x - 7;
       decimalPlaces = 0;
     }
-    DrawString(labelX, gcfg.y + gcfg.h * spacing / kGraphYDivisions - 5, String(axisVal, decimalPlaces), Alignment::kRight);
+    DrawString(labelX, gcfg.y + gcfg.h * spacing / kGraphYDivisions - 5, String(axisVal, decimalPlaces),
+               Alignment::kRight);
   }
   for (int i = 0; i < kGraphDaySections; i++) {
     DrawString(20 + gcfg.x + gcfg.w / kGraphDaySections * i, gcfg.y + gcfg.h + 10, String(i) + "d", Alignment::kLeft);
@@ -535,8 +545,8 @@ bool UpdateLocalTime() {
     return false;
   }
   current_hour = timeinfo.tm_hour;
-  current_min  = timeinfo.tm_min;
-  current_sec  = timeinfo.tm_sec;
+  current_min = timeinfo.tm_min;
+  current_sec = timeinfo.tm_sec;
   Serial.println(&timeinfo, "%a %b %d %Y   %H:%M:%S");
   if (isMetric) {
     snprintf(day_output, sizeof(day_output), "%s, %02u %s %04u", weekday_D[timeinfo.tm_wday], timeinfo.tm_mday,
