@@ -1,87 +1,22 @@
 #ifndef SIMULATOR_BUILD
-#include <Arduino.h>            // In-built
-#include <esp_task_wdt.h>       // In-built
-#include "freertos/FreeRTOS.h"  // In-built
-#include "freertos/task.h"      // In-built
-#include "epdiy.h"              // https://github.com/vroland/epdiy
-#include "esp_adc_cal.h"        // In-built
-#include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
-#include <HTTPClient.h>         // In-built
-#include <WiFi.h>               // In-built
-#include <SPI.h>                // In-built
-#include <time.h>               // In-built
-
+#include <Arduino.h>
+#include <esp_task_wdt.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <WiFi.h>
+#include <SPI.h>
+#include <time.h>
 #include <LittleFS.h>
 #include "qrcode.h"
 #include "config.h"
 #include "defaults.h"
 #include "setup_portal.h"
-#include "forecast_record.h"
-#include "translations/lang_en.h"
-#else
-// Simulator build: includes provided by simulator/main_wasm.cpp before including this file
-#endif
-
-enum alignment { LEFT, RIGHT, CENTER };
-constexpr uint8_t White = 0xFF;
-constexpr uint8_t LightGrey = 0xBB;
-constexpr uint8_t Grey = 0x88;
-constexpr uint8_t DarkGrey = 0x44;
-constexpr uint8_t Black = 0x00;
-
-constexpr bool autoscale_on = true;
-constexpr bool autoscale_off = false;
-constexpr bool barchart_on = true;
-constexpr bool barchart_off = false;
-
-constexpr uint8_t kGraphYDivisions = 5;   // Number of y-axis division markers
-constexpr uint8_t kGraphDashes = 20;      // Dashes per horizontal grid line
-constexpr uint8_t kGraphDaySections = 2;  // Day-boundary vertical lines
-
-struct GraphConfig {
-  int x, y, w, h;
-  float yMin, yMax;
-  const char* title;
-  bool autoscale;
-  bool barchart;
-  int readings;
-};
-
-#ifndef SIMULATOR_BUILD
-bool LargeIcon = true;
-bool SmallIcon = false;
-constexpr uint8_t Large = 20;  // For icon drawing
-constexpr uint8_t Small = 10;  // For icon drawing
-String Time_str = "--:--:--";
-String Date_str = "-- --- ----";
-int wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = kDefaultVref;
-//################ PROGRAM VARIABLES and OBJECTS ##########################################
-constexpr uint8_t max_readings = 24;  // Limited to 3-days here, but could go to 5-days = 40 as the data is issued
-constexpr uint8_t max_graph_readings = 16;
-
-Forecast_record_type WxConditions;
-Forecast_record_type WxForecast[max_readings];
-
-float pressure_readings[max_readings] = {0};
-float temperature_readings[max_readings] = {0};
-float humidity_readings[max_readings] = {0};
-float rain_readings[max_readings] = {0};
-float snow_readings[max_readings] = {0};
-
-long SleepDuration;
-int WakeupHour;
-int SleepHour;
-long StartTime = 0;
-long SleepTimer = 0;
-long Delta =
-    30;  // ESP32 rtc speed compensation, prevents display at xx:59:yy and then xx:00:yy (one minute later) to save power
-
-//fonts
-#include "fonts/opensans8b.h"
-#include "fonts/opensans10b.h"
+#include "weather_api.h"
+#include "display.h"
+#include "icons.h"
+#include "power.h"
 #include "fonts/opensans12b.h"
 #include "fonts/opensans18b.h"
-#include "fonts/opensans24b.h"
 
 //image "fonts"
 #include "images/moon.h"
@@ -316,7 +251,6 @@ void setup() {
 
 static int _ox, _oy, _ms, _renderedPx;
 
-// Returns the rendered pixel size (modules * moduleSize) of the QR code
 static int drawQR(const char* text, int originX, int originY, int moduleSize, int eccLevel = ESP_QRCODE_ECC_LOW) {
   _ox = originX;
   _oy = originY;
@@ -350,27 +284,22 @@ void DisplaySetupScreen(const char* apName) {
   epd_poweron();
   epd_fullclear(&hl, (int)epd_ambient_temperature());
 
-  int cx = epd_width() / 2;  // 480
-  int w = epd_width();       // 960
+  int cx = epd_width() / 2;
+  int w = epd_width();
   int ms = 6;
   int pad = 16;
 
-  // WiFi QR (ECC Low): WIFI:S:WeatherSetup-XXXX;T:nopass;; → version 4 = 33 modules = 198px
-  // Portal QR (ECC High): http://192.168.4.1 → forced to version 4 = 33 modules = 198px
-  int qrPx = 33 * ms;              // 198px — both QRs render at this size
-  int qrCxL = pad + qrPx / 2;      // left QR centre x
-  int qrCxR = w - pad - qrPx / 2;  // right QR centre x
+  int qrPx = 33 * ms;
+  int qrCxL = pad + qrPx / 2;
+  int qrCxR = w - pad - qrPx / 2;
 
-  // Top-left: WiFi join QR — label positioned from actual rendered size
   char wifiQR[64];
   snprintf(wifiQR, sizeof(wifiQR), "WIFI:S:%s;T:nopass;;", apName);
   int wifiQRpx = drawQR(wifiQR, pad, pad, ms, ESP_QRCODE_ECC_LOW);
 
-  // Top-right: portal QR — ECC High forces a larger version to better match WiFi QR size
   int rightQRx = w - pad - qrPx + (ms * 2);
   int portalQRpx = drawQR("http://192.168.4.1", rightQRx, pad, ms, ESP_QRCODE_ECC_HIGH);
 
-  // Two-line labels under each QR, each positioned from its own actual rendered height
   setFont(OpenSans12B);
   int labelGap = 24;
   int wifiGap = 34;
@@ -380,9 +309,6 @@ void DisplaySetupScreen(const char* apName) {
   drawString(qrCxR, pad + portalQRpx + labelGap, "Scan to open", CENTER);
   drawString(qrCxR, pad + portalQRpx + labelGap + portalGap, "config portal", CENTER);
 
-  // Middle text block — sits between the QRs, starts near the top
-  // Vertically centre the block in the display height
-  // Block height: heading(~22) + gap(20) + 6 lines × ~38px = ~270px
   int blockH = 270;
   int textY = (epd_height() - blockH) / 2;
 
@@ -405,108 +331,51 @@ void DisplaySetupScreen(const char* apName) {
   epd_poweroff();
 }
 
-#endif  // SIMULATOR_BUILD
+// ---------------------------------------------------------------------------
 
-void Convert_Readings_to_Imperial(int count) {
-  WxConditions.Pressure = hPa_to_inHg(WxConditions.Pressure);
-  for (int i = 0; i < count; i++) {
-    WxForecast[i].Rainfall = mm_to_inches(WxForecast[i].Rainfall);
-    WxForecast[i].Snowfall = mm_to_inches(WxForecast[i].Snowfall);
+void loop() {}
+
+void setup() {
+  InitialiseSystem();
+
+  bool forceConfig = false;
+  pinMode(CONFIG_BUTTON_PIN, INPUT_PULLUP);
+  if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
+    delay(CONFIG_BUTTON_HOLD_MS);
+    if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
+      Serial.println("Config button held — entering setup mode");
+      forceConfig = true;
+    }
   }
-}
 
-#ifndef SIMULATOR_BUILD
-bool DecodeWeather(WiFiClient& json, const String& Type) {
-  Serial.printf("\nCreating object...");
-  JsonDocument doc;                                         // allocate the JsonDocument
-  DeserializationError error = deserializeJson(doc, json);  // Deserialize the JSON document
-  if (error) {                                              // Test if parsing succeeds.
-    Serial.printf("deserializeJson() failed: %s\n", error.c_str());
-    return false;
+  if (!loadConfig() || !isConfigValid()) {
+    if (!seedConfigFromHeader() || !isConfigValid()) {
+      Serial.println("No valid config found — entering setup mode");
+      forceConfig = true;
+    }
   }
-  Serial.printf(" Decoding %s data\n", Type.c_str());
-  WxConditions.High = -50;  // Sentinel: replaced by daily[0] max below
-  WxConditions.Low = 50;    // Sentinel: replaced by daily[0] min below
-  JsonObject current = doc["current"];
-  WxConditions.Sunrise = current["sunrise"];
-  Serial.printf("SRis: %d\n", WxConditions.Sunrise);
-  WxConditions.Sunset = current["sunset"];
-  Serial.printf("SSet: %d\n", WxConditions.Sunset);
-  WxConditions.Temperature = current["temp"];
-  Serial.printf("Temp: %f\n", WxConditions.Temperature);
-  WxConditions.FeelsLike = current["feels_like"];
-  Serial.printf("FLik: %f\n", WxConditions.FeelsLike);
-  WxConditions.Pressure = current["pressure"];
-  Serial.printf("Pres: %f\n", WxConditions.Pressure);
-  WxConditions.Humidity = current["humidity"];
-  Serial.printf("Humi: %f\n", WxConditions.Humidity);
-  WxConditions.DewPoint = current["dew_point"];
-  Serial.printf("DPoi: %f\n", WxConditions.DewPoint);
-  WxConditions.UVI = current["uvi"];
-  Serial.printf("UVin: %f\n", WxConditions.UVI);
-  WxConditions.Cloudcover = current["clouds"];
-  Serial.printf("CCov: %d\n", WxConditions.Cloudcover);
-  WxConditions.Visibility = current["visibility"];
-  Serial.printf("Visi: %d\n", WxConditions.Visibility);
-  WxConditions.Windspeed = current["wind_speed"];
-  Serial.printf("WSpd: %f\n", WxConditions.Windspeed);
-  WxConditions.Winddir = current["wind_deg"];
-  Serial.printf("WDir: %d\n", WxConditions.Winddir);
-  JsonObject current_weather = current["weather"][0];
-  strlcpy(WxConditions.Forecast0, current_weather["description"] | "", sizeof(WxConditions.Forecast0));
-  Serial.printf("Fore: %s\n", WxConditions.Forecast0);
-  strlcpy(WxConditions.Icon, current_weather["icon"] | "", sizeof(WxConditions.Icon));
-  Serial.printf("Icon: %s\n", WxConditions.Icon);
 
-  Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
+  SleepDuration = cfg.sleepDuration;
+  WakeupHour    = cfg.wakeupHour;
+  SleepHour     = cfg.sleepHour;
 
-  // Daily
-  JsonArray daily = doc["daily"];
-  WxConditions.Low = daily[0]["temp"]["min"].as<float>();  // Get Lowest temperature for next 24Hrs
-  Serial.printf("TLow: %f\n", WxConditions.Low);
-  WxConditions.High = daily[0]["temp"]["max"].as<float>();  // Get Highest temperature for next 24Hrs
-  Serial.printf("High: %f\n", WxConditions.High);
-
-  //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
-
-  JsonArray list = doc["hourly"];
-  byte wxIndex = 0;                                      // Index to populate WxForecast sequentially
-  Serial.printf("hourly list size: %u\n", list.size());  // 48 hours of hourly data is returned by the API
-  for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
-    Serial.printf("\nPeriod-%u--------------\n", r);
-
-    WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
-    WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
-    Serial.printf("Temp: %f\n", WxForecast[wxIndex].Temperature);
-    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    WxForecast[wxIndex].High = max(max(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.printf("High: %f\n", WxForecast[wxIndex].High);
-    WxForecast[wxIndex].Low = min(min(WxForecast[wxIndex].Temperature, t1), t2);
-    Serial.printf("Low: %f\n", WxForecast[wxIndex].Low);
-    WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
-    Serial.printf("Pres: %f\n", WxForecast[wxIndex].Pressure);
-    WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    Serial.printf("Humi: %f\n", WxForecast[wxIndex].Humidity);
-    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
-    Serial.printf("Icon: %s\n", WxForecast[wxIndex].Icon);
-    WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
-    Serial.printf("Rain: %f\n", WxForecast[wxIndex].Rainfall);
-    WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
-    Serial.printf("Snow: %f\n", WxForecast[wxIndex].Snowfall);
-
-    wxIndex++;  // Increment WxForecast index for sequential population
+  if (forceConfig) {
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    char apName[24];
+    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(apName);
+    enterSetupMode();
   }
-  if (wxIndex >= 3) {
-    float pressure_trend =
-        WxForecast[0].Pressure - WxForecast[2].Pressure;   // Measure pressure slope between ~now and later
-    pressure_trend = ((int)(pressure_trend * 10)) / 10.0;  // Remove any small variations less than 0.1
-    WxConditions.Trend = '=';
-    if (pressure_trend > 0) WxConditions.Trend = '+';
-    if (pressure_trend < 0) WxConditions.Trend = '-';
-    if (pressure_trend == 0) WxConditions.Trend = '0';
-  } else {
-    WxConditions.Trend = '0';  // Default if insufficient data
+
+  if (StartWiFi() != WL_CONNECTED) {
+    Serial.println("WiFi failed — entering setup mode");
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    char apName[24];
+    snprintf(apName, sizeof(apName), "WeatherSetup-%02X%02X", mac[4], mac[5]);
+    DisplaySetupScreen(apName);
+    enterSetupMode();
   }
   if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;
