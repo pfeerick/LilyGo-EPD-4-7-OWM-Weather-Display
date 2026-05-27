@@ -164,10 +164,8 @@ bool DecodeWeather(const std::string& json, String Type) {
   WxConditions.Windspeed = current["wind_speed"];
   WxConditions.Winddir = current["wind_deg"];
 
-  const char* desc = current["weather"][0]["description"];
-  const char* icon = current["weather"][0]["icon"];
-  WxConditions.Forecast0 = String(desc ? desc : "");
-  WxConditions.Icon = String(icon ? icon : "");
+  strlcpy(WxConditions.Forecast0, current["weather"][0]["description"] | "", sizeof(WxConditions.Forecast0));
+  strlcpy(WxConditions.Icon, current["weather"][0]["icon"] | "", sizeof(WxConditions.Icon));
 
   JsonArray daily = root["daily"];
   WxConditions.Low = daily[0]["temp"]["min"].as<float>();
@@ -187,19 +185,18 @@ bool DecodeWeather(const std::string& json, String Type) {
                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
     WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
     WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    const char* ic = list[r]["weather"][0]["icon"];
-    WxForecast[wxIndex].Icon = String(ic ? ic : "");
+    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
     WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
     WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
 
-    if (wxIndex >= 2) {
-      float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
-      pt = ((int)(pt * 10)) / 10.0f;
-      WxConditions.Trend = (pt > 0) ? "+" : (pt < 0) ? "-" : "0";
-    } else {
-      WxConditions.Trend = "0";
-    }
     wxIndex++;
+  }
+  if (wxIndex >= 3) {
+    float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
+    pt = ((int)(pt * 10)) / 10.0f;
+    WxConditions.Trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
+  } else {
+    WxConditions.Trend = '0';
   }
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
