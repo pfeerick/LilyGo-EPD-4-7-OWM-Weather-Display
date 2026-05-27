@@ -411,8 +411,6 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     Serial.printf("deserializeJson() failed: %s\n", error.c_str());
     return false;
   }
-  // convert it to a JsonObject
-  JsonObject root = doc.as<JsonObject>();
   Serial.printf(" Decoding %s data\n", Type.c_str());
   WxConditions.High = -50;  // Sentinel: replaced by daily[0] max below
   WxConditions.Low = 50;    // Sentinel: replaced by daily[0] min below
@@ -452,7 +450,7 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
 
   // Daily
-  JsonArray daily = root["daily"];
+  JsonArray daily = doc["daily"];
   WxConditions.Low = daily[0]["temp"]["min"].as<float>();  // Get Lowest temperature for next 24Hrs
   Serial.printf("TLow: %f\n", WxConditions.Low);
   WxConditions.High = daily[0]["temp"]["max"].as<float>();  // Get Highest temperature for next 24Hrs
@@ -460,7 +458,7 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 
-  JsonArray list = root["hourly"];
+  JsonArray list = doc["hourly"];
   byte wxIndex = 0;                                      // Index to populate WxForecast sequentially
   Serial.printf("hourly list size: %u\n", list.size());  // 48 hours of hourly data is returned by the API
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
