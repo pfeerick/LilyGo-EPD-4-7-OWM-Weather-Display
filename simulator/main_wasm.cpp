@@ -217,11 +217,15 @@ EMSCRIPTEN_KEEPALIVE void wasm_init() {
 }
 
 EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang,
-                                          const char* hemisphere) {
+                                          const char* hemisphere, const char* timezone) {
   if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
   if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
   if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
   if (hemisphere) strncpy(cfg.hemisphere, hemisphere, sizeof(cfg.hemisphere) - 1);
+  if (timezone && timezone[0]) {
+    setenv("TZ", timezone, 1);
+    tzset();
+  }
 }
 
 EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {

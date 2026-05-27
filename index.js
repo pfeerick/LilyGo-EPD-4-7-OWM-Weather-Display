@@ -177,6 +177,7 @@ const server = Bun.serve({
           units: process.env.OWM_UNITS ?? "M",
           lang: process.env.OWM_LANG ?? "EN",
           hemisphere: process.env.OWM_HEMISPHERE ?? "north",
+          timezone: process.env.OWM_TIMEZONE ?? "UTC0",
         }),
         { headers: { "Content-Type": "application/json" } },
       );
