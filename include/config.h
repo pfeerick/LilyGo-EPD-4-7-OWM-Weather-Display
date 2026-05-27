@@ -25,13 +25,13 @@ struct AppConfig {
   char language[8];
   char units[4];
   char timezone[80];
-  char ntpServer[64];
-  int gmtOffset_sec;
-  int daylightOffset_sec;
-  int sleepDuration;
-  int wakeupHour;
-  int sleepHour;
-  bool debugDisplayUpdate;
+  char ntp_server[64];
+  int gmt_offset_sec;
+  int daylight_offset_sec;
+  int sleep_duration;
+  int wakeup_hour;
+  int sleep_hour;
+  bool debug_display_update;
 };
 
 extern AppConfig cfg;

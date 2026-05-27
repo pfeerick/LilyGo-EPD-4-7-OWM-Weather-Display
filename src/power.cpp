@@ -1,4 +1,4 @@
-#ifndef SIMULATOR_BUILD
+﻿#ifndef SIMULATOR_BUILD
 #include <Arduino.h>
 #include <WiFi.h>
 #include "display.h"  // for Time_str, Date_str, CurrentHour/Min/Sec, CurrentHour extern
@@ -23,7 +23,7 @@ void BeginSleep() {
 }
 
 bool SetupTime() {
-  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, kDefaultNtpFallback);
+  configTime(cfg.gmt_offset_sec, cfg.daylight_offset_sec, cfg.ntp_server, kDefaultNtpFallback);
   setenv("TZ", cfg.timezone, 1);
   tzset();
   delay(100);

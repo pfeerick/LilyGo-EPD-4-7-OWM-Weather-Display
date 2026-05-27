@@ -5,8 +5,8 @@
 constexpr uint8_t kMaxReadings      = 24;
 constexpr uint8_t kMaxGraphReadings = 16;
 
-extern Forecast_record_type WxConditions;
-extern Forecast_record_type WxForecast[];
+extern ForecastRecord WxConditions;
+extern ForecastRecord WxForecast[];
 
 #ifndef SIMULATOR_BUILD
 #include <WiFiClient.h>

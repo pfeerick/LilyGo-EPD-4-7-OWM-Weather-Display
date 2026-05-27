@@ -1,4 +1,4 @@
-#include "config.h"
+﻿#include "config.h"
 #include "defaults.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -55,13 +55,13 @@ bool loadConfig() {
   strlcpy(cfg.language, doc["language"] | kDefaultLanguage, sizeof(cfg.language));
   strlcpy(cfg.units, doc["units"] | kDefaultUnits, sizeof(cfg.units));
   strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec = doc["gmtOffset_sec"] | 0;
-  cfg.daylightOffset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleepDuration = doc["sleepDuration"] | kDefaultSleepDuration;
-  cfg.wakeupHour = doc["wakeupHour"] | kDefaultWakeupHour;
-  cfg.sleepHour = doc["sleepHour"] | kDefaultSleepHour;
-  cfg.debugDisplayUpdate = doc["debugDisplayUpdate"] | false;
+  strlcpy(cfg.ntp_server, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = doc["gmtOffset_sec"] | 0;
+  cfg.daylight_offset_sec = doc["daylightOffset_sec"] | 0;
+  cfg.sleep_duration = doc["sleepDuration"] | kDefaultSleepDuration;
+  cfg.wakeup_hour = doc["wakeupHour"] | kDefaultWakeupHour;
+  cfg.sleep_hour = doc["sleepHour"] | kDefaultSleepHour;
+  cfg.debug_display_update = doc["debugDisplayUpdate"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
 }
@@ -82,13 +82,13 @@ void saveConfig() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntpServer"] = cfg.ntp_server;
+  doc["gmtOffset_sec"] = cfg.gmt_offset_sec;
+  doc["daylightOffset_sec"] = cfg.daylight_offset_sec;
+  doc["sleepDuration"] = cfg.sleep_duration;
+  doc["wakeupHour"] = cfg.wakeup_hour;
+  doc["sleepHour"] = cfg.sleep_hour;
+  doc["debugDisplayUpdate"] = cfg.debug_display_update;
   File f = LittleFS.open("/config.json", "w");
   if (!f) {
     Serial.println("Failed to open config.json for writing");
@@ -116,10 +116,10 @@ bool seedConfigFromHeader() {
   strlcpy(cfg.language, Language.c_str(), sizeof(cfg.language));
   strlcpy(cfg.units, Units.c_str(), sizeof(cfg.units));
   strlcpy(cfg.timezone, Timezone, sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, ntpServer, sizeof(cfg.ntpServer));
-  cfg.gmtOffset_sec = gmtOffset_sec;
-  cfg.daylightOffset_sec = daylightOffset_sec;
-  cfg.debugDisplayUpdate = DebugDisplayUpdate;
+  strlcpy(cfg.ntp_server, ntpServer, sizeof(cfg.ntp_server));
+  cfg.gmt_offset_sec = gmtOffset_sec;
+  cfg.daylight_offset_sec = daylightOffset_sec;
+  cfg.debug_display_update = DebugDisplayUpdate;
   Serial.println("Config seeded from owm_credentials.h");
   saveConfig();
   return true;

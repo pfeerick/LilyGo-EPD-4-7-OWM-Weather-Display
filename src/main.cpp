@@ -1,4 +1,4 @@
-#ifndef SIMULATOR_BUILD
+﻿#ifndef SIMULATOR_BUILD
 #include <Arduino.h>
 #include <esp_task_wdt.h>
 #include "freertos/FreeRTOS.h"
@@ -128,9 +128,9 @@ void setup() {
     }
   }
 
-  SleepDuration = cfg.sleepDuration;
-  WakeupHour    = cfg.wakeupHour;
-  SleepHour     = cfg.sleepHour;
+  SleepDuration = cfg.sleep_duration;
+  WakeupHour    = cfg.wakeup_hour;
+  SleepHour     = cfg.sleep_hour;
 
   if (forceConfig) {
     uint8_t mac[6];
