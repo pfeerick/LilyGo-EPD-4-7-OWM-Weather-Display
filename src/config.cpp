@@ -1,4 +1,5 @@
 #include "config.h"
+#include "defaults.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
@@ -47,19 +48,19 @@ bool loadConfig() {
   strlcpy(cfg.ssid, doc["ssid"] | "", sizeof(cfg.ssid));
   strlcpy(cfg.password, doc["password"] | "", sizeof(cfg.password));
   strlcpy(cfg.apikey, doc["apikey"] | "", sizeof(cfg.apikey));
-  strlcpy(cfg.server, doc["server"] | "api.openweathermap.org", sizeof(cfg.server));
+  strlcpy(cfg.server, doc["server"] | kDefaultServer, sizeof(cfg.server));
   strlcpy(cfg.city, doc["city"] | "", sizeof(cfg.city));
   strlcpy(cfg.latitude, doc["latitude"] | "", sizeof(cfg.latitude));
   strlcpy(cfg.longitude, doc["longitude"] | "", sizeof(cfg.longitude));
-  strlcpy(cfg.language, doc["language"] | "EN", sizeof(cfg.language));
-  strlcpy(cfg.units, doc["units"] | "M", sizeof(cfg.units));
+  strlcpy(cfg.language, doc["language"] | kDefaultLanguage, sizeof(cfg.language));
+  strlcpy(cfg.units, doc["units"] | kDefaultUnits, sizeof(cfg.units));
   strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, doc["ntpServer"] | "pool.ntp.org", sizeof(cfg.ntpServer));
+  strlcpy(cfg.ntpServer, doc["ntpServer"] | kDefaultNtpServer, sizeof(cfg.ntpServer));
   cfg.gmtOffset_sec = doc["gmtOffset_sec"] | 0;
   cfg.daylightOffset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleepDuration = doc["sleepDuration"] | 60;
-  cfg.wakeupHour = doc["wakeupHour"] | 8;
-  cfg.sleepHour = doc["sleepHour"] | 23;
+  cfg.sleepDuration = doc["sleepDuration"] | kDefaultSleepDuration;
+  cfg.wakeupHour = doc["wakeupHour"] | kDefaultWakeupHour;
+  cfg.sleepHour = doc["sleepHour"] | kDefaultSleepHour;
   cfg.debugDisplayUpdate = doc["debugDisplayUpdate"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
