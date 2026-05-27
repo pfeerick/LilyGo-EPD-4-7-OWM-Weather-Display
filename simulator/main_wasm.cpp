@@ -216,9 +216,8 @@ EMSCRIPTEN_KEEPALIVE void wasm_init() {
   epd_hl_set_all_white(&hl);
 }
 
-EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang,
-                                          const char* hemisphere, int gmt_offset_sec,
-                                          int dst_offset_sec) {
+EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, const char* hemisphere,
+                                          int gmt_offset_sec, int dst_offset_sec) {
   if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
   if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
   if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
