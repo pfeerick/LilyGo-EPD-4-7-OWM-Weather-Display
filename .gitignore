@@ -9,3 +9,11 @@ include/update_html.h
 
 # Bun / Node
 node_modules/
+
+# Simulator build artifacts
+simulator/build/
+simulator/wasm/*.js
+simulator/wasm/*.wasm
+
+# Simulator credentials (copy simulator/.env.example to simulator/.env)
+simulator/.env

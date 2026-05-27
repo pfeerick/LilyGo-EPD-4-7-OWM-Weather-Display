@@ -1,6 +1,20 @@
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+
+// Load simulator/.env if present (gitignored credentials file)
+const dotenvPath = join(import.meta.dir, "simulator", ".env");
+if (existsSync(dotenvPath)) {
+  for (const line of readFileSync(dotenvPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq < 1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const val = trimmed.slice(eq + 1).trim();
+    if (!(key in process.env)) process.env[key] = val;
+  }
+}
 
 function git(args) {
   try {
@@ -16,6 +30,7 @@ const buildTime = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UT
 
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const webDir = join(import.meta.dir, "web");
+const SIMULATOR_WASM_DIR = join(import.meta.dir, "simulator", "wasm");
 
 const mock = {
   __SSID__: "MyHomeWiFi",
@@ -65,6 +80,7 @@ const server = Bun.serve({
       for (const [token, value] of Object.entries(mock)) {
         html = html.replaceAll(token, value);
       }
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -120,6 +136,7 @@ const server = Bun.serve({
     </script>`;
       let html = readFileSync(join(webDir, "update.html"), "utf8").replace("</head>", `${devScript}\n  </head>`);
       html = html.replace("__BUILD__", mock.__BUILD__);
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -130,12 +147,59 @@ const server = Bun.serve({
       return new Response("OK", { status: 200 });
     }
 
+    if (req.method === "GET" && pathname === "/display") {
+      const html = readFileSync(join(webDir, "display.html"), "utf8");
+      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+
+    if (req.method === "GET" && pathname === "/owm") {
+      const apikey = process.env.OWM_APIKEY ?? "";
+      const lat = process.env.OWM_LAT ?? "";
+      const lon = process.env.OWM_LON ?? "";
+      const units = { M: "metric", I: "imperial" }[process.env.OWM_UNITS ?? "M"] ?? "metric";
+      const lang = (process.env.OWM_LANG ?? "EN").toLowerCase();
+      const server = process.env.OWM_SERVER ?? "api.openweathermap.org";
+      const owmUrl =
+        `https://${server}/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apikey}` +
+        `&mode=json&units=${units}&lang=${lang}&exclude=minutely,alerts`;
+      const owmRes = await fetch(owmUrl);
+      const body = await owmRes.arrayBuffer();
+      return new Response(body, {
+        status: owmRes.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "GET" && pathname === "/owm-config") {
+      return new Response(
+        JSON.stringify({
+          city: process.env.OWM_CITY ?? "",
+          units: process.env.OWM_UNITS ?? "M",
+          lang: process.env.OWM_LANG ?? "EN",
+          hemisphere: process.env.OWM_HEMISPHERE ?? "north",
+          gmtOffsetSec: parseInt(process.env.OWM_GMT_OFFSET_SEC ?? "0", 10),
+          dstOffsetSec: parseInt(process.env.OWM_DST_OFFSET_SEC ?? "0", 10),
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (req.method === "GET" && pathname.startsWith("/wasm/")) {
+      const file = pathname.slice(6);
+      const wasmPath = join(SIMULATOR_WASM_DIR, file);
+      if (!existsSync(wasmPath)) return new Response("Not Found", { status: 404 });
+      const ct = file.endsWith(".wasm") ? "application/wasm" : "application/javascript";
+      return new Response(Bun.file(wasmPath), { headers: { "Content-Type": ct } });
+    }
+
     return new Response("Not Found", { status: 404 });
   },
 });
 
+const wasmAvailable = existsSync(join(SIMULATOR_WASM_DIR, "simulator.wasm"));
 console.log(`Preview server running at http://localhost:${server.port}`);
 console.log(`Serving web/ from: ${webDir}`);
+console.log(`Simulator (WASM): ${wasmAvailable ? SIMULATOR_WASM_DIR : "(not built — run emcmake cmake)"}`);
 
 process.on("SIGINT", () => {
   console.log("\nShutting down...");

@@ -53,3 +53,47 @@ bun run dev
 Then open **http://localhost:3000** in a browser. The page is served from `web/config.html` with placeholder values filled from the mock config in `index.js`. `POST /save` is stubbed — it logs the submitted values and returns a confirmation page without restarting anything.
 
 After editing `web/config.html`, refresh the browser to see changes immediately. The next `pio run` will regenerate `include/config_html.h` automatically.
+
+## Simulating the display
+
+The `simulator/` directory runs the real rendering code (`DisplayWeather()`) against live OWM data and renders it to a browser canvas via WebAssembly — no hardware or C++ toolchain required.
+
+### Prerequisites
+
+- An [OpenWeatherMap](https://openweathermap.org/) API key with One Call API 3.0 access
+- [Bun](https://bun.sh/) (already required for the rest of the project)
+
+### Run
+
+Download `simulator.js` and `simulator.wasm` from the [latest release](https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/latest) and place them in `simulator/wasm/`:
+
+```sh
+mkdir -p simulator/wasm
+curl -L -o simulator/wasm/simulator.js   https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/latest/simulator-wasm-latest.js
+curl -L -o simulator/wasm/simulator.wasm https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/latest/simulator-wasm-latest.wasm
+```
+
+Set up credentials and start the server:
+
+```sh
+cp simulator/.env.example simulator/.env
+# edit simulator/.env with your OWM API key and location
+bun run dev
+```
+
+Open **http://localhost:3000/display** to see the rendered display.
+
+### Rebuilding the WASM module
+
+Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and Ninja.
+
+```sh
+emcmake cmake -B simulator/build -S simulator -G Ninja -DCMAKE_BUILD_TYPE=Release
+emmake cmake --build simulator/build
+```
+
+The build writes `simulator.js` and `simulator.wasm` straight into `simulator/wasm/` (gitignored). When your PR is merged to `main`, CI rebuilds the artifacts and publishes them to the `latest` release.
+
+### How it tracks `main.cpp`
+
+The WASM module `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub version in `main_wasm.cpp` to match.

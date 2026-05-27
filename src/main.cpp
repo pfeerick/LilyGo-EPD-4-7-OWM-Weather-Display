@@ -1,3 +1,4 @@
+#ifndef SIMULATOR_BUILD
 #include <Arduino.h>            // In-built
 #include <esp_task_wdt.h>       // In-built
 #include "freertos/FreeRTOS.h"  // In-built
@@ -16,6 +17,9 @@
 #include "setup_portal.h"
 #include "forecast_record.h"
 #include "translations/lang_en.h"
+#else
+// PC build: includes provided by main_pc.cpp before including this file
+#endif
 
 enum alignment { LEFT, RIGHT, CENTER };
 #define White 0xFF
@@ -29,6 +33,7 @@ enum alignment { LEFT, RIGHT, CENTER };
 #define barchart_on true
 #define barchart_off false
 
+#ifndef SIMULATOR_BUILD
 boolean LargeIcon = true;
 boolean SmallIcon = false;
 #define Large 20  // For icon drawing
@@ -73,6 +78,7 @@ long Delta =
 EpdFont currentFont;
 uint8_t* framebuffer;
 static EpdiyHighlevelState hl;
+#endif  // SIMULATOR_BUILD
 
 #pragma region Function Prototypes
 void BeginSleep();
@@ -100,7 +106,6 @@ void DisplayForecastTextSection(int x, int y);
 void DisplayVisiCCoverUVISection(int x, int y);
 void Display_UVIndexLevel(int x, int y, float UVI);
 void DisplayForecastWeather(int x, int y, int index, int fwidth);
-double NormalizedMoonPhase(int d, int m, int y);
 void DisplayAstronomySection(int x, int y);
 void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisphere);
 String MoonPhase(int d, int m, int y, String hemisphere);
@@ -154,6 +159,7 @@ void setFont(EpdFont const& font);
 void edp_update();
 #pragma endregion
 
+#ifndef SIMULATOR_BUILD
 void BeginSleep() {
   epd_poweroff();
   UpdateLocalTime();
@@ -385,6 +391,8 @@ void DisplaySetupScreen(const char* apName) {
   epd_poweroff();
 }
 
+#endif  // SIMULATOR_BUILD
+
 void Convert_Readings_to_Imperial(int count) {
   WxConditions[0].Pressure = hPa_to_inHg(WxConditions[0].Pressure);
   for (int i = 0; i < count; i++) {
@@ -393,6 +401,7 @@ void Convert_Readings_to_Imperial(int count) {
   }
 }
 
+#ifndef SIMULATOR_BUILD
 bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.print(F("\nCreating object..."));
   JsonDocument doc;                                         // allocate the JsonDocument
@@ -496,11 +505,13 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
+#endif  // SIMULATOR_BUILD
+
 //#########################################################################################
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
-  time_t tm = unix_time;
-  struct tm* now_tm = localtime(&tm);
+  time_t tm = unix_time + cfg.gmtOffset_sec + cfg.daylightOffset_sec;
+  struct tm* now_tm = gmtime(&tm);
   char output[40];
   if (strcmp(cfg.units, "M") == 0) {
     strftime(output, sizeof(output), "%H:%M %d/%m/%y", now_tm);
@@ -510,6 +521,7 @@ String ConvertUnixTime(int unix_time) {
   return output;
 }
 //#########################################################################################
+#ifndef SIMULATOR_BUILD
 bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
   const String units = (strcmp(cfg.units, "M") == 0 ? "metric" : "imperial");
   client.stop();  // close connection before sending a new request
@@ -532,6 +544,7 @@ bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
   http.end();
   return true;
 }
+#endif  // SIMULATOR_BUILD
 
 float mm_to_inches(float value_mm) {
   return 0.0393701 * value_mm;
@@ -725,12 +738,6 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
              CENTER);
 }
 
-double NormalizedMoonPhase(int d, int m, int y) {
-  int j = JulianDate(d, m, y);
-  //Calculate approximate moon phase
-  double Phase = (j + 4.867) / 29.53059;
-  return (Phase - (int)Phase);
-}
 
 void DisplayAstronomySection(int x, int y) {
   setFont(OpenSans10B);
@@ -748,9 +755,24 @@ void DisplayAstronomySection(int x, int y) {
 }
 
 void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisphere) {
-  double Phase = NormalizedMoonPhase(dd, mm, yy);
+  int c, e;
+  double jd;
+  if (mm < 3) {
+    yy--;
+    mm += 12;
+  }
+  mm++;
+  c = 365.25 * yy;
+  e = 30.6 * mm;
+  jd = c + e + dd - 694039.09;
+  jd /= 29.53059;
+  int b = jd;
+  jd -= b;  // fractional part 0.0–1.0
+  double Phase = jd;
+  b = (int)(Phase * 8 + 0.5) & 7;
   hemisphere.toLowerCase();
   if (hemisphere == "south") Phase = 1 - Phase;
+  int octant = (int)(Phase * 8 + 0.5) & 7;
   // Draw dark part of moon
   fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, DarkGrey);
   const int number_of_lines = 90;
@@ -759,7 +781,7 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, String hemisph
     // Determine the edges of the lighted part of the moon
     double Rpos = 2 * Xpos;
     double Xpos1, Xpos2;
-    if (Phase < 0.5) {
+    if (octant < 5) {
       Xpos1 = -Xpos;
       Xpos2 = Rpos - 2 * Phase * Rpos - Xpos;
     } else {
@@ -792,13 +814,12 @@ String MoonPhase(int d, int m, int y, String hemisphere) {
   ++m;
   c = 365.25 * y;
   e = 30.6 * m;
-  jd = c + e + d - 694039.09; /* jd is total days elapsed */
-  jd /= 29.53059;             /* divide by the moon cycle (29.53 days) */
-  b = jd;                     /* int(jd) -> b, take integer part of jd */
-  jd -= b;                    /* subtract integer part to leave fractional part of original jd */
-  b = jd * 8 + 0.5;           /* scale fraction from 0-8 and round by adding 0.5 */
-  b = b & 7;                  /* 0 and 8 are the same phase so modulo 8 for 0 */
-  if (hemisphere == "south") b = 7 - b;
+  jd = c + e + d - 694039.09;                   /* jd is total days elapsed */
+  jd /= 29.53059;                               /* divide by the moon cycle (29.53 days) */
+  b = jd;                                       /* int(jd) -> b, take integer part of jd */
+  jd -= b;                                      /* subtract integer part to leave fractional part of original jd */
+  b = jd * 8 + 0.5;                             /* scale fraction from 0-8 and round by adding 0.5 */
+  b = b & 7;                                    /* 0 and 8 are the same phase so modulo 8 for 0 */
   if (b == 0) return TXT_MOON_NEW;              // New;              0%  illuminated
   if (b == 1) return TXT_MOON_WAXING_CRESCENT;  // Waxing crescent; 25%  illuminated
   if (b == 2) return TXT_MOON_FIRST_QUARTER;    // First quarter;   50%  illuminated
@@ -935,6 +956,7 @@ void DrawRSSI(int x, int y, int rssi) {
   }
 }
 
+#ifndef SIMULATOR_BUILD
 boolean UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
@@ -961,7 +983,9 @@ boolean UpdateLocalTime() {
   Time_str = time_output;
   return true;
 }
+#endif  // SIMULATOR_BUILD
 
+#ifndef SIMULATOR_BUILD
 void DrawBattery(int x, int y) {
   uint8_t percentage = 100;
   esp_adc_cal_characteristics_t adc_chars;
@@ -984,6 +1008,7 @@ void DrawBattery(int x, int y) {
     drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
   }
 }
+#endif  // SIMULATOR_BUILD — DrawBattery uses ADC; PC version defined in simulator/main_pc.cpp
 
 // Symbols are drawn on a relative 10x10grid and 1 scale unit = 1 drawing unit
 void addcloud(int x, int y, int scale, int linesize) {
@@ -1347,6 +1372,8 @@ void setFont(EpdFont const& font) {
   currentFont = font;
 }
 
+#ifndef SIMULATOR_BUILD
 void edp_update() {
   epd_hl_update_screen(&hl, MODE_GL16, (int)epd_ambient_temperature());
 }
+#endif

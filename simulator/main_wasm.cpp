@@ -1,0 +1,246 @@
+// WASM entry point for the weather display simulator.
+// OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
+#define SIMULATOR_BUILD 1
+
+#include "pc_stubs.h"
+#include "epdiy_pc/epdiy_pc.h"
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#include "../.pio/libdeps/display/ArduinoJson/src/ArduinoJson.h"
+
+#include "../include/config.h"
+#include "../include/forecast_record.h"
+#include "../include/translations/lang_en.h"
+#include "../include/fonts/opensans8b.h"
+#include "../include/fonts/opensans10b.h"
+#include "../include/fonts/opensans12b.h"
+#include "../include/fonts/opensans18b.h"
+#include "../include/fonts/opensans24b.h"
+#include "../include/images/moon.h"
+#include "../include/images/sunrise.h"
+#include "../include/images/sunset.h"
+#include "../include/images/uvi.h"
+
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#else
+// Allow the file to compile under a native toolchain (e.g. for IDE checks).
+// EMSCRIPTEN_KEEPALIVE becomes a no-op; the exported functions exist but are
+// not linked as WASM exports.
+#define EMSCRIPTEN_KEEPALIVE
+#endif
+
+// ---- Globals expected by the rendering code ----
+
+boolean LargeIcon = true;
+boolean SmallIcon = false;
+#define Large 20
+#define Small 10
+String Time_str = "--:--:--";
+String Date_str = "-- --- ----";
+int wifi_signal = -55;
+int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
+
+#define max_readings 24
+#define max_graph_readings 16
+
+Forecast_record_type WxConditions[1];
+Forecast_record_type WxForecast[max_readings];
+
+float pressure_readings[max_readings] = {0};
+float temperature_readings[max_readings] = {0};
+float humidity_readings[max_readings] = {0};
+float rain_readings[max_readings] = {0};
+float snow_readings[max_readings] = {0};
+
+long SleepDuration = 30;
+int WakeupHour = 7;
+int SleepHour = 23;
+long StartTime = 0;
+long SleepTimer = 0;
+long Delta = 30;
+
+EpdFont currentFont;
+uint8_t* framebuffer;
+static EpdiyHighlevelState hl;
+
+// ---- Config ----
+
+AppConfig cfg = {"",                        // ssid
+                 "",                        // password
+                 "",                        // apikey
+                 "api.openweathermap.org",  // server
+                 "",                        // city
+                 "",                        // latitude
+                 "",                        // longitude
+                 "EN",                      // language
+                 "north",                   // hemisphere
+                 "M",                       // units
+                 "",                        // timezone
+                 "pool.ntp.org",            // ntpServer
+                 0,
+                 0,
+                 30,
+                 7,
+                 23,
+                 false};
+
+bool loadConfig() {
+  return false;
+}
+void saveConfig() {}
+bool isConfigValid() {
+  return cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0';
+}
+bool seedConfigFromHeader() {
+  return false;
+}
+
+boolean UpdateLocalTime() {
+  time_t now = time(nullptr);
+  struct tm t;
+  localtime_r(&now, &t);
+  CurrentHour = t.tm_hour;
+  CurrentMin = t.tm_min;
+  CurrentSec = t.tm_sec;
+  char day_buf[64], time_buf[32];
+  if (strcmp(cfg.units, "M") == 0) {
+    snprintf(day_buf, sizeof(day_buf), "%s, %02d %s %04d", weekday_D[t.tm_wday], t.tm_mday, month_M[t.tm_mon],
+             t.tm_year + 1900);
+    strftime(time_buf, sizeof(time_buf), "%H:%M:%S", &t);
+  } else {
+    strftime(day_buf, sizeof(day_buf), "%a %b-%d-%Y", &t);
+    strftime(time_buf, sizeof(time_buf), "%r", &t);
+  }
+  Date_str = day_buf;
+  Time_str = time_buf;
+  return true;
+}
+
+void edp_update() {}
+
+#include "../src/main.cpp"
+
+void DrawBattery(int x, int y) {
+  const uint8_t percentage = 85;
+  const float voltage = 4.1f;
+  drawRect(x + 25, y - 14, 40, 15, (uint16_t)0x00);
+  fillRect(x + 65, y - 10, 4, 7, (uint16_t)0x00);
+  fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, (uint16_t)0x00);
+  drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
+}
+
+bool DecodeWeather(const std::string& json, String Type) {
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, json);
+  if (error) {
+    fprintf(stderr, "deserializeJson() failed: %s\n", error.c_str());
+    return false;
+  }
+  JsonObject root = doc.as<JsonObject>();
+  fprintf(stderr, "Decoding %s data\n", Type.c_str());
+
+  WxConditions[0].High = -50;
+  WxConditions[0].Low = 50;
+
+  JsonObject current = doc["current"];
+  WxConditions[0].Sunrise = current["sunrise"];
+  WxConditions[0].Sunset = current["sunset"];
+  WxConditions[0].Temperature = current["temp"];
+  WxConditions[0].FeelsLike = current["feels_like"];
+  WxConditions[0].Pressure = current["pressure"];
+  WxConditions[0].Humidity = current["humidity"];
+  WxConditions[0].DewPoint = current["dew_point"];
+  WxConditions[0].UVI = current["uvi"];
+  WxConditions[0].Cloudcover = current["clouds"];
+  WxConditions[0].Visibility = current["visibility"];
+  WxConditions[0].Windspeed = current["wind_speed"];
+  WxConditions[0].Winddir = current["wind_deg"];
+
+  const char* desc = current["weather"][0]["description"];
+  const char* icon = current["weather"][0]["icon"];
+  WxConditions[0].Forecast0 = String(desc ? desc : "");
+  WxConditions[0].Icon = String(icon ? icon : "");
+
+  JsonArray daily = root["daily"];
+  WxConditions[0].Low = daily[0]["temp"]["min"].as<float>();
+  WxConditions[0].High = daily[0]["temp"]["max"].as<float>();
+
+  JsonArray list = root["hourly"];
+  byte wxIndex = 0;
+  for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
+    WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
+    WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
+    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
+    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
+    float temps[3] = {WxForecast[wxIndex].Temperature, t1, t2};
+    WxForecast[wxIndex].High = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
+                                                    : (temps[1] > temps[2] ? temps[1] : temps[2]));
+    WxForecast[wxIndex].Low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
+                                                   : (temps[1] < temps[2] ? temps[1] : temps[2]));
+    WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
+    WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
+    const char* ic = list[r]["weather"][0]["icon"];
+    WxForecast[wxIndex].Icon = String(ic ? ic : "");
+    WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
+    WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
+
+    if (wxIndex >= 2) {
+      float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
+      pt = ((int)(pt * 10)) / 10.0f;
+      WxConditions[0].Trend = (pt > 0) ? "+" : (pt < 0) ? "-" : "0";
+    } else {
+      WxConditions[0].Trend = "0";
+    }
+    wxIndex++;
+  }
+  if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
+  return true;
+}
+
+// ---- Exported WASM API ----
+
+extern "C" {
+
+EMSCRIPTEN_KEEPALIVE void wasm_init() {
+  hl = epd_hl_init(nullptr);
+  framebuffer = epd_pc_get_framebuffer();
+  epd_hl_set_all_white(&hl);
+}
+
+EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, const char* hemisphere,
+                                          int gmt_offset_sec, int dst_offset_sec) {
+  if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
+  if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
+  if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
+  if (hemisphere) strncpy(cfg.hemisphere, hemisphere, sizeof(cfg.hemisphere) - 1);
+  cfg.gmtOffset_sec = gmt_offset_sec;
+  cfg.daylightOffset_sec = dst_offset_sec;
+}
+
+EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {
+  UpdateLocalTime();
+  epd_hl_set_all_white(&hl);
+  std::string json_str(json, len);
+  if (!DecodeWeather(json_str, "onecall")) return -1;
+  DisplayWeather();
+  return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE uint8_t* wasm_get_framebuffer() {
+  return epd_pc_get_framebuffer();
+}
+
+EMSCRIPTEN_KEEPALIVE int wasm_fb_size() {
+  return (epd_width() / 2) * epd_height();
+}
+
+}  // extern "C"

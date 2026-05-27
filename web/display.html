@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>E-ink Display Simulator</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #888;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding: 24px 16px;
+        padding-top: 52px;
+        font-family: sans-serif;
+        gap: 16px;
+      }
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #1e1e2e;
+        display: flex;
+        z-index: 100;
+      }
+      nav a {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        color: #aaa;
+        text-decoration: none;
+        font-size: 0.9em;
+        border-bottom: 3px solid transparent;
+      }
+      nav a.active {
+        color: #fff;
+        border-bottom-color: #2a7ae2;
+      }
+      nav a:hover:not(.active) {
+        color: #ddd;
+        background: #2a2a3e;
+      }
+      h1 { color: #eee; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+      #frame {
+        background: #d4cfc8;
+        border: 6px solid #444;
+        border-radius: 4px;
+        padding: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      }
+      canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      #controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      button {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 4px;
+        background: #555;
+        color: #eee;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      button:hover { background: #666; }
+      label { color: #ddd; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+      #status { color: #bbb; font-size: 0.8rem; min-width: 10ch; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="/">Configuration</a>
+      <a href="/update">Firmware Update</a>
+      <a href="/display" class="active">Display</a>
+    </nav>
+    <h1>E-ink Display Simulator &mdash; 960 &times; 540</h1>
+    <div id="frame">
+      <canvas id="epd" width="960" height="540"></canvas>
+    </div>
+    <div id="controls">
+      <button type="button" id="refreshBtn">Refresh</button>
+      <button type="button" id="refetchBtn" title="Re-fetch live OWM data">Re-fetch OWM</button>
+      <button type="button" id="saveBtn" title="Save the current display as a PNG">Save PNG</button>
+      <label>
+        <input type="checkbox" id="autoRefresh" />
+        Auto-refresh
+      </label>
+      <select id="interval" style="padding:6px;border-radius:4px;background:#555;color:#eee;border:none;">
+        <option value="2000">2 s</option>
+        <option value="5000" selected>5 s</option>
+        <option value="10000">10 s</option>
+        <option value="30000">30 s</option>
+      </select>
+      <label>
+        <input type="checkbox" id="halfScale" />
+        50% scale
+      </label>
+      <label>
+        <input type="checkbox" id="showCity" />
+        Show city
+      </label>
+      <span id="status">—</span>
+    </div>
+    <script>
+      const EPD_W = 960;
+      const EPD_H = 540;
+      const canvas = document.getElementById("epd");
+      const ctx = canvas.getContext("2d");
+      const statusEl = document.getElementById("status");
+      let autoTimer = null;
+      let wasmModule = null;
+      let wasmReady = false;
+      let owmCfg = { city: "", units: "M", lang: "EN", hemisphere: "north", gmtOffsetSec: 0, dstOffsetSec: 0 };
+
+      // Pixel unpacking: 4bpp packed grayscale.
+      //   odd x  → upper nibble: (byte >> 4) & 0xF
+      //   even x → lower nibble: byte & 0xF
+      // 0x0 = black, 0xF = white
+      function renderFramebuffer(fb) {
+        const imgData = ctx.createImageData(EPD_W, EPD_H);
+        const d = imgData.data;
+        const u8 = new Uint8Array(fb.buffer ?? fb);
+        for (let y = 0; y < EPD_H; y++) {
+          const rowBase = y * (EPD_W / 2);
+          for (let x = 0; x < EPD_W; x++) {
+            const byteIdx = rowBase + Math.floor(x / 2);
+            const nibble = (x % 2 === 1)
+              ? (u8[byteIdx] >> 4) & 0xf   // odd x → upper nibble
+              : u8[byteIdx] & 0xf;          // even x → lower nibble
+            const gray = Math.round((nibble / 15) * 255);
+            const px = (y * EPD_W + x) * 4;
+            d[px]     = gray;
+            d[px + 1] = gray;
+            d[px + 2] = gray;
+            d[px + 3] = 255;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      function applyCity() {
+        const revealed = document.getElementById("showCity").checked;
+        const city = revealed ? owmCfg.city : "Simulator";
+        wasmModule.ccall("wasm_set_config", null,
+          ["string", "string", "string", "string", "number", "number"],
+          [city, owmCfg.units, owmCfg.lang, owmCfg.hemisphere, owmCfg.gmtOffsetSec, owmCfg.dstOffsetSec]);
+      }
+
+      async function ensureWasm() {
+        if (wasmReady) return true;
+        statusEl.textContent = "Loading WASM…";
+        try {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = "/wasm/simulator.js";
+            s.onload = resolve;
+            s.onerror = () => reject(new Error("Failed to load /wasm/simulator.js — build the WASM module first"));
+            document.head.appendChild(s);
+          });
+          wasmModule = await SimulatorModule({ locateFile: f => `/wasm/${f}` });
+          wasmModule.ccall("wasm_init", null, [], []);
+          owmCfg = await (await fetch("/owm-config")).json();
+          applyCity();
+          wasmReady = true;
+          return true;
+        } catch (e) {
+          statusEl.textContent = `WASM load failed: ${e.message}`;
+          return false;
+        }
+      }
+
+      async function fetchAndRender(refetch = false) {
+        statusEl.textContent = refetch ? "Re-fetching OWM…" : "Rendering…";
+        try {
+          if (!await ensureWasm()) return;
+          const t0 = performance.now();
+          const owmRes = await fetch(`/owm${refetch ? `?t=${Date.now()}` : ""}`, { cache: "no-store" });
+          if (!owmRes.ok) {
+            statusEl.textContent = `OWM error: ${owmRes.status}`;
+            return;
+          }
+          const json = await owmRes.text();
+          const enc = new TextEncoder().encode(json);
+          const ptr = wasmModule._malloc(enc.length);
+          // Re-read HEAPU8 after every WASM call that can grow memory.
+          // Emscripten's HEAPU8 view is detached when the underlying ArrayBuffer is replaced.
+          wasmModule.HEAPU8.set(enc, ptr);
+          const ok = wasmModule.ccall("wasm_render", "number", ["number", "number"], [ptr, enc.length]);
+          wasmModule._free(ptr);
+          if (ok !== 0) { statusEl.textContent = "Render failed"; return; }
+          const fbPtr  = wasmModule.ccall("wasm_get_framebuffer", "number", [], []);
+          const fbSize = wasmModule.ccall("wasm_fb_size",         "number", [], []);
+          // Copy out immediately so we don't hold a view that could become detached.
+          const fbCopy = new Uint8Array(wasmModule.HEAPU8.buffer, fbPtr, fbSize).slice();
+          renderFramebuffer(fbCopy);
+          const ms = Math.round(performance.now() - t0);
+          statusEl.textContent = `${new Date().toLocaleTimeString()} (${ms} ms)`;
+        } catch (e) {
+          statusEl.textContent = `Error: ${e.message}`;
+        }
+      }
+
+      function startAuto() {
+        stopAuto();
+        autoTimer = setInterval(() => fetchAndRender(false), parseInt(document.getElementById("interval").value, 10));
+      }
+      function stopAuto() {
+        if (autoTimer !== null) { clearInterval(autoTimer); autoTimer = null; }
+      }
+
+      document.getElementById("refreshBtn").addEventListener("click", () => fetchAndRender(false));
+      document.getElementById("refetchBtn").addEventListener("click", () => fetchAndRender(true));
+
+      document.getElementById("saveBtn").addEventListener("click", () => {
+        canvas.toBlob((blob) => {
+          if (!blob) { statusEl.textContent = "PNG export failed"; return; }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+          a.href = url;
+          a.download = `epd-${ts}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      });
+
+      document.getElementById("autoRefresh").addEventListener("change", (e) => {
+        e.target.checked ? startAuto() : stopAuto();
+      });
+
+      document.getElementById("interval").addEventListener("change", () => {
+        if (document.getElementById("autoRefresh").checked) startAuto();
+      });
+
+      document.getElementById("showCity").addEventListener("change", async () => {
+        if (!await ensureWasm()) return;
+        applyCity();
+        fetchAndRender(false);
+      });
+
+      document.getElementById("halfScale").addEventListener("change", (e) => {
+        if (e.target.checked) {
+          canvas.style.width  = `${EPD_W / 2}px`;
+          canvas.style.height = `${EPD_H / 2}px`;
+        } else {
+          canvas.style.width  = "";
+          canvas.style.height = "";
+        }
+      });
+
+      // Load on page open
+      fetchAndRender();
+    </script>
+  </body>
+</html>

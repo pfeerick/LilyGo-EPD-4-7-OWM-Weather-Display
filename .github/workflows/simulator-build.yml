@@ -1,0 +1,49 @@
+name: Simulator Build
+
+on:
+  pull_request:
+    paths:
+      - "simulator/**"
+      - "src/main.cpp"
+      - "include/**"
+  workflow_call:
+
+jobs:
+  wasm:
+    name: WASM (Emscripten)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install PlatformIO (for ArduinoJson / epdiy headers)
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - run: pip install platformio
+      - uses: actions/cache@v5
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - name: Fetch PlatformIO library deps (headers only)
+        run: pio pkg install
+
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Install Ninja
+        run: sudo apt-get install -y ninja-build
+
+      - name: Configure
+        run: emcmake cmake -B simulator/build -S simulator -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: emmake cmake --build simulator/build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: simulator-wasm
+          path: |
+            simulator/wasm/simulator.js
+            simulator/wasm/simulator.wasm
