@@ -36,11 +36,13 @@ static int DrawQR(const char* text, int originX, int originY, int moduleSize, in
             int size = esp_qrcode_get_size(qrcode);
             qr_rendered_px = size * qr_mod_size;
             int border = qr_mod_size * 2;
-            FillRect(qr_origin_x - border, qr_origin_y - border, qr_rendered_px + border * 2, qr_rendered_px + border * 2, kWhite);
+            FillRect(qr_origin_x - border, qr_origin_y - border, qr_rendered_px + border * 2,
+                     qr_rendered_px + border * 2, kWhite);
             for (int y = 0; y < size; y++) {
               for (int x = 0; x < size; x++) {
                 if (esp_qrcode_get_module(qrcode, x, y)) {
-                  FillRect(qr_origin_x + x * qr_mod_size, qr_origin_y + y * qr_mod_size, qr_mod_size, qr_mod_size, kBlack);
+                  FillRect(qr_origin_x + x * qr_mod_size, qr_origin_y + y * qr_mod_size, qr_mod_size, qr_mod_size,
+                           kBlack);
                 }
               }
             }
@@ -129,8 +131,8 @@ void setup() {
   }
 
   sleep_duration = cfg.sleep_duration;
-  wakeup_hour    = cfg.wakeup_hour;
-  sleep_hour     = cfg.sleep_hour;
+  wakeup_hour = cfg.wakeup_hour;
+  sleep_hour = cfg.sleep_hour;
 
   if (force_config) {
     uint8_t mac[6];
