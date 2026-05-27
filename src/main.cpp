@@ -111,10 +111,10 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
 String MoonPhase(int d, int m, int y);
 void DisplayForecastSection(int x, int y);
 void DisplayGraphSection(int x, int y);
-void DisplayConditionsSection(int x, int y, const String& IconName, bool IconSize);
+void DisplayConditionsSection(int x, int y, const char* IconName, bool IconSize);
 void arrow(int x, int y, int asize, float aangle, int pwidth, int plength);
 void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12, int o13, int o14);
-void DrawPressureAndTrend(int x, int y, float pressure, const String& slope);
+void DrawPressureAndTrend(int x, int y, float pressure, char slope);
 void DisplayStatusSection(int x, int y, int rssi);
 void DrawRSSI(int x, int y, int rssi);
 bool UpdateLocalTime();
@@ -126,19 +126,19 @@ void addtstorm(int x, int y, int scale);
 void addsun(int x, int y, int scale, bool IconSize);
 void addfog(int x, int y, int scale, int linesize, bool IconSize);
 void DrawAngledLine(int x, int y, int x1, int y1, int size, int color);
-void ClearSky(int x, int y, bool IconSize, const String& IconName);
-void BrokenClouds(int x, int y, bool IconSize, const String& IconName);
-void FewClouds(int x, int y, bool IconSize, const String& IconName);
-void ScatteredClouds(int x, int y, bool IconSize, const String& IconName);
-void Rain(int x, int y, bool IconSize, const String& IconName);
-void ChanceRain(int x, int y, bool IconSize, const String& IconName);
-void Thunderstorms(int x, int y, bool IconSize, const String& IconName);
-void Snow(int x, int y, bool IconSize, const String& IconName);
-void Mist(int x, int y, bool IconSize, const String& IconName);
+void ClearSky(int x, int y, bool IconSize, const char* IconName);
+void BrokenClouds(int x, int y, bool IconSize, const char* IconName);
+void FewClouds(int x, int y, bool IconSize, const char* IconName);
+void ScatteredClouds(int x, int y, bool IconSize, const char* IconName);
+void Rain(int x, int y, bool IconSize, const char* IconName);
+void ChanceRain(int x, int y, bool IconSize, const char* IconName);
+void Thunderstorms(int x, int y, bool IconSize, const char* IconName);
+void Snow(int x, int y, bool IconSize, const char* IconName);
+void Mist(int x, int y, bool IconSize, const char* IconName);
 void CloudCover(int x, int y, int CloudCover);
 void Visibility(int x, int y, const String& Visibility);
 void addmoon(int x, int y, bool IconSize);
-void Nodata(int x, int y, bool IconSize, const String& IconName);
+void Nodata(int x, int y, bool IconSize, const char* IconName);
 void DrawMoonImage(int x, int y);
 void DrawSunriseImage(int x, int y);
 void DrawSunsetImage(int x, int y);
@@ -440,12 +440,10 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   WxConditions.Winddir = current["wind_deg"];
   Serial.printf("WDir: %d\n", WxConditions.Winddir);
   JsonObject current_weather = current["weather"][0];
-  String Description = current_weather["description"];  // "scattered clouds"
-  String Icon = current_weather["icon"];                // "01n"
-  WxConditions.Forecast0 = Description;
-  Serial.printf("Fore: %s\n", WxConditions.Forecast0.c_str());
-  WxConditions.Icon = Icon;
-  Serial.printf("Icon: %s\n", WxConditions.Icon.c_str());
+  strlcpy(WxConditions.Forecast0, current_weather["description"] | "", sizeof(WxConditions.Forecast0));
+  Serial.printf("Fore: %s\n", WxConditions.Forecast0);
+  strlcpy(WxConditions.Icon, current_weather["icon"] | "", sizeof(WxConditions.Icon));
+  Serial.printf("Icon: %s\n", WxConditions.Icon);
 
   Serial.printf("\nReceiving Forecast period - ");  //------------------------------------------------
 
@@ -477,8 +475,8 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     Serial.printf("Pres: %f\n", WxForecast[wxIndex].Pressure);
     WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
     Serial.printf("Humi: %f\n", WxForecast[wxIndex].Humidity);
-    WxForecast[wxIndex].Icon = list[r]["weather"][0]["icon"].as<const char*>();
-    Serial.printf("Icon: %s\n", WxForecast[wxIndex].Icon.c_str());
+    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
+    Serial.printf("Icon: %s\n", WxForecast[wxIndex].Icon);
     WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
     Serial.printf("Rain: %f\n", WxForecast[wxIndex].Rainfall);
     WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
@@ -490,12 +488,12 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     float pressure_trend =
         WxForecast[0].Pressure - WxForecast[2].Pressure;   // Measure pressure slope between ~now and later
     pressure_trend = ((int)(pressure_trend * 10)) / 10.0;  // Remove any small variations less than 0.1
-    WxConditions.Trend = "=";
-    if (pressure_trend > 0) WxConditions.Trend = "+";
-    if (pressure_trend < 0) WxConditions.Trend = "-";
-    if (pressure_trend == 0) WxConditions.Trend = "0";
+    WxConditions.Trend = '=';
+    if (pressure_trend > 0) WxConditions.Trend = '+';
+    if (pressure_trend < 0) WxConditions.Trend = '-';
+    if (pressure_trend == 0) WxConditions.Trend = '0';
   } else {
-    WxConditions.Trend = "0";  // Default if insufficient data
+    WxConditions.Trend = '0';  // Default if insufficient data
   }
   if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
   return true;
@@ -868,25 +866,25 @@ void DisplayGraphSection(int x, int y) {
               max_graph_readings, autoscale_on, barchart_on);
 }
 
-void DisplayConditionsSection(int x, int y, const String& IconName, bool IconSize) {
-  Serial.printf("Icon name: %s\n", IconName.c_str());
-  if (IconName == "01d" || IconName == "01n")
+void DisplayConditionsSection(int x, int y, const char* IconName, bool IconSize) {
+  Serial.printf("Icon name: %s\n", IconName);
+  if (strcmp(IconName, "01d") == 0 || strcmp(IconName, "01n") == 0)
     ClearSky(x, y, IconSize, IconName);
-  else if (IconName == "02d" || IconName == "02n")
+  else if (strcmp(IconName, "02d") == 0 || strcmp(IconName, "02n") == 0)
     FewClouds(x, y, IconSize, IconName);
-  else if (IconName == "03d" || IconName == "03n")
+  else if (strcmp(IconName, "03d") == 0 || strcmp(IconName, "03n") == 0)
     ScatteredClouds(x, y, IconSize, IconName);
-  else if (IconName == "04d" || IconName == "04n")
+  else if (strcmp(IconName, "04d") == 0 || strcmp(IconName, "04n") == 0)
     BrokenClouds(x, y, IconSize, IconName);
-  else if (IconName == "09d" || IconName == "09n")
+  else if (strcmp(IconName, "09d") == 0 || strcmp(IconName, "09n") == 0)
     ChanceRain(x, y, IconSize, IconName);
-  else if (IconName == "10d" || IconName == "10n")
+  else if (strcmp(IconName, "10d") == 0 || strcmp(IconName, "10n") == 0)
     Rain(x, y, IconSize, IconName);
-  else if (IconName == "11d" || IconName == "11n")
+  else if (strcmp(IconName, "11d") == 0 || strcmp(IconName, "11n") == 0)
     Thunderstorms(x, y, IconSize, IconName);
-  else if (IconName == "13d" || IconName == "13n")
+  else if (strcmp(IconName, "13d") == 0 || strcmp(IconName, "13n") == 0)
     Snow(x, y, IconSize, IconName);
-  else if (IconName == "50d" || IconName == "50n")
+  else if (strcmp(IconName, "50d") == 0 || strcmp(IconName, "50n") == 0)
     Mist(x, y, IconSize, IconName);
   else
     Nodata(x, y, IconSize, IconName);
@@ -916,16 +914,16 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
   drawLine(x + o11, y + o12, x + o13, y + o14, Black);
 }
 
-void DrawPressureAndTrend(int x, int y, float pressure, const String& slope) {
+void DrawPressureAndTrend(int x, int y, float pressure, char slope) {
   const bool isMetric = (strcmp(cfg.units, "M") == 0);
   drawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), LEFT);
-  if (slope == "+") {
+  if (slope == '+') {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
     DrawSegment(x - 1, y, 0, 0, 8, -8, 8, -8, 16, 0);
-  } else if (slope == "0") {
+  } else if (slope == '0') {
     DrawSegment(x, y, 8, -8, 16, 0, 8, 8, 16, 0);
     DrawSegment(x - 1, y, 8, -8, 16, 0, 8, 8, 16, 0);
-  } else if (slope == "-") {
+  } else if (slope == '-') {
     DrawSegment(x, y, 0, 0, 8, 8, 8, 8, 16, 0);
     DrawSegment(x - 1, y, 0, 0, 8, 8, 8, 8, 16, 0);
   }
@@ -1091,53 +1089,53 @@ void DrawAngledLine(int x, int y, int x1, int y1, int size, int color) {
   fillTriangle(x - dx, y + dy, x1 - dx, y1 + dy, x1 + dx, y1 - dy, color);
 }
 
-void ClearSky(int x, int y, bool IconSize, const String& IconName) {
+void ClearSky(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   if (IconSize == LargeIcon) scale = Large;
   y += (IconSize ? 0 : 10);
   addsun(x, y, scale * (IconSize ? 1.7 : 1.2), IconSize);
 }
 
-void BrokenClouds(int x, int y, bool IconSize, const String& IconName) {
+void BrokenClouds(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   y += 15;
   if (IconSize == LargeIcon) scale = Large;
   addsun(x - scale * 1.8, y - scale * 1.8, scale, IconSize);
   addcloud(x, y, scale * (IconSize ? 1 : 0.75), linesize);
 }
 
-void FewClouds(int x, int y, bool IconSize, const String& IconName) {
+void FewClouds(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   y += 15;
   if (IconSize == LargeIcon) scale = Large;
   addcloud(x + (IconSize ? 10 : 0), y, scale * (IconSize ? 0.9 : 0.8), linesize);
   addsun((x + (IconSize ? 10 : 0)) - scale * 1.8, y - scale * 1.6, scale, IconSize);
 }
 
-void ScatteredClouds(int x, int y, bool IconSize, const String& IconName) {
+void ScatteredClouds(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   y += 15;
   if (IconSize == LargeIcon) scale = Large;
   addcloud(x - (IconSize ? 35 : 0), y - scale * 2, scale / 2, linesize);  // Cloud top left
   addcloud(x, y, scale * 0.9, linesize);                                  // Main cloud
 }
 
-void Rain(int x, int y, bool IconSize, const String& IconName) {
+void Rain(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   y += 15;
   if (IconSize == LargeIcon) scale = Large;
   addcloud(x, y, scale * (IconSize ? 1 : 0.75), linesize);
   addrain(x, y, scale, IconSize);
 }
 
-void ChanceRain(int x, int y, bool IconSize, const String& IconName) {
+void ChanceRain(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   if (IconSize == LargeIcon) scale = Large;
   y += 15;
   addsun(x - scale * 1.8, y - scale * 1.8, scale, IconSize);
@@ -1145,26 +1143,26 @@ void ChanceRain(int x, int y, bool IconSize, const String& IconName) {
   addrain(x, y, scale, IconSize);
 }
 
-void Thunderstorms(int x, int y, bool IconSize, const String& IconName) {
+void Thunderstorms(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   if (IconSize == LargeIcon) scale = Large;
   y += 5;
   addcloud(x, y, scale * (IconSize ? 1 : 0.75), linesize);
   addtstorm(x, y, scale);
 }
 
-void Snow(int x, int y, bool IconSize, const String& IconName) {
+void Snow(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   if (IconSize == LargeIcon) scale = Large;
   addcloud(x, y, scale * (IconSize ? 1 : 0.75), linesize);
   addsnow(x, y, scale, IconSize);
 }
 
-void Mist(int x, int y, bool IconSize, const String& IconName) {
+void Mist(int x, int y, bool IconSize, const char* IconName) {
   int scale = Small, linesize = 5;
-  if (IconName.endsWith("n")) addmoon(x, y, IconSize);
+  if (IconName[2] == 'n') addmoon(x, y, IconSize);
   if (IconSize == LargeIcon) scale = Large;
   addsun(x, y, scale * (IconSize ? 1 : 0.75), linesize);
   addfog(x, y, scale, linesize, IconSize);
@@ -1205,7 +1203,7 @@ void addmoon(int x, int y, bool IconSize) {
   fillCircle(x - 16 + xOffset, y - 37 + yOffset, (int)(Small * 1.6), White);
 }
 
-void Nodata(int x, int y, bool IconSize, const String& IconName) {
+void Nodata(int x, int y, bool IconSize, const char* IconName) {
   if (IconSize == LargeIcon)
     setFont(OpenSans24B);
   else
