@@ -20,7 +20,7 @@ void ConvertReadingsToImperial(int count) {
 
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
@@ -158,19 +158,19 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   } else {
     wx_conditions.trend = '0';
   }
-  if (strcmp(cfg.units, "I") == 0) ConvertReadingsToImperial(wxIndex);
+  if (cfg.units == "I") ConvertReadingsToImperial(wxIndex);
   return true;
 }
 
 bool ObtainWeatherData(WiFiClient& client, const String& RequestType) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   const String units = (isMetric ? "metric" : "imperial");
   client.stop();
   HTTPClient http;
-  String uri = "/data/3.0/" + RequestType + "?lat=" + cfg.latitude + "&lon=" + cfg.longitude + "&appid=" + cfg.apikey +
-               "&mode=json&units=" + units + "&lang=" + cfg.language;
+  String uri = "/data/3.0/" + RequestType + "?lat=" + cfg.latitude.c_str() + "&lon=" + cfg.longitude.c_str() +
+               "&appid=" + cfg.apikey.c_str() + "&mode=json&units=" + units + "&lang=" + cfg.language.c_str();
   if (RequestType == "onecall") uri += "&exclude=minutely,alerts";
-  http.begin(client, cfg.server, 80, uri);
+  http.begin(client, cfg.server.c_str(), 80, uri);
   int httpCode = http.GET();
   if (httpCode == HTTP_CODE_OK) {
     if (!DecodeWeather(http.getStream(), RequestType)) return false;

@@ -122,7 +122,7 @@ static void handleSave() {
   CHECK_FIELD_LEN("language", 7)
   CHECK_FIELD_LEN("units", 3)
   CHECK_FIELD_LEN("timezone", 79)
-  CHECK_FIELD_LEN("ntpServer", 63)
+  CHECK_FIELD_LEN("ntp_server", 63)
 
   cfg.ssid = arg("ssid").c_str();
 
@@ -144,12 +144,12 @@ static void handleSave() {
   cfg.language = arg("language").c_str();
   cfg.units = arg("units").c_str();
   cfg.timezone = arg("timezone").c_str();
-  cfg.ntpServer = arg("ntpServer").c_str();
-  cfg.gmtOffset_sec = arg("gmtOffset_sec").toInt();
-  cfg.daylightOffset_sec = arg("daylightOffset_sec").toInt();
-  cfg.sleepDuration = arg("sleepDuration").toInt();
-  cfg.wakeupHour = arg("wakeupHour").toInt();
-  cfg.sleepHour = arg("sleepHour").toInt();
+  cfg.ntp_server = arg("ntp_server").c_str();
+  cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
+  cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
+  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.wakeup_hour = arg("wakeup_hour").toInt();
+  cfg.sleep_hour = arg("sleep_hour").toInt();
 
   SaveConfig();
 

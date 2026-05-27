@@ -76,7 +76,7 @@ AppConfig cfg = {"",                        // ssid
                  "EN",                      // language
                  "M",                       // units
                  "",                        // timezone
-                 "pool.ntp.org",            // ntpServer
+                 "pool.ntp.org",            // ntp_server
                  0,
                  0,
                  30,
@@ -87,8 +87,8 @@ AppConfig cfg = {"",                        // ssid
 bool LoadConfig() {
   return false;
 }
-void saveConfig() {}
-bool isConfigValid() {
+void SaveConfig() {}
+bool IsConfigValid() {
   return !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty();
 }
 bool SeedConfigFromHeader() {
@@ -192,7 +192,7 @@ bool DecodeWeather(const std::string& json, String Type) {
   } else {
     wx_conditions.trend = '0';
   }
-  if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
+  if (cfg.units == "I") ConvertReadingsToImperial(wxIndex);
   return true;
 }
 
@@ -214,8 +214,8 @@ EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, c
   char lat_buf[32];
   snprintf(lat_buf, sizeof(lat_buf), "%.6f", latitude);
   cfg.latitude = lat_buf;
-  cfg.gmtOffset_sec = gmt_offset_sec;
-  cfg.daylightOffset_sec = dst_offset_sec;
+  cfg.gmt_offset_sec = gmt_offset_sec;
+  cfg.daylight_offset_sec = dst_offset_sec;
 }
 
 EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {

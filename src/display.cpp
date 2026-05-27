@@ -42,7 +42,7 @@ void DisplayWeather() {
 
 void DisplayGeneralInfoSection() {
   SetFont(OpenSans10B);
-  DrawString(5, 2, String(cfg.city), Alignment::kLeft);
+  DrawString(5, 2, cfg.city.c_str(), Alignment::kLeft);
   SetFont(OpenSans8B);
   DrawString(500, 2, date_str + "  @   " + time_str, Alignment::kLeft);
 }
@@ -91,7 +91,7 @@ void DisplayWindSection(int x, int y, float angle, float windspeed, int radius) 
   SetFont(OpenSans24B);
   DrawString(x + 3, y - 18, String(windspeed, 1), Alignment::kCenter);
   SetFont(OpenSans12B);
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   DrawString(x, y + 25, (isMetric ? "m/s" : "mph"), Alignment::kCenter);
 }
 
@@ -132,7 +132,7 @@ void DisplayTempHumiPressSection(int x, int y) {
 
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   SetFont(OpenSans12B);
   String Wx_Description = wx_conditions.forecast0;
   Wx_Description.replace(".", "");
@@ -184,7 +184,7 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
 }
 
 static inline bool isSouthernHemisphere() {
-  return atof(cfg.latitude) < 0.0;
+  return atof(cfg.latitude.c_str()) < 0.0;
 }
 
 void DisplayAstronomySection(int x, int y) {
@@ -283,7 +283,7 @@ void DisplayForecastSection(int x, int y) {
 }
 
 void DisplayGraphSection(int x, int y) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   static float pressure_readings[kMaxReadings] = {0};
   static float temperature_readings[kMaxReadings] = {0};
   static float humidity_readings[kMaxReadings] = {0};
@@ -369,7 +369,7 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
 }
 
 void DrawPressureAndTrend(int x, int y, float pressure, char slope) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   DrawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), Alignment::kLeft);
   if (slope == '+') {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
@@ -537,7 +537,7 @@ void SetFont(EpdFont const& font) {
 
 #ifndef SIMULATOR_BUILD
 bool UpdateLocalTime() {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {
@@ -589,16 +589,4 @@ void EdpUpdate() {
   epd_hl_update_screen(&epd_hl, MODE_GL16, (int)epd_ambient_temperature());
 }
 
-void InitialiseSystem() {
-  start_time = millis();
-  Serial.begin(115200);
-  while (!Serial)
-    ;
-  Serial.printf("%s\nStarting...\n", __FILE__);
-  epd_init(&epd_board_lilygo_t5_47, &ED047TC2, EPD_LUT_64K);
-  epd_set_vcom(1560);
-  epd_hl = epd_hl_init(EPD_BUILTIN_WAVEFORM);
-  framebuffer = epd_hl_get_framebuffer(&epd_hl);
-  epd_hl_set_all_white(&epd_hl);
-}
 #endif  // SIMULATOR_BUILD

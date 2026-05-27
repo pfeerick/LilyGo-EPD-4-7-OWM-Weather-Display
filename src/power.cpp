@@ -23,25 +23,25 @@ void BeginSleep() {
 }
 
 bool SetupTime() {
-  configTime(cfg.gmt_offset_sec, cfg.daylight_offset_sec, cfg.ntp_server, kDefaultNtpFallback);
-  setenv("TZ", cfg.timezone, 1);
+  configTime(cfg.gmt_offset_sec, cfg.daylight_offset_sec, cfg.ntp_server.c_str(), kDefaultNtpFallback);
+  setenv("TZ", cfg.timezone.c_str(), 1);
   tzset();
   delay(100);
   return UpdateLocalTime();
 }
 
 uint8_t StartWiFi() {
-  Serial.printf("\r\nConnecting to: %s\n", cfg.ssid);
+  Serial.printf("\r\nConnecting to: %s\n", cfg.ssid.c_str());
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
   WiFi.setAutoConnect(true);
   WiFi.setAutoReconnect(true);
-  WiFi.begin(cfg.ssid, cfg.password);
+  WiFi.begin(cfg.ssid.c_str(), cfg.password.c_str());
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("STA: Failed!\n");
     WiFi.disconnect(false);
     delay(500);
-    WiFi.begin(cfg.ssid, cfg.password);
+    WiFi.begin(cfg.ssid.c_str(), cfg.password.c_str());
   }
   if (WiFi.status() == WL_CONNECTED) {
     wifi_signal = WiFi.RSSI();

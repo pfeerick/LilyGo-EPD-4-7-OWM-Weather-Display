@@ -19,13 +19,13 @@ AppConfig cfg = {
     "EN",                      // language
     "M",                       // units
     "",                        // timezone
-    "pool.ntp.org",            // ntpServer
-    0,                         // gmtOffset_sec
-    0,                         // daylightOffset_sec
+    "pool.ntp.org",            // ntp_server
+    0,                         // gmt_offset_sec
+    0,                         // daylight_offset_sec
     60,                        // sleep_duration
     8,                         // wakeup_hour
     23,                        // sleep_hour
-    false                      // debugDisplayUpdate
+    false                      // debug_display_update
 };
 
 bool LoadConfig() {
@@ -55,13 +55,13 @@ bool LoadConfig() {
   cfg.language = doc["language"] | kDefaultLanguage;
   cfg.units = doc["units"] | kDefaultUnits;
   cfg.timezone = doc["timezone"] | "";
-  cfg.ntpServer = doc["ntpServer"] | kDefaultNtpServer;
-  cfg.gmtOffset_sec = doc["gmtOffset_sec"] | 0;
-  cfg.daylightOffset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleepDuration = doc["sleepDuration"] | kDefaultSleepDuration;
-  cfg.wakeupHour = doc["wakeupHour"] | kDefaultWakeupHour;
-  cfg.sleepHour = doc["sleepHour"] | kDefaultSleepHour;
-  cfg.debugDisplayUpdate = doc["debugDisplayUpdate"] | false;
+  cfg.ntp_server = doc["ntp_server"] | kDefaultNtpServer;
+  cfg.gmt_offset_sec = doc["gmt_offset_sec"] | 0;
+  cfg.daylight_offset_sec = doc["daylight_offset_sec"] | 0;
+  cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
+  cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
+  cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
+  cfg.debug_display_update = doc["debug_display_update"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
 }
@@ -99,7 +99,7 @@ void SaveConfig() {
   Serial.println("Config saved to LittleFS");
 }
 
-bool isConfigValid() {
+bool IsConfigValid() {
   return !cfg.ssid.empty() && !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty() &&
          !cfg.timezone.empty();
 }
@@ -116,10 +116,10 @@ bool SeedConfigFromHeader() {
   cfg.language = Language.c_str();
   cfg.units = Units.c_str();
   cfg.timezone = Timezone;
-  cfg.ntpServer = ntpServer;
-  cfg.gmtOffset_sec = gmtOffset_sec;
-  cfg.daylightOffset_sec = daylightOffset_sec;
-  cfg.debugDisplayUpdate = DebugDisplayUpdate;
+  cfg.ntp_server = ntpServer;
+  cfg.gmt_offset_sec = gmtOffset_sec;
+  cfg.daylight_offset_sec = daylightOffset_sec;
+  cfg.debug_display_update = DebugDisplayUpdate;
   Serial.println("Config seeded from owm_credentials.h");
   SaveConfig();
   return true;
