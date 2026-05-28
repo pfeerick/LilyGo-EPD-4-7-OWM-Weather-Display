@@ -105,25 +105,25 @@ static void handleRoot() {
 
 // Reject and respond 400 if the named form field exceeds the target buffer.
 // String::toCharArray() does not null-terminate when src >= dest size.
-#define CHECK_FIELD_LEN(name, buf)                                        \
-  if (httpServer.arg(name).length() >= sizeof(buf)) {                     \
-    httpServer.send(400, "text/plain", "Field too long: " name);          \
-    return;                                                                \
+#define CHECK_FIELD_LEN(name, buf)                               \
+  if (httpServer.arg(name).length() >= sizeof(buf)) {            \
+    httpServer.send(400, "text/plain", "Field too long: " name); \
+    return;                                                      \
   }
 
 static void handleSave() {
   auto arg = [](const char* n) { return httpServer.arg(n); };
 
-  CHECK_FIELD_LEN("ssid",          cfg.ssid)
-  CHECK_FIELD_LEN("apikey",        cfg.apikey)
-  CHECK_FIELD_LEN("server",        cfg.server)
-  CHECK_FIELD_LEN("city",          cfg.city)
-  CHECK_FIELD_LEN("latitude",      cfg.latitude)
-  CHECK_FIELD_LEN("longitude",     cfg.longitude)
-  CHECK_FIELD_LEN("language",      cfg.language)
-  CHECK_FIELD_LEN("units",         cfg.units)
-  CHECK_FIELD_LEN("timezone",      cfg.timezone)
-  CHECK_FIELD_LEN("ntpServer",     cfg.ntpServer)
+  CHECK_FIELD_LEN("ssid", cfg.ssid)
+  CHECK_FIELD_LEN("apikey", cfg.apikey)
+  CHECK_FIELD_LEN("server", cfg.server)
+  CHECK_FIELD_LEN("city", cfg.city)
+  CHECK_FIELD_LEN("latitude", cfg.latitude)
+  CHECK_FIELD_LEN("longitude", cfg.longitude)
+  CHECK_FIELD_LEN("language", cfg.language)
+  CHECK_FIELD_LEN("units", cfg.units)
+  CHECK_FIELD_LEN("timezone", cfg.timezone)
+  CHECK_FIELD_LEN("ntpServer", cfg.ntpServer)
 
   arg("ssid").toCharArray(cfg.ssid, sizeof(cfg.ssid));
 
