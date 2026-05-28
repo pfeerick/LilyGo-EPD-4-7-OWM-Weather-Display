@@ -770,10 +770,9 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
   jd = c + e + dd - 694039.09;
   jd /= 29.53059;
   int b = jd;
-  jd -= b;  // fractional part 0.0–1.0
-  double Phase = jd;
-  b = (int)(Phase * 8 + 0.5) & 7;
-  if (southernHemisphere) Phase = 1 - Phase;
+  jd -= b;                                    // fractional part 0.0–1.0
+  double Phase = fmod(jd + 0.5, 1.0);         // algorithm: 0=Full, 0.5=New; jd: 0=New, 0.5=Full
+  if (southernHemisphere) Phase = fmod(1.0 - Phase, 1.0);
   int octant = (int)(Phase * 8 + 0.5) & 7;
   // Draw dark part of moon
   fillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, DarkGrey);
@@ -822,7 +821,6 @@ String MoonPhase(int d, int m, int y) {
   jd -= b;                    /* subtract integer part to leave fractional part of original jd */
   b = jd * 8 + 0.5;           /* scale fraction from 0-8 and round by adding 0.5 */
   b = b & 7;                  /* 0 and 8 are the same phase so modulo 8 for 0 */
-  if (isSouthernHemisphere()) b = 7 - b;
   if (b == 0) return TXT_MOON_NEW;              // New;              0%  illuminated
   if (b == 1) return TXT_MOON_WAXING_CRESCENT;  // Waxing crescent; 25%  illuminated
   if (b == 2) return TXT_MOON_FIRST_QUARTER;    // First quarter;   50%  illuminated
