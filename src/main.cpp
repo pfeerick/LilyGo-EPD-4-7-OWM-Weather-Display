@@ -168,7 +168,7 @@ void BeginSleep() {
   esp_sleep_enable_timer_wakeup(SleepTimer * 1000000LL);  // in Secs, 1000000LL converts to Secs as unit = 1uSec
   Serial.printf("Awake for : %.3f-secs\n", (millis() - StartTime) / 1000.0);
   Serial.printf("Entering %ld (secs) of sleep time\n", SleepTimer);
-  Serial.printf("Starting deep-sleep period...\n");
+  Serial.println("Starting deep-sleep period...");
   esp_deep_sleep_start();  // Sleep for e.g. 30 minutes
 }
 
@@ -189,7 +189,7 @@ uint8_t StartWiFi() {
   WiFi.setAutoReconnect(true);
   WiFi.begin(cfg.ssid, cfg.password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("STA: Failed!\n");
+    Serial.println("STA: Failed!");
     WiFi.disconnect(false);
     delay(500);
     WiFi.begin(cfg.ssid, cfg.password);
@@ -198,14 +198,14 @@ uint8_t StartWiFi() {
     wifi_signal = WiFi.RSSI();  // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
     Serial.printf("WiFi connected at: %s\n", WiFi.localIP().toString().c_str());
   } else
-    Serial.printf("WiFi connection *** FAILED ***\n");
+    Serial.println("WiFi connection *** FAILED ***");
   return WiFi.status();
 }
 
 void StopWiFi() {
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);
-  Serial.printf("WiFi switched Off\n");
+  Serial.println("WiFi switched Off");
 }
 
 void InitialiseSystem() {
@@ -286,7 +286,7 @@ void setup() {
         if (RxWeather == false) RxWeather = obtainWeatherData(client, "onecall");
         Attempts++;
       }
-      Serial.printf("Received all weather data...\n");
+      Serial.println("Received all weather data...");
       if (RxWeather) {
         StopWiFi();
         epd_poweron();
@@ -960,7 +960,7 @@ bool UpdateLocalTime() {
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise
-    Serial.printf("Failed to obtain time\n");
+    Serial.println("Failed to obtain time");
     return false;
   }
   CurrentHour = timeinfo.tm_hour;
