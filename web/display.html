@@ -117,7 +117,7 @@
       let autoTimer = null;
       let wasmModule = null;
       let wasmReady = false;
-      let owmCfg = { city: "", units: "M", lang: "EN", hemisphere: "north", gmtOffsetSec: 0, dstOffsetSec: 0 };
+      let owmCfg = { city: "", units: "M", lang: "EN", latitude: 0, gmtOffsetSec: 0, dstOffsetSec: 0 };
 
       // Pixel unpacking: 4bpp packed grayscale.
       //   odd x  → upper nibble: (byte >> 4) & 0xF
@@ -149,8 +149,8 @@
         const revealed = document.getElementById("showCity").checked;
         const city = revealed ? owmCfg.city : "Simulator";
         wasmModule.ccall("wasm_set_config", null,
-          ["string", "string", "string", "string", "number", "number"],
-          [city, owmCfg.units, owmCfg.lang, owmCfg.hemisphere, owmCfg.gmtOffsetSec, owmCfg.dstOffsetSec]);
+          ["string", "string", "string", "number", "number", "number"],
+          [city, owmCfg.units, owmCfg.lang, owmCfg.latitude, owmCfg.gmtOffsetSec, owmCfg.dstOffsetSec]);
       }
 
       async function ensureWasm() {
