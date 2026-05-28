@@ -186,25 +186,25 @@ void BeginSleep() {
 }
 
 bool SetupTime() {
-  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer, kDefaultNtpFallback);
-  setenv("TZ", cfg.timezone, 1);
+  configTime(cfg.gmtOffset_sec, cfg.daylightOffset_sec, cfg.ntpServer.c_str(), kDefaultNtpFallback);
+  setenv("TZ", cfg.timezone.c_str(), 1);
   tzset();  // Set the TZ environment variable
   delay(100);
   return UpdateLocalTime();
 }
 
 uint8_t StartWiFi() {
-  Serial.printf("\r\nConnecting to: %s\n", cfg.ssid);
+  Serial.printf("\r\nConnecting to: %s\n", cfg.ssid.c_str());
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);  // switch off AP
   WiFi.setAutoConnect(true);
   WiFi.setAutoReconnect(true);
-  WiFi.begin(cfg.ssid, cfg.password);
+  WiFi.begin(cfg.ssid.c_str(), cfg.password.c_str());
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("STA: Failed!\n");
     WiFi.disconnect(false);
     delay(500);
-    WiFi.begin(cfg.ssid, cfg.password);
+    WiFi.begin(cfg.ssid.c_str(), cfg.password.c_str());
   }
   if (WiFi.status() == WL_CONNECTED) {
     wifi_signal = WiFi.RSSI();  // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
@@ -508,7 +508,7 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   } else {
     WxConditions.Trend = '0';  // Default if insufficient data
   }
-  if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
+  if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
 #endif  // SIMULATOR_BUILD
@@ -516,7 +516,7 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
 //#########################################################################################
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   time_t tm = unix_time + cfg.gmtOffset_sec + cfg.daylightOffset_sec;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
@@ -530,15 +530,15 @@ String ConvertUnixTime(int unix_time) {
 //#########################################################################################
 #ifndef SIMULATOR_BUILD
 bool obtainWeatherData(WiFiClient& client, const String& RequestType) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   const String units = (isMetric ? "metric" : "imperial");
   client.stop();  // close connection before sending a new request
   HTTPClient http;
   //api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API key}
-  String uri = "/data/3.0/" + RequestType + "?lat=" + cfg.latitude + "&lon=" + cfg.longitude + "&appid=" + cfg.apikey +
-               "&mode=json&units=" + units + "&lang=" + cfg.language;
+  String uri = "/data/3.0/" + RequestType + "?lat=" + cfg.latitude.c_str() + "&lon=" + cfg.longitude.c_str() +
+               "&appid=" + cfg.apikey.c_str() + "&mode=json&units=" + units + "&lang=" + cfg.language.c_str();
   if (RequestType == "onecall") uri += "&exclude=minutely,alerts";
-  http.begin(client, cfg.server, 80, uri);
+  http.begin(client, cfg.server.c_str(), 80, uri);
   int httpCode = http.GET();
   if (httpCode == HTTP_CODE_OK) {
     if (!DecodeWeather(http.getStream(), RequestType)) return false;
@@ -605,7 +605,7 @@ void DisplayWeather() {  // 4.7" e-paper display is 960x540 resolution
 
 void DisplayGeneralInfoSection() {
   setFont(OpenSans10B);
-  drawString(5, 2, String(cfg.city), LEFT);
+  drawString(5, 2, String(cfg.city.c_str()), LEFT);
   setFont(OpenSans8B);
   drawString(500, 2, Date_str + "  @   " + Time_str, LEFT);
 }
@@ -654,7 +654,7 @@ void DisplayWindSection(int x, int y, float angle, float windspeed, int Cradius)
   setFont(OpenSans24B);
   drawString(x + 3, y - 18, String(windspeed, 1), CENTER);
   setFont(OpenSans12B);
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   drawString(x, y + 25, (isMetric ? "m/s" : "mph"), CENTER);
 }
 
@@ -695,7 +695,7 @@ void DisplayTempHumiPressSection(int x, int y) {
 
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   setFont(OpenSans12B);
   String Wx_Description = WxConditions.Forecast0;
   Wx_Description.replace(".", "");  // remove any '.'
@@ -747,7 +747,7 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
 
 
 static inline bool isSouthernHemisphere() {
-  return atof(cfg.latitude) < 0.0;
+  return atof(cfg.latitude.c_str()) < 0.0;
 }
 
 void DisplayAstronomySection(int x, int y) {
@@ -849,7 +849,7 @@ void DisplayForecastSection(int x, int y) {
 }
 
 void DisplayGraphSection(int x, int y) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   int r = 0;
   do {  // Pre-load temporary arrays with data — values already in display units after DecodeWeather
     pressure_readings[r] = WxForecast[r].Pressure;
@@ -935,7 +935,7 @@ void DrawSegment(int x, int y, int o1, int o2, int o3, int o4, int o11, int o12,
 }
 
 void DrawPressureAndTrend(int x, int y, float pressure, char slope) {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   drawString(x + 25, y - 10, String(pressure, isMetric ? 0 : 1) + (isMetric ? "hPa" : "in"), LEFT);
   if (slope == '+') {
     DrawSegment(x, y, 0, 0, 8, -8, 8, -8, 16, 0);
@@ -971,7 +971,7 @@ void DrawRSSI(int x, int y, int rssi) {
 
 #ifndef SIMULATOR_BUILD
 bool UpdateLocalTime() {
-  const bool isMetric = (strcmp(cfg.units, "M") == 0);
+  const bool isMetric = (cfg.units == "M");
   struct tm timeinfo;
   char time_output[30], day_output[30], update_time[30];
   while (!getLocalTime(&timeinfo, 5000)) {  // Wait for 5-sec for time to synchronise

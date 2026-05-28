@@ -16,10 +16,10 @@ static DNSServer dnsServer;
 // Helpers
 // ---------------------------------------------------------------------------
 
-static String htmlEscape(const char* s) {
+static String htmlEscape(const std::string& s) {
   String out;
-  for (const char* p = s; *p; p++) {
-    switch (*p) {
+  for (char c : s) {
+    switch (c) {
       case '&':
         out += "&amp;";
         break;
@@ -33,7 +33,7 @@ static String htmlEscape(const char* s) {
         out += "&gt;";
         break;
       default:
-        out += *p;
+        out += c;
     }
   }
   return out;
@@ -48,15 +48,15 @@ static String buildPage() {
   page.replace("__CITY__", htmlEscape(cfg.city));
   page.replace("__LATITUDE__", htmlEscape(cfg.latitude));
   page.replace("__LONGITUDE__", htmlEscape(cfg.longitude));
-  page.replace("__UNITS_M__", strcmp(cfg.units, "I") == 0 ? "" : "selected");
-  page.replace("__UNITS_I__", strcmp(cfg.units, "I") == 0 ? "selected" : "");
+  page.replace("__UNITS_M__", cfg.units == "I" ? "" : "selected");
+  page.replace("__UNITS_I__", cfg.units == "I" ? "selected" : "");
 
   // Language options
   const char* langs[] = {"EN", "AR", "CZ", "EL", "FA", "FR", "GL", "HU",
                          "JA", "KR", "LA", "LT", "MK", "SK", "SL", "VI"};
   for (const char* lang : langs) {
     String token = String("__LANG_") + lang + "__";
-    page.replace(token, strcmp(cfg.language, lang) == 0 ? "selected" : "");
+    page.replace(token, cfg.language == lang ? "selected" : "");
   }
 
   page.replace("__TIMEZONE__", htmlEscape(cfg.timezone));
@@ -103,10 +103,9 @@ static void handleRoot() {
   httpServer.send(200, "text/html", buildPage());
 }
 
-// Reject and respond 400 if the named form field exceeds the target buffer.
-// String::toCharArray() does not null-terminate when src >= dest size.
-#define CHECK_FIELD_LEN(name, buf)                               \
-  if (httpServer.arg(name).length() >= sizeof(buf)) {            \
+// Reject and respond 400 if the named form field exceeds a reasonable max length.
+#define CHECK_FIELD_LEN(name, maxlen)                            \
+  if (httpServer.arg(name).length() > maxlen) {                  \
     httpServer.send(400, "text/plain", "Field too long: " name); \
     return;                                                      \
   }
@@ -114,38 +113,38 @@ static void handleRoot() {
 static void handleSave() {
   auto arg = [](const char* n) { return httpServer.arg(n); };
 
-  CHECK_FIELD_LEN("ssid", cfg.ssid)
-  CHECK_FIELD_LEN("apikey", cfg.apikey)
-  CHECK_FIELD_LEN("server", cfg.server)
-  CHECK_FIELD_LEN("city", cfg.city)
-  CHECK_FIELD_LEN("latitude", cfg.latitude)
-  CHECK_FIELD_LEN("longitude", cfg.longitude)
-  CHECK_FIELD_LEN("language", cfg.language)
-  CHECK_FIELD_LEN("units", cfg.units)
-  CHECK_FIELD_LEN("timezone", cfg.timezone)
-  CHECK_FIELD_LEN("ntpServer", cfg.ntpServer)
+  CHECK_FIELD_LEN("ssid", 63)
+  CHECK_FIELD_LEN("apikey", 63)
+  CHECK_FIELD_LEN("server", 63)
+  CHECK_FIELD_LEN("city", 63)
+  CHECK_FIELD_LEN("latitude", 15)
+  CHECK_FIELD_LEN("longitude", 15)
+  CHECK_FIELD_LEN("language", 7)
+  CHECK_FIELD_LEN("units", 3)
+  CHECK_FIELD_LEN("timezone", 79)
+  CHECK_FIELD_LEN("ntpServer", 63)
 
-  arg("ssid").toCharArray(cfg.ssid, sizeof(cfg.ssid));
+  cfg.ssid = arg("ssid").c_str();
 
   // Only overwrite password if user typed something
   String pw = arg("password");
   if (pw.length() > 0) {
-    if (pw.length() >= sizeof(cfg.password)) {
+    if (pw.length() > 63) {
       httpServer.send(400, "text/plain", "Field too long: password");
       return;
     }
-    pw.toCharArray(cfg.password, sizeof(cfg.password));
+    cfg.password = pw.c_str();
   }
 
-  arg("apikey").toCharArray(cfg.apikey, sizeof(cfg.apikey));
-  arg("server").toCharArray(cfg.server, sizeof(cfg.server));
-  arg("city").toCharArray(cfg.city, sizeof(cfg.city));
-  arg("latitude").toCharArray(cfg.latitude, sizeof(cfg.latitude));
-  arg("longitude").toCharArray(cfg.longitude, sizeof(cfg.longitude));
-  arg("language").toCharArray(cfg.language, sizeof(cfg.language));
-  arg("units").toCharArray(cfg.units, sizeof(cfg.units));
-  arg("timezone").toCharArray(cfg.timezone, sizeof(cfg.timezone));
-  arg("ntpServer").toCharArray(cfg.ntpServer, sizeof(cfg.ntpServer));
+  cfg.apikey = arg("apikey").c_str();
+  cfg.server = arg("server").c_str();
+  cfg.city = arg("city").c_str();
+  cfg.latitude = arg("latitude").c_str();
+  cfg.longitude = arg("longitude").c_str();
+  cfg.language = arg("language").c_str();
+  cfg.units = arg("units").c_str();
+  cfg.timezone = arg("timezone").c_str();
+  cfg.ntpServer = arg("ntpServer").c_str();
   cfg.gmtOffset_sec = arg("gmtOffset_sec").toInt();
   cfg.daylightOffset_sec = arg("daylightOffset_sec").toInt();
   cfg.sleepDuration = arg("sleepDuration").toInt();

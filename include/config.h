@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <string>
 
 // GPIO for the button that triggers config mode when held at boot.
 #define CONFIG_BUTTON_PIN 39
@@ -15,17 +16,17 @@
 // #define REDACT_PASSWORD_IN_CONFIG_DOWNLOAD
 
 struct AppConfig {
-  char ssid[64];
-  char password[64];
-  char apikey[64];
-  char server[64];
-  char city[64];
-  char latitude[16];
-  char longitude[16];
-  char language[8];
-  char units[4];
-  char timezone[80];
-  char ntpServer[64];
+  std::string ssid;
+  std::string password;
+  std::string apikey;
+  std::string server;
+  std::string city;
+  std::string latitude;
+  std::string longitude;
+  std::string language;
+  std::string units;
+  std::string timezone;
+  std::string ntpServer;
   int gmtOffset_sec;
   int daylightOffset_sec;
   int sleepDuration;
