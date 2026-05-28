@@ -3,9 +3,9 @@
 
 struct Forecast_record_type {  // For current Day and Day 1, 2, 3, etc
   int Dt;
-  char Icon[8];       // OWM icon code e.g. "01d", "01n" (3 chars + null)
-  char Trend;         // Pressure trend: '+', '-', '0', '='
-  char Forecast0[64]; // Weather description e.g. "scattered clouds"
+  char Icon[8];        // OWM icon code e.g. "01d", "01n" (3 chars + null)
+  char Trend;          // Pressure trend: '+', '-', '0', '='
+  char Forecast0[64];  // Weather description e.g. "scattered clouds"
   float Temperature;
   float FeelsLike;
   float DewPoint;

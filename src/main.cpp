@@ -680,8 +680,7 @@ String WindDegToOrdinalDirection(float winddirection) {
 
 void DisplayTempHumiPressSection(int x, int y) {
   setFont(OpenSans18B);
-  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%",
-             LEFT);
+  drawString(x - 30, y, String(WxConditions.Temperature, 1) + "°   " + String(WxConditions.Humidity, 0) + "%", LEFT);
   setFont(OpenSans12B);
   DrawPressureAndTrend(x + 195, y + 15, WxConditions.Pressure, WxConditions.Trend);
   int Yoffset = 42;
@@ -864,23 +863,27 @@ void DisplayGraphSection(int x, int y) {
   int gx = (epd_width() - gwidth * 4) / 5 + 8;
   int gy = (epd_height() - gheight - 30);
   int gap = gwidth + gx;
-  DrawGraph({gx + 0 * gap, gy, gwidth, gheight, 900, 1050,
-             isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(), autoscale_on, barchart_off, max_graph_readings},
-            pressure_readings);
-  DrawGraph({gx + 1 * gap, gy, gwidth, gheight, 10, 30,
-             isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(), autoscale_on, barchart_off, max_graph_readings},
-            temperature_readings);
-  DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100,
-             TXT_HUMIDITY_PERCENT.c_str(), autoscale_off, barchart_off, max_graph_readings},
+  DrawGraph(
+      {gx + 0 * gap, gy, gwidth, gheight, 900, 1050, isMetric ? TXT_PRESSURE_HPA.c_str() : TXT_PRESSURE_IN.c_str(),
+       autoscale_on, barchart_off, max_graph_readings},
+      pressure_readings);
+  DrawGraph(
+      {gx + 1 * gap, gy, gwidth, gheight, 10, 30, isMetric ? TXT_TEMPERATURE_C.c_str() : TXT_TEMPERATURE_F.c_str(),
+       autoscale_on, barchart_off, max_graph_readings},
+      temperature_readings);
+  DrawGraph({gx + 2 * gap, gy, gwidth, gheight, 0, 100, TXT_HUMIDITY_PERCENT.c_str(), autoscale_off, barchart_off,
+             max_graph_readings},
             humidity_readings);
   if (SumOfPrecip(rain_readings, max_graph_readings) >= SumOfPrecip(snow_readings, max_graph_readings))
-    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
-              rain_readings);
+    DrawGraph(
+        {gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_RAINFALL_MM.c_str() : TXT_RAINFALL_IN.c_str(),
+         autoscale_on, barchart_on, max_graph_readings},
+        rain_readings);
   else
-    DrawGraph({gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30,
-               isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(), autoscale_on, barchart_on, max_graph_readings},
-              snow_readings);
+    DrawGraph(
+        {gx + 3 * gap + 5, gy, gwidth, gheight, 0, 30, isMetric ? TXT_SNOWFALL_MM.c_str() : TXT_SNOWFALL_IN.c_str(),
+         autoscale_on, barchart_on, max_graph_readings},
+        snow_readings);
 }
 
 void DisplayConditionsSection(int x, int y, const char* IconName, bool IconSize) {
@@ -1280,7 +1283,8 @@ void DrawGraph(GraphConfig gcfg, float DataArray[]) {
   drawString(gcfg.x - 20 + gcfg.w / 2, gcfg.y - 28, gcfg.title, CENTER);
   for (int i = 0; i < gcfg.readings; i++) {
     float x2 = gcfg.x + i * gcfg.w / (gcfg.readings - 1) - 1;
-    float y2 = gcfg.y + (gcfg.yMax - constrain(DataArray[i], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h + 1;
+    float y2 =
+        gcfg.y + (gcfg.yMax - constrain(DataArray[i], gcfg.yMin, gcfg.yMax)) / (gcfg.yMax - gcfg.yMin) * gcfg.h + 1;
     if (gcfg.barchart) {
       fillRect(last_x + 2, y2, (gcfg.w / gcfg.readings) - 1, gcfg.y + gcfg.h - y2 + 2, Black);
     } else {
