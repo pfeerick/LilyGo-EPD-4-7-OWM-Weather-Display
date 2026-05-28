@@ -98,7 +98,7 @@ bool loadConfig() {
 }
 void saveConfig() {}
 bool isConfigValid() {
-  return cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0';
+  return !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty();
 }
 bool seedConfigFromHeader() {
   return false;
@@ -112,7 +112,7 @@ boolean UpdateLocalTime() {
   CurrentMin = t.tm_min;
   CurrentSec = t.tm_sec;
   char day_buf[64], time_buf[32];
-  if (strcmp(cfg.units, "M") == 0) {
+  if (cfg.units == "M") {
     snprintf(day_buf, sizeof(day_buf), "%s, %02d %s %04d", weekday_D[t.tm_wday], t.tm_mday, month_M[t.tm_mon],
              t.tm_year + 1900);
     strftime(time_buf, sizeof(time_buf), "%H:%M:%S", &t);
@@ -199,7 +199,7 @@ bool DecodeWeather(const std::string& json, String Type) {
   } else {
     WxConditions.Trend = '0';
   }
-  if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
+  if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
 
@@ -215,10 +215,12 @@ EMSCRIPTEN_KEEPALIVE void wasm_init() {
 
 EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, float latitude,
                                           int gmt_offset_sec, int dst_offset_sec) {
-  if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
-  if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
-  if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
-  snprintf(cfg.latitude, sizeof(cfg.latitude), "%.6f", latitude);
+  if (city) cfg.city = city;
+  if (units) cfg.units = units;
+  if (lang) cfg.language = lang;
+  char lat_buf[32];
+  snprintf(lat_buf, sizeof(lat_buf), "%.6f", latitude);
+  cfg.latitude = lat_buf;
   cfg.gmtOffset_sec = gmt_offset_sec;
   cfg.daylightOffset_sec = dst_offset_sec;
 }
