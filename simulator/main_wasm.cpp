@@ -14,6 +14,7 @@
 #include "../.pio/libdeps/display/ArduinoJson/src/ArduinoJson.h"
 
 #include "../include/config.h"
+#include "../include/defaults.h"
 #include "../include/forecast_record.h"
 #include "../include/translations/lang_en.h"
 #include "../include/fonts/opensans8b.h"
