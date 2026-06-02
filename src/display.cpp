@@ -478,7 +478,7 @@ void DrawGraph(GraphConfig gcfg, float data_array[]) {
   }
   for (int i = 0; i < kGraphDaySections; i++) {
     DrawString(20 + gcfg.x + gcfg.w / kGraphDaySections * i, gcfg.y + gcfg.h + 10, String(i) + "d", Alignment::kLeft);
-    if (i < 2)
+    if (i < kGraphDaySections - 1)
       DrawFastVLine(gcfg.x + gcfg.w / kGraphDaySections * i + gcfg.w / kGraphDaySections, gcfg.y, gcfg.h, kLightGrey);
   }
 }
