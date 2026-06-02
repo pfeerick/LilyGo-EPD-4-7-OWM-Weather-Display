@@ -2,9 +2,15 @@
 header = """
 ## Flashing
 
+### First-time / Factory Flash
+
 Use the [ESPHome Web Flasher](https://web.esphome.io/) to flash directly from your browser:
-1. Download the firmware binary from the assets below
+1. Download `firmware-factory-*.bin` from the assets below
 2. Open [web.esphome.io](https://web.esphome.io/), connect your device, and upload the file
+
+### OTA / Web Update
+
+Use the built-in web interface to upload `firmware-*.bin` (the app-only binary) without reflashing the bootloader.
 
 ## Changes
 

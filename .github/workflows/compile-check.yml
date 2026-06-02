@@ -35,4 +35,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: firmware
-          path: .pio/build/display/firmware.bin
+          path: |
+            .pio/build/display/firmware.bin
+            .pio/build/display/firmware-factory.bin
