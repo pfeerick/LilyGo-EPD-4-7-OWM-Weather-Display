@@ -2,6 +2,11 @@ name: Compile Check
 
 on:
   pull_request:
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'platformio.ini'
+      - '.github/workflows/compile-check.yml'
   workflow_call:
 
 jobs:
