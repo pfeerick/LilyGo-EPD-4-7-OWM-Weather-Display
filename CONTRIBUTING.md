@@ -83,6 +83,18 @@ bun run dev
 
 Open **http://localhost:3000/display** to see the rendered display.
 
+To capture a PNG screenshot of the current display without a browser, run:
+
+```sh
+bun run screenshot
+```
+
+This instantiates the WASM renderer directly in Bun, fetches live OWM data, and writes `simulator-screenshot.png` in your current directory. To regenerate the screenshot used in the README, run:
+
+```sh
+bun run screenshot:readme
+```
+
 ### Rebuilding the WASM module
 
 Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and Ninja.
