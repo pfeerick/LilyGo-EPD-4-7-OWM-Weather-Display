@@ -1,4 +1,5 @@
 #include "config.h"
+#include "defaults.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
@@ -44,22 +45,22 @@ bool loadConfig() {
     Serial.printf("Config parse error: %s\n", err.c_str());
     return false;
   }
-  strlcpy(cfg.ssid, doc["ssid"] | "", sizeof(cfg.ssid));
-  strlcpy(cfg.password, doc["password"] | "", sizeof(cfg.password));
-  strlcpy(cfg.apikey, doc["apikey"] | "", sizeof(cfg.apikey));
-  strlcpy(cfg.server, doc["server"] | "api.openweathermap.org", sizeof(cfg.server));
-  strlcpy(cfg.city, doc["city"] | "", sizeof(cfg.city));
-  strlcpy(cfg.latitude, doc["latitude"] | "", sizeof(cfg.latitude));
-  strlcpy(cfg.longitude, doc["longitude"] | "", sizeof(cfg.longitude));
-  strlcpy(cfg.language, doc["language"] | "EN", sizeof(cfg.language));
-  strlcpy(cfg.units, doc["units"] | "M", sizeof(cfg.units));
-  strlcpy(cfg.timezone, doc["timezone"] | "", sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, doc["ntpServer"] | "pool.ntp.org", sizeof(cfg.ntpServer));
+  cfg.ssid = doc["ssid"] | "";
+  cfg.password = doc["password"] | "";
+  cfg.apikey = doc["apikey"] | "";
+  cfg.server = doc["server"] | kDefaultServer;
+  cfg.city = doc["city"] | "";
+  cfg.latitude = doc["latitude"] | "";
+  cfg.longitude = doc["longitude"] | "";
+  cfg.language = doc["language"] | kDefaultLanguage;
+  cfg.units = doc["units"] | kDefaultUnits;
+  cfg.timezone = doc["timezone"] | "";
+  cfg.ntpServer = doc["ntpServer"] | kDefaultNtpServer;
   cfg.gmtOffset_sec = doc["gmtOffset_sec"] | 0;
   cfg.daylightOffset_sec = doc["daylightOffset_sec"] | 0;
-  cfg.sleepDuration = doc["sleepDuration"] | 60;
-  cfg.wakeupHour = doc["wakeupHour"] | 8;
-  cfg.sleepHour = doc["sleepHour"] | 23;
+  cfg.sleepDuration = doc["sleepDuration"] | kDefaultSleepDuration;
+  cfg.wakeupHour = doc["wakeupHour"] | kDefaultWakeupHour;
+  cfg.sleepHour = doc["sleepHour"] | kDefaultSleepHour;
   cfg.debugDisplayUpdate = doc["debugDisplayUpdate"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;
@@ -99,23 +100,23 @@ void saveConfig() {
 }
 
 bool isConfigValid() {
-  return cfg.ssid[0] != '\0' && cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0' &&
-         cfg.timezone[0] != '\0';
+  return !cfg.ssid.empty() && !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty() &&
+         !cfg.timezone.empty();
 }
 
 bool seedConfigFromHeader() {
 #ifdef OWM_CREDENTIALS_AVAILABLE
-  strlcpy(cfg.ssid, ssid, sizeof(cfg.ssid));
-  strlcpy(cfg.password, password, sizeof(cfg.password));
-  strlcpy(cfg.apikey, apikey.c_str(), sizeof(cfg.apikey));
-  strlcpy(cfg.server, server, sizeof(cfg.server));
-  strlcpy(cfg.city, City.c_str(), sizeof(cfg.city));
-  strlcpy(cfg.latitude, Latitude.c_str(), sizeof(cfg.latitude));
-  strlcpy(cfg.longitude, Longitude.c_str(), sizeof(cfg.longitude));
-  strlcpy(cfg.language, Language.c_str(), sizeof(cfg.language));
-  strlcpy(cfg.units, Units.c_str(), sizeof(cfg.units));
-  strlcpy(cfg.timezone, Timezone, sizeof(cfg.timezone));
-  strlcpy(cfg.ntpServer, ntpServer, sizeof(cfg.ntpServer));
+  cfg.ssid = ssid;
+  cfg.password = password;
+  cfg.apikey = apikey.c_str();
+  cfg.server = server;
+  cfg.city = City.c_str();
+  cfg.latitude = Latitude.c_str();
+  cfg.longitude = Longitude.c_str();
+  cfg.language = Language.c_str();
+  cfg.units = Units.c_str();
+  cfg.timezone = Timezone;
+  cfg.ntpServer = ntpServer;
   cfg.gmtOffset_sec = gmtOffset_sec;
   cfg.daylightOffset_sec = daylightOffset_sec;
   cfg.debugDisplayUpdate = DebugDisplayUpdate;

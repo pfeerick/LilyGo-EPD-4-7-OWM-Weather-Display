@@ -14,6 +14,7 @@
 #include "../.pio/libdeps/display/ArduinoJson/src/ArduinoJson.h"
 
 #include "../include/config.h"
+#include "../include/defaults.h"
 #include "../include/forecast_record.h"
 #include "../include/translations/lang_en.h"
 #include "../include/fonts/opensans8b.h"
@@ -52,7 +53,7 @@ int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
 #define max_readings 24
 #define max_graph_readings 16
 
-Forecast_record_type WxConditions[1];
+Forecast_record_type WxConditions;
 Forecast_record_type WxForecast[max_readings];
 
 float pressure_readings[max_readings] = {0};
@@ -97,7 +98,7 @@ bool loadConfig() {
 }
 void saveConfig() {}
 bool isConfigValid() {
-  return cfg.apikey[0] != '\0' && cfg.latitude[0] != '\0' && cfg.longitude[0] != '\0';
+  return !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty();
 }
 bool seedConfigFromHeader() {
   return false;
@@ -111,7 +112,7 @@ boolean UpdateLocalTime() {
   CurrentMin = t.tm_min;
   CurrentSec = t.tm_sec;
   char day_buf[64], time_buf[32];
-  if (strcmp(cfg.units, "M") == 0) {
+  if (cfg.units == "M") {
     snprintf(day_buf, sizeof(day_buf), "%s, %02d %s %04d", weekday_D[t.tm_wday], t.tm_mday, month_M[t.tm_mon],
              t.tm_year + 1900);
     strftime(time_buf, sizeof(time_buf), "%H:%M:%S", &t);
@@ -147,31 +148,29 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonObject root = doc.as<JsonObject>();
   fprintf(stderr, "Decoding %s data\n", Type.c_str());
 
-  WxConditions[0].High = -50;
-  WxConditions[0].Low = 50;
+  WxConditions.High = -50;
+  WxConditions.Low = 50;
 
   JsonObject current = doc["current"];
-  WxConditions[0].Sunrise = current["sunrise"];
-  WxConditions[0].Sunset = current["sunset"];
-  WxConditions[0].Temperature = current["temp"];
-  WxConditions[0].FeelsLike = current["feels_like"];
-  WxConditions[0].Pressure = current["pressure"];
-  WxConditions[0].Humidity = current["humidity"];
-  WxConditions[0].DewPoint = current["dew_point"];
-  WxConditions[0].UVI = current["uvi"];
-  WxConditions[0].Cloudcover = current["clouds"];
-  WxConditions[0].Visibility = current["visibility"];
-  WxConditions[0].Windspeed = current["wind_speed"];
-  WxConditions[0].Winddir = current["wind_deg"];
+  WxConditions.Sunrise = current["sunrise"];
+  WxConditions.Sunset = current["sunset"];
+  WxConditions.Temperature = current["temp"];
+  WxConditions.FeelsLike = current["feels_like"];
+  WxConditions.Pressure = current["pressure"];
+  WxConditions.Humidity = current["humidity"];
+  WxConditions.DewPoint = current["dew_point"];
+  WxConditions.UVI = current["uvi"];
+  WxConditions.Cloudcover = current["clouds"];
+  WxConditions.Visibility = current["visibility"];
+  WxConditions.Windspeed = current["wind_speed"];
+  WxConditions.Winddir = current["wind_deg"];
 
-  const char* desc = current["weather"][0]["description"];
-  const char* icon = current["weather"][0]["icon"];
-  WxConditions[0].Forecast0 = String(desc ? desc : "");
-  WxConditions[0].Icon = String(icon ? icon : "");
+  strlcpy(WxConditions.Forecast0, current["weather"][0]["description"] | "", sizeof(WxConditions.Forecast0));
+  strlcpy(WxConditions.Icon, current["weather"][0]["icon"] | "", sizeof(WxConditions.Icon));
 
   JsonArray daily = root["daily"];
-  WxConditions[0].Low = daily[0]["temp"]["min"].as<float>();
-  WxConditions[0].High = daily[0]["temp"]["max"].as<float>();
+  WxConditions.Low = daily[0]["temp"]["min"].as<float>();
+  WxConditions.High = daily[0]["temp"]["max"].as<float>();
 
   JsonArray list = root["hourly"];
   byte wxIndex = 0;
@@ -187,21 +186,20 @@ bool DecodeWeather(const std::string& json, String Type) {
                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
     WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
     WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    const char* ic = list[r]["weather"][0]["icon"];
-    WxForecast[wxIndex].Icon = String(ic ? ic : "");
+    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
     WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
     WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
 
-    if (wxIndex >= 2) {
-      float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
-      pt = ((int)(pt * 10)) / 10.0f;
-      WxConditions[0].Trend = (pt > 0) ? "+" : (pt < 0) ? "-" : "0";
-    } else {
-      WxConditions[0].Trend = "0";
-    }
     wxIndex++;
   }
-  if (strcmp(cfg.units, "I") == 0) Convert_Readings_to_Imperial(wxIndex);
+  if (wxIndex >= 3) {
+    float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
+    pt = ((int)(pt * 10)) / 10.0f;
+    WxConditions.Trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
+  } else {
+    WxConditions.Trend = '0';
+  }
+  if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
   return true;
 }
 
@@ -217,10 +215,12 @@ EMSCRIPTEN_KEEPALIVE void wasm_init() {
 
 EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, float latitude,
                                           int gmt_offset_sec, int dst_offset_sec) {
-  if (city) strncpy(cfg.city, city, sizeof(cfg.city) - 1);
-  if (units) strncpy(cfg.units, units, sizeof(cfg.units) - 1);
-  if (lang) strncpy(cfg.language, lang, sizeof(cfg.language) - 1);
-  snprintf(cfg.latitude, sizeof(cfg.latitude), "%.6f", latitude);
+  if (city) cfg.city = city;
+  if (units) cfg.units = units;
+  if (lang) cfg.language = lang;
+  char lat_buf[32];
+  snprintf(lat_buf, sizeof(lat_buf), "%.6f", latitude);
+  cfg.latitude = lat_buf;
   cfg.gmtOffset_sec = gmt_offset_sec;
   cfg.daylightOffset_sec = dst_offset_sec;
 }
