@@ -26,18 +26,18 @@ struct AppConfig {
   std::string language;
   std::string units;
   std::string timezone;
-  std::string ntpServer;
-  int gmtOffset_sec;
-  int daylightOffset_sec;
-  int sleepDuration;
-  int wakeupHour;
-  int sleepHour;
-  bool debugDisplayUpdate;
+  std::string ntp_server;
+  int gmt_offset_sec;
+  int daylight_offset_sec;
+  int sleep_duration;
+  int wakeup_hour;
+  int sleep_hour;
+  bool debug_display_update;
 };
 
 extern AppConfig cfg;
 
-bool loadConfig();
-void saveConfig();
-bool isConfigValid();
-bool seedConfigFromHeader();
+bool LoadConfig();
+void SaveConfig();
+bool IsConfigValid();
+bool SeedConfigFromHeader();

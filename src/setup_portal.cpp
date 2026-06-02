@@ -1,4 +1,4 @@
-#include "setup_portal.h"
+﻿#include "setup_portal.h"
 #include "config.h"
 #include "config_html.h"
 #include "update_html.h"
@@ -60,12 +60,12 @@ static String buildPage() {
   }
 
   page.replace("__TIMEZONE__", htmlEscape(cfg.timezone));
-  page.replace("__NTPSERVER__", htmlEscape(cfg.ntpServer));
-  page.replace("__GMTOFFSET__", String(cfg.gmtOffset_sec));
-  page.replace("__DSTOFFSET__", String(cfg.daylightOffset_sec));
-  page.replace("__SLEEPDURATION__", String(cfg.sleepDuration));
-  page.replace("__WAKEUPHOUR__", String(cfg.wakeupHour));
-  page.replace("__SLEEPHOUR__", String(cfg.sleepHour));
+  page.replace("__NTPSERVER__", htmlEscape(cfg.ntp_server));
+  page.replace("__GMTOFFSET__", String(cfg.gmt_offset_sec));
+  page.replace("__DSTOFFSET__", String(cfg.daylight_offset_sec));
+  page.replace("__SLEEPDURATION__", String(cfg.sleep_duration));
+  page.replace("__WAKEUPHOUR__", String(cfg.wakeup_hour));
+  page.replace("__SLEEPHOUR__", String(cfg.sleep_hour));
   return page;
 }
 
@@ -86,13 +86,13 @@ static void handleConfigJson() {
   doc["language"] = cfg.language;
   doc["units"] = cfg.units;
   doc["timezone"] = cfg.timezone;
-  doc["ntpServer"] = cfg.ntpServer;
-  doc["gmtOffset_sec"] = cfg.gmtOffset_sec;
-  doc["daylightOffset_sec"] = cfg.daylightOffset_sec;
-  doc["sleepDuration"] = cfg.sleepDuration;
-  doc["wakeupHour"] = cfg.wakeupHour;
-  doc["sleepHour"] = cfg.sleepHour;
-  doc["debugDisplayUpdate"] = cfg.debugDisplayUpdate;
+  doc["ntp_server"] = cfg.ntp_server;
+  doc["gmt_offset_sec"] = cfg.gmt_offset_sec;
+  doc["daylight_offset_sec"] = cfg.daylight_offset_sec;
+  doc["sleep_duration"] = cfg.sleep_duration;
+  doc["wakeup_hour"] = cfg.wakeup_hour;
+  doc["sleep_hour"] = cfg.sleep_hour;
+  doc["debug_display_update"] = cfg.debug_display_update;
   String body;
   serializeJsonPretty(doc, body);
   httpServer.send(200, "application/json", body);
@@ -122,7 +122,7 @@ static void handleSave() {
   CHECK_FIELD_LEN("language", 7)
   CHECK_FIELD_LEN("units", 3)
   CHECK_FIELD_LEN("timezone", 79)
-  CHECK_FIELD_LEN("ntpServer", 63)
+  CHECK_FIELD_LEN("ntp_server", 63)
 
   cfg.ssid = arg("ssid").c_str();
 
@@ -144,14 +144,14 @@ static void handleSave() {
   cfg.language = arg("language").c_str();
   cfg.units = arg("units").c_str();
   cfg.timezone = arg("timezone").c_str();
-  cfg.ntpServer = arg("ntpServer").c_str();
-  cfg.gmtOffset_sec = arg("gmtOffset_sec").toInt();
-  cfg.daylightOffset_sec = arg("daylightOffset_sec").toInt();
-  cfg.sleepDuration = arg("sleepDuration").toInt();
-  cfg.wakeupHour = arg("wakeupHour").toInt();
-  cfg.sleepHour = arg("sleepHour").toInt();
+  cfg.ntp_server = arg("ntp_server").c_str();
+  cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
+  cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
+  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.wakeup_hour = arg("wakeup_hour").toInt();
+  cfg.sleep_hour = arg("sleep_hour").toInt();
 
-  saveConfig();
+  SaveConfig();
 
   httpServer.send(200, "text/html",
                   "<html><body style='font-family:sans-serif;max-width:400px;margin:40px auto'>"
@@ -218,7 +218,7 @@ static void handleNotFound() {
 
 // ---------------------------------------------------------------------------
 
-void enterSetupMode() {
+void EnterSetupMode() {
   Serial.println("Entering setup mode");
 
   // Derive a unique AP name from the last 4 hex digits of MAC

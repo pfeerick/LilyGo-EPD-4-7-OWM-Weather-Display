@@ -1,4 +1,4 @@
-// WASM entry point for the weather display simulator.
+﻿// WASM entry point for the weather display simulator.
 // OWM HTTP fetch is done in JavaScript; this module handles JSON decoding and rendering.
 #define SIMULATOR_BUILD 1
 
@@ -27,6 +27,8 @@
 #include "../include/images/sunset.h"
 #include "../include/images/uvi.h"
 
+#include "../include/display.h"
+
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -41,37 +43,26 @@
 
 // ---- Globals expected by the rendering code ----
 
-boolean LargeIcon = true;
-boolean SmallIcon = false;
-#define Large 20
-#define Small 10
-String Time_str = "--:--:--";
-String Date_str = "-- --- ----";
+boolean large_icon = true;
+boolean small_icon = false;
+String time_str = "--:--:--";
+String date_str = "-- --- ----";
 int wifi_signal = -55;
-int CurrentHour = 0, CurrentMin = 0, CurrentSec = 0, vref = 1100;
+int current_hour = 0, current_min = 0, current_sec = 0;
 
-#define max_readings 24
-#define max_graph_readings 16
+ForecastRecord wx_conditions;
+ForecastRecord wx_forecast[kMaxReadings];
 
-Forecast_record_type WxConditions;
-Forecast_record_type WxForecast[max_readings];
+long sleep_duration = 30;
+int wakeup_hour = 7;
+int sleep_hour = 23;
+long start_time = 0;
+long sleep_timer = 0;
+long delta = 30;
 
-float pressure_readings[max_readings] = {0};
-float temperature_readings[max_readings] = {0};
-float humidity_readings[max_readings] = {0};
-float rain_readings[max_readings] = {0};
-float snow_readings[max_readings] = {0};
-
-long SleepDuration = 30;
-int WakeupHour = 7;
-int SleepHour = 23;
-long StartTime = 0;
-long SleepTimer = 0;
-long Delta = 30;
-
-EpdFont currentFont;
+EpdFont current_font;
 uint8_t* framebuffer;
-static EpdiyHighlevelState hl;
+static EpdiyHighlevelState epd_hl;
 
 // ---- Config ----
 
@@ -85,7 +76,7 @@ AppConfig cfg = {"",                        // ssid
                  "EN",                      // language
                  "M",                       // units
                  "",                        // timezone
-                 "pool.ntp.org",            // ntpServer
+                 "pool.ntp.org",            // ntp_server
                  0,
                  0,
                  30,
@@ -93,14 +84,14 @@ AppConfig cfg = {"",                        // ssid
                  23,
                  false};
 
-bool loadConfig() {
+bool LoadConfig() {
   return false;
 }
-void saveConfig() {}
-bool isConfigValid() {
+void SaveConfig() {}
+bool IsConfigValid() {
   return !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty();
 }
-bool seedConfigFromHeader() {
+bool SeedConfigFromHeader() {
   return false;
 }
 
@@ -108,9 +99,9 @@ boolean UpdateLocalTime() {
   time_t now = time(nullptr);
   struct tm t;
   localtime_r(&now, &t);
-  CurrentHour = t.tm_hour;
-  CurrentMin = t.tm_min;
-  CurrentSec = t.tm_sec;
+  current_hour = t.tm_hour;
+  current_min = t.tm_min;
+  current_sec = t.tm_sec;
   char day_buf[64], time_buf[32];
   if (cfg.units == "M") {
     snprintf(day_buf, sizeof(day_buf), "%s, %02d %s %04d", weekday_D[t.tm_wday], t.tm_mday, month_M[t.tm_mon],
@@ -120,22 +111,24 @@ boolean UpdateLocalTime() {
     strftime(day_buf, sizeof(day_buf), "%a %b-%d-%Y", &t);
     strftime(time_buf, sizeof(time_buf), "%r", &t);
   }
-  Date_str = day_buf;
-  Time_str = time_buf;
+  date_str = day_buf;
+  time_str = time_buf;
   return true;
 }
 
-void edp_update() {}
+void EdpUpdate() {}
 
-#include "../src/main.cpp"
+#include "../src/weather_api.cpp"
+#include "../src/display.cpp"
+#include "../src/icons.cpp"
 
 void DrawBattery(int x, int y) {
   const uint8_t percentage = 85;
   const float voltage = 4.1f;
-  drawRect(x + 25, y - 14, 40, 15, (uint16_t)0x00);
-  fillRect(x + 65, y - 10, 4, 7, (uint16_t)0x00);
-  fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, (uint16_t)0x00);
-  drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
+  DrawRect(x + 25, y - 14, 40, 15, (uint16_t)0x00);
+  FillRect(x + 65, y - 10, 4, 7, (uint16_t)0x00);
+  FillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, (uint16_t)0x00);
+  DrawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", Alignment::kLeft);
 }
 
 bool DecodeWeather(const std::string& json, String Type) {
@@ -148,58 +141,58 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonObject root = doc.as<JsonObject>();
   fprintf(stderr, "Decoding %s data\n", Type.c_str());
 
-  WxConditions.High = -50;
-  WxConditions.Low = 50;
+  wx_conditions.high = -50;
+  wx_conditions.low = 50;
 
   JsonObject current = doc["current"];
-  WxConditions.Sunrise = current["sunrise"];
-  WxConditions.Sunset = current["sunset"];
-  WxConditions.Temperature = current["temp"];
-  WxConditions.FeelsLike = current["feels_like"];
-  WxConditions.Pressure = current["pressure"];
-  WxConditions.Humidity = current["humidity"];
-  WxConditions.DewPoint = current["dew_point"];
-  WxConditions.UVI = current["uvi"];
-  WxConditions.Cloudcover = current["clouds"];
-  WxConditions.Visibility = current["visibility"];
-  WxConditions.Windspeed = current["wind_speed"];
-  WxConditions.Winddir = current["wind_deg"];
+  wx_conditions.sunrise = current["sunrise"];
+  wx_conditions.sunset = current["sunset"];
+  wx_conditions.temperature = current["temp"];
+  wx_conditions.feels_like = current["feels_like"];
+  wx_conditions.pressure = current["pressure"];
+  wx_conditions.humidity = current["humidity"];
+  wx_conditions.dew_point = current["dew_point"];
+  wx_conditions.uvi = current["uvi"];
+  wx_conditions.cloud_cover = current["clouds"];
+  wx_conditions.visibility = current["visibility"];
+  wx_conditions.wind_speed = current["wind_speed"];
+  wx_conditions.wind_dir = current["wind_deg"];
 
-  strlcpy(WxConditions.Forecast0, current["weather"][0]["description"] | "", sizeof(WxConditions.Forecast0));
-  strlcpy(WxConditions.Icon, current["weather"][0]["icon"] | "", sizeof(WxConditions.Icon));
+  strlcpy(wx_conditions.forecast0, current["weather"][0]["description"] | "", sizeof(wx_conditions.forecast0));
+  strlcpy(wx_conditions.icon, current["weather"][0]["icon"] | "", sizeof(wx_conditions.icon));
 
   JsonArray daily = root["daily"];
-  WxConditions.Low = daily[0]["temp"]["min"].as<float>();
-  WxConditions.High = daily[0]["temp"]["max"].as<float>();
+  wx_conditions.low = daily[0]["temp"]["min"].as<float>();
+  wx_conditions.high = daily[0]["temp"]["max"].as<float>();
 
   JsonArray list = root["hourly"];
   byte wxIndex = 0;
   for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
-    WxForecast[wxIndex].Dt = list[r]["dt"].as<int>();
-    WxForecast[wxIndex].Temperature = list[r]["temp"].as<float>();
-    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : WxForecast[wxIndex].Temperature;
-    float temps[3] = {WxForecast[wxIndex].Temperature, t1, t2};
-    WxForecast[wxIndex].High = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
-                                                    : (temps[1] > temps[2] ? temps[1] : temps[2]));
-    WxForecast[wxIndex].Low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
-                                                   : (temps[1] < temps[2] ? temps[1] : temps[2]));
-    WxForecast[wxIndex].Pressure = list[r]["pressure"].as<float>();
-    WxForecast[wxIndex].Humidity = list[r]["humidity"].as<float>();
-    strlcpy(WxForecast[wxIndex].Icon, list[r]["weather"][0]["icon"] | "", sizeof(WxForecast[wxIndex].Icon));
-    WxForecast[wxIndex].Rainfall = list[r]["rain"]["1h"].as<float>();
-    WxForecast[wxIndex].Snowfall = list[r]["snow"]["1h"].as<float>();
+    wx_forecast[wxIndex].dt = list[r]["dt"].as<int>();
+    wx_forecast[wxIndex].temperature = list[r]["temp"].as<float>();
+    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
+    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
+    float temps[3] = {wx_forecast[wxIndex].temperature, t1, t2};
+    wx_forecast[wxIndex].high = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
+                                                     : (temps[1] > temps[2] ? temps[1] : temps[2]));
+    wx_forecast[wxIndex].low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
+                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
+    wx_forecast[wxIndex].pressure = list[r]["pressure"].as<float>();
+    wx_forecast[wxIndex].humidity = list[r]["humidity"].as<float>();
+    strlcpy(wx_forecast[wxIndex].icon, list[r]["weather"][0]["icon"] | "", sizeof(wx_forecast[wxIndex].icon));
+    wx_forecast[wxIndex].rainfall = list[r]["rain"]["1h"].as<float>();
+    wx_forecast[wxIndex].snowfall = list[r]["snow"]["1h"].as<float>();
 
     wxIndex++;
   }
   if (wxIndex >= 3) {
-    float pt = WxForecast[0].Pressure - WxForecast[2].Pressure;
+    float pt = wx_forecast[0].pressure - wx_forecast[2].pressure;
     pt = ((int)(pt * 10)) / 10.0f;
-    WxConditions.Trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
+    wx_conditions.trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
   } else {
-    WxConditions.Trend = '0';
+    wx_conditions.trend = '0';
   }
-  if (cfg.units == "I") Convert_Readings_to_Imperial(wxIndex);
+  if (cfg.units == "I") ConvertReadingsToImperial(wxIndex);
   return true;
 }
 
@@ -208,9 +201,9 @@ bool DecodeWeather(const std::string& json, String Type) {
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE void wasm_init() {
-  hl = epd_hl_init(nullptr);
+  epd_hl = epd_hl_init(nullptr);
   framebuffer = epd_pc_get_framebuffer();
-  epd_hl_set_all_white(&hl);
+  epd_hl_set_all_white(&epd_hl);
 }
 
 EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, const char* lang, float latitude,
@@ -221,13 +214,13 @@ EMSCRIPTEN_KEEPALIVE void wasm_set_config(const char* city, const char* units, c
   char lat_buf[32];
   snprintf(lat_buf, sizeof(lat_buf), "%.6f", latitude);
   cfg.latitude = lat_buf;
-  cfg.gmtOffset_sec = gmt_offset_sec;
-  cfg.daylightOffset_sec = dst_offset_sec;
+  cfg.gmt_offset_sec = gmt_offset_sec;
+  cfg.daylight_offset_sec = dst_offset_sec;
 }
 
 EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {
   UpdateLocalTime();
-  epd_hl_set_all_white(&hl);
+  epd_hl_set_all_white(&epd_hl);
   std::string json_str(json, len);
   if (!DecodeWeather(json_str, "onecall")) return -1;
   DisplayWeather();
