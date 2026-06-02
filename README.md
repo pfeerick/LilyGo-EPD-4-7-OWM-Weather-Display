@@ -1,8 +1,8 @@
 # LilyGo EPD 4.7" OpenWeather Weather Display
 
-OpenWeather weather station using [LilyGo EPD 4.7" display](https://bit.ly/3exI3Hb)
+OpenWeather weather station using a LilyGo EPD 4.7" display (the original non-S3 hardware is no longer readily available; see [LilyGo's e-paper range](https://lilygo.cc/collections/e-paper) for current offerings)
 
-[![Presentation video](doc/assets/001.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
+![Simulator screenshot](doc/assets/simulator-screenshot.png)
 
 # License
 

@@ -1,8 +1,18 @@
 # Project History & Licensing
 
+## Original Presentation Video
+
+DzikuVx originally presented the project in a YouTube video, which has since been removed. The thumbnail is preserved here for historical reference.
+
+[![Presentation video](doc/assets/001.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
+
 ## Origin
 
 This project is a fork of [DzikuVx](https://github.com/DzikuVx/LilyGo-EPD-4-7-OWM-Weather-Display)'s repo for the OpenWeather weather station display, which itself was originally created by [G6EJD](https://github.com/G6EJD/).
+
+DzikuVx also presented the project in a YouTube video, which has since been removed. The thumbnail is preserved here for historical reference.
+
+[![Presentation video](doc/assets/dzikuvx-video-thumbnail.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
 
 ## Licensing
 
