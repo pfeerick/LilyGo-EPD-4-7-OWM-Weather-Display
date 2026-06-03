@@ -7,8 +7,8 @@
     "dev": "bun run index.js",
     "screenshot": "bun scripts/screenshot.js",
     "screenshot:readme": "bun scripts/screenshot.js doc/assets/simulator-screenshot.png",
-    "format": "biome format --write web/config.html web/display.html index.js",
-    "format:check": "biome ci web/config.html web/display.html index.js"
+    "format": "biome format --write web/config.html web/display.html docs/index.html index.js",
+    "format:check": "biome ci web/config.html web/display.html docs/index.html index.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15"

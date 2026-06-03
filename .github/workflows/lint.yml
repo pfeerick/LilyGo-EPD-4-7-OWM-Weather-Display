@@ -7,6 +7,7 @@ on:
       - 'include/**'
       - 'simulator/**'
       - 'web/**'
+      - 'docs/**'
       - 'index.js'
   workflow_call:
 
