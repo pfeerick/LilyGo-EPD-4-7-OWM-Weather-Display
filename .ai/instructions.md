@@ -168,6 +168,15 @@ Always create a new branch before starting any work. Never commit directly to `m
   git rebase --autosquash origin/main
   ```
 
+### Pull Requests
+
+Push branches to `origin` (`pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display`). When creating a PR with `gh`, always pass `--repo pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display` — without it, `gh` defaults to the upstream `DzikuVx/LilyGo-EPD-4-7-OWM-Weather-Display` repo.
+
+```sh
+git push -u origin <branch-name>
+gh pr create --repo pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display --title "..." --body "..."
+```
+
 ### Symlink quirk: `.cursorrules` and `.windsurfrules`
 
 These two files are git symlinks (mode `120000`) whose stored content is the bare target path `.ai/instructions.md` with no trailing newline — which is correct; newlines are not valid in filesystem paths. GitHub suppresses the "no newline at end of file" warning for `.md` files (likely because trailing whitespace is meaningful in Markdown), so only these two non-markdown symlinks show the warning in PR diffs. Do not attempt to add a trailing newline to fix it — it would corrupt the symlink target.
