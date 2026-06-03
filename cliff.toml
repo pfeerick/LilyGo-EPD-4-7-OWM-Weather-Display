@@ -4,7 +4,7 @@ header = """
 
 ### First-time / Factory Flash
 
-Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a Chromium-based browser with Web Serial support (Chrome, Edge, Opera, Brave, etc.),
+Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a browser with Web Serial support (Chrome, Edge, Opera, Brave, Firefox 151+, etc.),
 select a version, choose **Factory Flash**, connect your device via USB, and click **Install**.
 This erases the device and writes the bootloader, partition table, and application.
 

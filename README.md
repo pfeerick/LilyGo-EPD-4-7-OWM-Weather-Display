@@ -57,7 +57,7 @@ On first boot the values are automatically written to the on-device config store
 
 Flash directly from your browser — no file download or toolchain required:
 
-1. Open **[pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a Chromium-based browser with Web Serial support (Chrome, Edge, Opera, Brave, etc.)
+1. Open **[pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a browser with Web Serial support (Chrome, Edge, Opera, Brave, Firefox 151+, etc.)
 2. Select a firmware version and flash mode, then connect your device via USB
 3. Click **Install** and follow the prompts
 
