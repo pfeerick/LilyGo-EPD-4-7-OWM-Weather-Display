@@ -4,7 +4,7 @@
 
 DzikuVx originally presented the project in a YouTube video, which has since been removed. The thumbnail is preserved here for historical reference.
 
-[![Presentation video](doc/assets/001.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
+[![Presentation video](docs/assets/dzikuvx-video-thumbnail.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
 
 ## Origin
 
@@ -12,7 +12,7 @@ This project is a fork of [DzikuVx](https://github.com/DzikuVx/LilyGo-EPD-4-7-OW
 
 DzikuVx also presented the project in a YouTube video, which has since been removed. The thumbnail is preserved here for historical reference.
 
-[![Presentation video](doc/assets/dzikuvx-video-thumbnail.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
+[![Presentation video](docs/assets/dzikuvx-video-thumbnail.png)](https://www.youtube.com/watch?v=TQaVQcld1Pk)
 
 ## Licensing
 
