@@ -30,6 +30,7 @@ const buildTime = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UT
 
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const webDir = join(import.meta.dir, "web");
+const docsDir = join(import.meta.dir, "docs");
 const SIMULATOR_WASM_DIR = join(import.meta.dir, "simulator", "wasm");
 
 const mock = {
@@ -78,7 +79,7 @@ const server = Bun.serve({
       for (const [token, value] of Object.entries(mock)) {
         html = html.replaceAll(token, value);
       }
-      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n  <a href="/flash">Flash</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -134,7 +135,7 @@ const server = Bun.serve({
     </script>`;
       let html = readFileSync(join(webDir, "update.html"), "utf8").replace("</head>", `${devScript}\n  </head>`);
       html = html.replace("__BUILD__", mock.__BUILD__);
-      html = html.replace("</nav>", `  <a href="/display">Display</a>\n</nav>`);
+      html = html.replace("</nav>", `  <a href="/display">Display</a>\n  <a href="/flash">Flash</a>\n</nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
@@ -146,8 +147,45 @@ const server = Bun.serve({
     }
 
     if (req.method === "GET" && pathname === "/display") {
-      const html = readFileSync(join(webDir, "display.html"), "utf8");
+      let html = readFileSync(join(webDir, "display.html"), "utf8");
+      html = html.replace("</nav>", `  <a href="/flash">Flash</a>\n    </nav>`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+
+    if (req.method === "GET" && pathname === "/flash") {
+      let html = readFileSync(join(docsDir, "index.html"), "utf8");
+      const devNav =
+        `<nav style="position:fixed;top:0;left:0;right:0;background:#1e1e2e;display:flex;z-index:100">` +
+        `<a href="/" style="flex:1;text-align:center;padding:12px;color:#aaa;text-decoration:none">Setup</a>` +
+        `<a href="/update" style="flex:1;text-align:center;padding:12px;color:#aaa;text-decoration:none">Update</a>` +
+        `<a href="/display" style="flex:1;text-align:center;padding:12px;color:#aaa;text-decoration:none">Display</a>` +
+        `<a href="/flash" style="flex:1;text-align:center;padding:12px;color:#fff;text-decoration:none;font-weight:600">Flash</a>` +
+        `</nav>`;
+      // Proxy GitHub release downloads through the local server to avoid CORS issues.
+      // This script is only injected in dev mode; the GitHub Pages version is unaffected.
+      const fetchProxy =
+        `<script>` +
+        `const _f=window.fetch;` +
+        `window.fetch=(u,...a)=>{` +
+        `if(typeof u==="string"&&u.startsWith("https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/"))` +
+        `u="/release-proxy?url="+encodeURIComponent(u);` +
+        `return _f(u,...a);};` +
+        `</script>`;
+      html = html.replace("</head>", `${fetchProxy}\n</head>`);
+      html = html.replace("<main>", `${devNav}\n    <main style="margin-top:44px">`);
+      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+
+    if (req.method === "GET" && pathname === "/release-proxy") {
+      const target = new URL(req.url).searchParams.get("url") ?? "";
+      const allowed = "https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/";
+      if (!target.startsWith(allowed)) return new Response("Forbidden", { status: 403 });
+      const upstream = await fetch(target);
+      if (!upstream.ok) return new Response("Upstream error", { status: upstream.status });
+      const headers = { "Content-Type": "application/octet-stream" };
+      const len = upstream.headers.get("Content-Length");
+      if (len) headers["Content-Length"] = len;
+      return new Response(upstream.body, { headers });
     }
 
     if (req.method === "GET" && pathname === "/owm") {
@@ -198,6 +236,7 @@ const wasmAvailable = existsSync(join(SIMULATOR_WASM_DIR, "simulator.wasm"));
 console.log(`Preview server running at http://localhost:${server.port}`);
 console.log(`Serving web/ from: ${webDir}`);
 console.log(`Simulator (WASM): ${wasmAvailable ? SIMULATOR_WASM_DIR : "(not built — run emcmake cmake)"}`);
+console.log(`Flash page:       http://localhost:${server.port}/flash`);
 
 process.on("SIGINT", () => {
   console.log("\nShutting down...");

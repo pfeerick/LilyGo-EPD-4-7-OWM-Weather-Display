@@ -4,13 +4,21 @@ header = """
 
 ### First-time / Factory Flash
 
-Use the [ESPHome Web Flasher](https://web.esphome.io/) to flash directly from your browser:
-1. Download `firmware-factory-*.bin` from the assets below
-2. Open [web.esphome.io](https://web.esphome.io/), connect your device, and upload the file
+Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a browser with Web Serial support (Chrome, Edge, Opera, Brave, Firefox 151+, etc.),
+select a version, choose **Factory Flash**, connect your device via USB, and click **Install**.
+This erases the device and writes the bootloader, partition table, and application.
 
-### OTA / Web Update
+No file download required. Alternatively, download `firmware-factory-*.bin` and flash via
+[web.esphome.io](https://web.esphome.io/) or `esptool.py write_flash 0x0`.
 
-Use the built-in web interface to upload `firmware-*.bin` (the app-only binary) without reflashing the bootloader.
+### Update Flash
+
+Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)**,
+select a version, choose **Update Flash**, and click **Install**.
+This writes only the application binary and preserves your WiFi credentials and settings.
+
+Alternatively, use the on-device web portal (served over WiFi) to upload `firmware-*.bin`,
+or flash manually with `esptool.py write_flash 0x10000`.
 
 ## Changes
 

@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>LilyGo EPD 4.7 Weather Display — Firmware Flasher</title>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/esp-web-tools@10/dist/web/install-button.js"
+    ></script>
+    <style>
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: #1e1e2e;
+  color: #fff;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+}
+header h1 {
+  margin: 0 0 2px;
+  font-size: 1.2em;
+}
+header p {
+  margin: 0;
+  font-size: 0.85em;
+  color: #aaa;
+}
+main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+.banner {
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 0.88em;
+  margin-bottom: 16px;
+}
+.banner-warn {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+.banner-error {
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  color: #842029;
+}
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 16px;
+}
+.tab {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.95em;
+  color: #555;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.tab.active {
+  color: #2a7ae2;
+  border-bottom-color: #2a7ae2;
+  font-weight: 600;
+}
+.panel {
+  margin-bottom: 16px;
+}
+label {
+  display: block;
+  font-size: 0.85em;
+  color: #333;
+  margin-bottom: 4px;
+}
+select,
+input[type="file"] {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95em;
+  background: #fff;
+  margin-bottom: 4px;
+}
+select:disabled {
+  color: #999;
+}
+fieldset {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+legend {
+  font-size: 0.85em;
+  color: #333;
+  padding: 0 4px;
+}
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95em;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.radio-label:last-child {
+  margin-bottom: 0;
+}
+.note {
+  font-size: 0.78em;
+  color: #777;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+esp-web-install-button {
+  display: block;
+  margin-top: 8px;
+}
+esp-web-install-button::part(button) {
+  width: 100%;
+  padding: 12px;
+  background: #2a7ae2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1em;
+  cursor: pointer;
+}
+esp-web-install-button::part(button):hover {
+  background: #1a5dbf;
+}
+footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd;
+  font-size: 0.78em;
+  color: #777;
+}
+footer a {
+  color: #2a7ae2;
+}
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LilyGo EPD 4.7 Weather Display</h1>
+      <p>Firmware Flasher</p>
+    </header>
+    <main>
+      <div id="no-webserial" class="banner banner-warn" hidden>
+        <strong>Browser not supported.</strong> Web Serial is required — please use Chrome, Edge, Opera, Brave,
+        Firefox 151+, or another browser with Web Serial support.
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="releases" role="tab" aria-selected="true">From releases</button>
+        <button type="button" class="tab" data-tab="local" role="tab" aria-selected="false">Local file</button>
+      </div>
+
+      <div id="panel-releases" class="panel" role="tabpanel">
+        <label for="version-select">Firmware version</label>
+        <select id="version-select" disabled>
+          <option>Loading releases…</option>
+        </select>
+        <div id="releases-error" class="banner banner-error" hidden></div>
+      </div>
+
+      <div id="panel-local" class="panel" role="tabpanel" hidden>
+        <label for="file-input">Firmware binary (.bin)</label>
+        <input type="file" id="file-input" accept=".bin" />
+        <p class="note">
+          Factory Flash: use <code>firmware-factory-*.bin</code> (merged binary including bootloader and partition
+          table).<br />
+          Update Flash: use <code>firmware-*.bin</code> (app-only binary).
+        </p>
+      </div>
+
+      <fieldset>
+        <legend>Flash mode</legend>
+        <label class="radio-label">
+          <input type="radio" name="mode" value="factory" checked />
+          Factory Flash — first-time install
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="mode" value="update" />
+          Update Flash — preserve settings
+        </label>
+      </fieldset>
+      <p id="mode-desc" class="note"></p>
+
+      <div id="install-wrap" hidden>
+        <esp-web-install-button id="install-btn"></esp-web-install-button>
+      </div>
+
+      <footer>
+        <p>
+          Powered by <a href="https://esphome.github.io/esp-web-tools/" target="_blank">ESP Web Tools</a> by the
+          ESPHome project. Requires a browser with Web Serial support (Chrome, Edge, Opera, Brave, Firefox 151+, etc.). Firmware releases are on
+          <a href="https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases" target="_blank"
+            >GitHub</a
+          >.
+        </p>
+      </footer>
+    </main>
+    <script>
+const REPO = "pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display";
+const API_URL = `https://api.github.com/repos/${REPO}/releases`;
+const DOWNLOAD_BASE = `https://github.com/${REPO}/releases/download`;
+
+let activeTab = "releases";
+let selectedTag = null;
+let localFileUrl = null;
+let prevManifestUrl = null;
+
+const modeDescriptions = {
+  factory:
+    "Erases the entire flash and writes from offset 0x0. WiFi credentials and all device settings will be wiped.",
+  update:
+    "Writes only the application at offset 0x10000, preserving WiFi credentials and device settings. " +
+    "When the installer asks whether to erase the device, click “Skip” to preserve your settings.",
+};
+
+function getMode() {
+  return document.querySelector("input[name='mode']:checked").value;
+}
+
+function updateButton() {
+  const mode = getMode();
+  const btn = document.getElementById("install-btn");
+  const wrap = document.getElementById("install-wrap");
+
+  // Sync erase-before-install immediately so it is never left stale from a
+  // previous mode, even if we return early below because no binary is ready yet.
+  if (mode === "factory") {
+    btn.setAttribute("erase-before-install", "");
+  } else {
+    btn.removeAttribute("erase-before-install");
+  }
+
+  let binaryUrl = null;
+
+  if (activeTab === "releases" && selectedTag) {
+    const isLatest = selectedTag === "latest";
+    const filename =
+      mode === "factory"
+        ? isLatest
+          ? "firmware-factory-latest.bin"
+          : `firmware-factory-${selectedTag}.bin`
+        : isLatest
+          ? "firmware-latest.bin"
+          : `firmware-${selectedTag}.bin`;
+    binaryUrl = `${DOWNLOAD_BASE}/${selectedTag}/${filename}`;
+  } else if (activeTab === "local" && localFileUrl) {
+    binaryUrl = localFileUrl;
+  }
+
+  if (!binaryUrl) {
+    wrap.hidden = true;
+    return;
+  }
+
+  if (prevManifestUrl) {
+    URL.revokeObjectURL(prevManifestUrl);
+  }
+
+  const manifest = {
+    name: "LilyGo EPD 4.7 Weather Display",
+    version: selectedTag ?? "local",
+    // For updates: prompt the user before erasing so they can choose "Skip" and preserve settings.
+    // (esp-web-tools defaults to auto-erase for any "new install", which always applies here
+    //  because our firmware does not implement Improv Serial.)
+    ...(mode === "update" && { new_install_prompt_erase: true }),
+    builds: [
+      {
+        chipFamily: "ESP32",
+        parts: [{ path: binaryUrl, offset: mode === "factory" ? 0 : 65536 }],
+      },
+    ],
+  };
+
+  const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+  prevManifestUrl = URL.createObjectURL(blob);
+
+  // Set manifest after erase-before-install so the component sees the correct
+  // erase state when it processes the manifest attribute change.
+  btn.setAttribute("manifest", prevManifestUrl);
+
+  wrap.hidden = false;
+}
+
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const name = tab.dataset.tab;
+    activeTab = name;
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.classList.toggle("active", t.dataset.tab === name);
+      t.setAttribute("aria-selected", String(t.dataset.tab === name));
+    });
+    document.getElementById("panel-releases").hidden = name !== "releases";
+    document.getElementById("panel-local").hidden = name !== "local";
+    updateButton();
+  });
+});
+
+document.querySelectorAll("input[name='mode']").forEach((radio) => {
+  radio.addEventListener("change", () => {
+    document.getElementById("mode-desc").textContent = modeDescriptions[getMode()];
+    updateButton();
+  });
+});
+
+document.getElementById("mode-desc").textContent = modeDescriptions.factory;
+
+document.getElementById("version-select").addEventListener("change", (e) => {
+  selectedTag = e.target.value;
+  updateButton();
+});
+
+document.getElementById("file-input").addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (localFileUrl) {
+    URL.revokeObjectURL(localFileUrl);
+    localFileUrl = null;
+  }
+  if (file) {
+    localFileUrl = URL.createObjectURL(file);
+  }
+  updateButton();
+});
+
+async function loadReleases() {
+  const select = document.getElementById("version-select");
+  const errorDiv = document.getElementById("releases-error");
+
+  try {
+    const resp = await fetch(API_URL);
+
+    if (resp.status === 403 || resp.status === 429) {
+      throw new Error("rate-limit");
+    }
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
+    const releases = await resp.json();
+
+    if (!Array.isArray(releases) || releases.length === 0) {
+      throw new Error("empty");
+    }
+
+    select.innerHTML = "";
+
+    for (const release of releases) {
+      const tag = release.tag_name;
+      const isLatestTag = release.prerelease && tag === "latest";
+      const label = isLatestTag
+        ? "Latest Build (development)"
+        : `${tag}${release.name && release.name !== tag ? ` — ${release.name}` : ""}`;
+      const opt = document.createElement("option");
+      opt.value = tag;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+
+    select.disabled = false;
+    selectedTag = select.value;
+    updateButton();
+  } catch (err) {
+    const msg =
+      err.message === "rate-limit"
+        ? "GitHub API rate limit reached. Try again in a few minutes."
+        : err.message === "empty"
+          ? "No releases found."
+          : "Could not load releases. Check your internet connection.";
+
+    const link = document.createElement("a");
+    link.href = `https://github.com/${REPO}/releases`;
+    link.textContent = "View releases on GitHub →";
+    errorDiv.textContent = `${msg} `;
+    errorDiv.appendChild(link);
+    errorDiv.hidden = false;
+    select.innerHTML = "<option>Failed to load</option>";
+  }
+}
+
+if (!("serial" in navigator)) {
+  document.getElementById("no-webserial").hidden = false;
+}
+
+loadReleases();
+    </script>
+  </body>
+</html>
