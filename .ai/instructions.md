@@ -62,7 +62,7 @@ scripts/
 
 ## 4. Coding Conventions
 
-- **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing.
+- **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing. **Do not run clang-format on `include/fonts/` or `include/images/`** — those directories contain auto-generated binary data and have nested `.clang-format` files with `DisableFormat: true` to exclude them from CI checks.
 - **Naming:** Arduino camelCase conventions for variables and functions (`displayWeather`, `fetchWeatherData`).
 - **Web files:** Biome enforced — 2-space indentation, 120-column limit, double quotes, trailing commas, semicolons. Run `bun run format` after editing any file under `web/`.
 - **Generated files:** Do not manually edit `include/config_html.h` or `include/update_html.h` — both are regenerated on every `pio run`.
@@ -145,6 +145,14 @@ Four GitHub Actions workflows run on pull requests:
 
 ## 8. AI Collaboration Guidelines
 
+### Branches
+
+Always create a new branch before starting any work. Never commit directly to `main`.
+
+- Name the branch after the conventional commit type and a short description: `feat/add-humidity-graph`, `fix/graph-overflow`, `chore/update-deps`
+- Create with `git checkout -b <branch-name>` before making any changes
+- This applies to all change types: features, fixes, refactors, docs, chores, etc.
+
 ### Commits
 
 - Prefer small, focused commits.
@@ -159,6 +167,15 @@ Four GitHub Actions workflows run on pull requests:
   ```sh
   git rebase --autosquash origin/main
   ```
+
+### Pull Requests
+
+Push branches to `origin` (`pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display`). When creating a PR with `gh`, always pass `--repo pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display` — without it, `gh` defaults to the upstream `DzikuVx/LilyGo-EPD-4-7-OWM-Weather-Display` repo.
+
+```sh
+git push -u origin <branch-name>
+gh pr create --repo pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display --title "..." --body "..."
+```
 
 ### Symlink quirk: `.cursorrules` and `.windsurfrules`
 
