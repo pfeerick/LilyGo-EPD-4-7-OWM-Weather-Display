@@ -3,6 +3,7 @@ name: Simulator Build
 on:
   pull_request:
     paths:
+      - ".github/workflows/simulator-build.yml"
       - "simulator/**"
       - "src/main.cpp"
       - "include/**"
