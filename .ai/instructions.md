@@ -48,6 +48,8 @@ simulator/
 web/
   config.html           # Setup portal HTML — source of truth; never edit config_html.h directly
   display.html          # Display configuration portal page
+docs/
+  index.html            # GitHub Pages firmware flasher (ESP Web Tools; served at pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)
 scripts/
   embed_html.py         # Pre-build: regenerates include/config_html.h from web/config.html
   merge_binary.py       # Post-build: merges firmware + bootloader + partition table into factory binary
@@ -64,7 +66,7 @@ scripts/
 
 - **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing. **Do not run clang-format on `include/fonts/` or `include/images/`** — those directories contain auto-generated binary data and have nested `.clang-format` files with `DisableFormat: true` to exclude them from CI checks.
 - **Naming:** Arduino camelCase conventions for variables and functions (`displayWeather`, `fetchWeatherData`).
-- **Web files:** Biome enforced — 2-space indentation, 120-column limit, double quotes, trailing commas, semicolons. Run `bun run format` after editing any file under `web/`.
+- **Web files:** Biome enforced — 2-space indentation, 120-column limit, double quotes, trailing commas, semicolons. Run `bun run format` after editing any file under `web/` or `docs/`.
 - **Generated files:** Do not manually edit `include/config_html.h` or `include/update_html.h` — both are regenerated on every `pio run`.
 
 ## 5. Key Files & Entrypoints
@@ -129,19 +131,22 @@ Output goes to `simulator/wasm/` (gitignored). CI rebuilds and publishes WASM ar
 
 ## 7. CI/CD
 
-Four GitHub Actions workflows run on pull requests:
+Five GitHub Actions workflows run on pull requests (or push to main):
 
 | Workflow | Trigger (path filters) | What it does |
 |---|---|---|
 | `compile-check.yml` | `src/`, `include/`, `platformio.ini` | PlatformIO firmware build; uploads firmware binaries as artifacts |
-| `lint.yml` | `src/`, `include/`, `simulator/`, `web/`, `index.js` | clang-format-18 dry-run on C++ files; Biome format check on web files |
+| `lint.yml` | `src/`, `include/`, `simulator/`, `web/`, `docs/`, `index.js` | clang-format-18 dry-run on C++ files; Biome format check on web files |
 | `simulator-build.yml` | `simulator/`, `src/`, `include/` | Emscripten CMake WASM build; uploads `simulator.js` + `simulator.wasm` |
 | `release.yml` | Push to `main` or version tags | Runs all three above; creates/updates GitHub release with git-cliff changelog and firmware + WASM artifacts |
+| `pages.yml` | Push to `main` (`docs/**`) | Deploys `docs/` to GitHub Pages (firmware flasher at `pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/`) |
 
 **Before submitting a PR:**
 - Run `clang-format -i` on any changed `.cpp`/`.h` files
-- Run `bun run format` on any changed web files
+- Run `bun run format` on any changed files under `web/` or `docs/`
 - Confirm `pio run` succeeds locally
+
+**GitHub Pages setup (one-time manual step):** For `pages.yml` to deploy successfully, go to **Settings > Pages > Build and deployment** and set Source to **GitHub Actions**.
 
 ## 8. AI Collaboration Guidelines
 
