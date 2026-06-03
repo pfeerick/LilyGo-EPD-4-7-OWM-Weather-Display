@@ -13,8 +13,7 @@ No file download required. Alternatively, download `firmware-factory-*.bin` and 
 
 ### Update Flash
 
-Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)**,
-select a version, choose **Update Flash**, and click **Install**.
+Open the **[browser flasher](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)**, select a version, choose **Update Flash**, and click **Install**.
 This writes only the application binary and preserves your WiFi credentials and settings.
 
 Alternatively, use the on-device web portal (served over WiFi) to upload `firmware-*.bin`,
