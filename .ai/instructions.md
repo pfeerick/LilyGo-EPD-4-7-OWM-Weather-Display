@@ -36,6 +36,7 @@ include/
   defaults.h            # Compile-time defaults (location, units, etc.)
   forecast_record.h     # Shared weather data structs (Forecast_record_type, etc.)
   config_html.h         # Auto-generated PROGMEM copy of web/config.html — do not edit
+  update_html.h         # Auto-generated PROGMEM copy of web/update.html — do not edit
   fonts/                # E-paper font headers
   images/               # Icon/image headers
   translations/         # Locale string tables
@@ -55,7 +56,7 @@ scripts/
 
 **Deep-sleep model:** The firmware wakes from deep sleep, fetches weather data, renders the display, then immediately returns to deep sleep until the next update interval. There is no persistent `loop()` polling — `setup()` does all the work.
 
-**HTML embedding:** `web/config.html` is the authoritative source. `scripts/embed_html.py` runs as a PlatformIO pre-build script and regenerates `include/config_html.h` on every build. Never edit `config_html.h` directly — it will be overwritten.
+**HTML embedding:** `web/config.html` and `web/update.html` are the authoritative sources. `scripts/embed_html.py` runs as a PlatformIO pre-build script and regenerates `include/config_html.h` and `include/update_html.h` on every build. Never edit these generated headers directly — they are overwritten on every build.
 
 **Simulator seam:** `simulator/src/main_wasm.cpp` `#include`s `src/main.cpp` directly, so all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef SIMULATOR_BUILD` guards and replaced by stubs in `main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub in `main_wasm.cpp` to match.
 
@@ -64,7 +65,7 @@ scripts/
 - **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing.
 - **Naming:** Arduino camelCase conventions for variables and functions (`displayWeather`, `fetchWeatherData`).
 - **Web files:** Biome enforced — 2-space indentation, 120-column limit, double quotes, trailing commas, semicolons. Run `bun run format` after editing any file under `web/`.
-- **Generated files:** Do not manually edit `include/config_html.h` — it is regenerated on every `pio run`.
+- **Generated files:** Do not manually edit `include/config_html.h` or `include/update_html.h` — both are regenerated on every `pio run`.
 
 ## 5. Key Files & Entrypoints
 
@@ -72,6 +73,7 @@ scripts/
 - `src/main.cpp` — firmware entrypoint; weather fetch + deep-sleep cycle
 - `src/display.cpp` — all e-paper rendering logic (`DisplayWeather` and helpers)
 - `web/config.html` — setup portal HTML source (embed_html.py publishes it to `include/config_html.h`)
+- `web/update.html` — OTA update portal HTML source (embed_html.py publishes it to `include/update_html.h`)
 - `include/defaults.h` — compile-time defaults (location, units, language, update interval)
 - `include/forecast_record.h` — shared weather data structs
 - `simulator/src/main_wasm.cpp` — WASM build entry + hardware function stubs

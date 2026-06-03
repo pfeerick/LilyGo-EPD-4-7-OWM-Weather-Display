@@ -38,7 +38,7 @@ To compile you will need the following libraries, compatible versions of which w
 - <https://github.com/vroland/epdiy> (display driver — replaced the frozen LilyGo-EPD47 fork)
 - <https://github.com/bblanchon/ArduinoJson>
 
-The setup portal HTML lives in `web/config.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` (the embedded PROGMEM copy) — no separate filesystem upload is needed.
+The setup portal HTML lives in `web/config.html` and the OTA update portal in `web/update.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` and `include/update_html.h` (the embedded PROGMEM copies) — no separate filesystem upload is needed.
 
 ## Previewing the web UI
 
