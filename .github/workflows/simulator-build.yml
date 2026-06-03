@@ -3,6 +3,7 @@ name: Simulator Build
 on:
   pull_request:
     paths:
+      - ".github/workflows/simulator-build.yml"
       - "simulator/**"
       - "src/main.cpp"
       - "include/**"
@@ -29,7 +30,7 @@ jobs:
         run: pio pkg install
 
       - name: Install Emscripten
-        uses: mymindstorm/setup-emsdk@v14
+        uses: mymindstorm/setup-emsdk@v16
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
