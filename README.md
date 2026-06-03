@@ -55,18 +55,36 @@ On first boot the values are automatically written to the on-device config store
 
 # Installing firmware
 
-The easiest way to get started is to flash a pre-built firmware using the
-[ESPHome Web Flasher](https://web.esphome.io/) — no toolchain required:
+Flash directly from your browser — no file download or toolchain required:
 
-1. Download `firmware-latest.bin` (or a specific version) from the
-   [Releases](https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases) page
-2. Open [web.esphome.io](https://web.esphome.io/) in your browser, connect your
-   device via USB, and upload the file
-3. After flashing, the device will enter the
-   [web setup portal](#option-1-web-setup-portal-recommended) on first boot to
-   guide you through configuration
+1. Open **[pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display](https://pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/)** in a Chromium-based browser with Web Serial support (Chrome, Edge, Opera, Brave, etc.)
+2. Select a firmware version and flash mode, then connect your device via USB
+3. Click **Install** and follow the prompts
 
-The web flasher runs entirely in your browser via WebSerial — no installation required.
+**First-time install** — use **Factory Flash**: erases the device and writes the bootloader,
+partition table, and application. After flashing, the device enters the
+[web setup portal](#option-1-web-setup-portal-recommended) to guide you through configuration.
+
+**Updating** — use **Update Flash**: writes only the application binary and preserves your
+WiFi credentials and settings.
+
+The flash page also accepts a locally-built binary via the **Local file** tab.
+
+## Manual flashing (fallback)
+
+If the browser flasher is unavailable, download `firmware-factory-latest.bin` (or a specific
+version) from the [Releases](https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases)
+page and flash it using [web.esphome.io](https://web.esphome.io/) or `esptool.py`:
+
+```sh
+esptool.py --chip esp32 write_flash 0x0 firmware-factory-vX.Y.Z.bin
+```
+
+For an OTA update without erasing, flash `firmware-vX.Y.Z.bin` at offset `0x10000`:
+
+```sh
+esptool.py --chip esp32 write_flash 0x10000 firmware-vX.Y.Z.bin
+```
 
 Want to build from source or work on the UI? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
