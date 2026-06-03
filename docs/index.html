@@ -217,7 +217,6 @@ footer a {
     <script>
 const REPO = "pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display";
 const API_URL = `https://api.github.com/repos/${REPO}/releases`;
-const DOWNLOAD_BASE = `https://github.com/${REPO}/releases/download`;
 
 let activeTab = "releases";
 let selectedTag = null;
@@ -261,7 +260,7 @@ function updateButton() {
         : isLatest
           ? "firmware-latest.bin"
           : `firmware-${selectedTag}.bin`;
-    binaryUrl = `${DOWNLOAD_BASE}/${selectedTag}/${filename}`;
+    binaryUrl = `firmware/${filename}`;
   } else if (activeTab === "local" && localFileUrl) {
     binaryUrl = localFileUrl;
   }

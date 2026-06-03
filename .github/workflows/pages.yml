@@ -6,6 +6,8 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/pages.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -22,6 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Download firmware from all releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p docs/firmware
+          gh release list --json tagName --jq '.[].tagName' | \
+            while IFS= read -r tag; do
+              gh release download "$tag" --pattern "firmware*.bin" --dir docs/firmware --clobber || true
+            done
 
       - uses: actions/upload-pages-artifact@v5
         with:

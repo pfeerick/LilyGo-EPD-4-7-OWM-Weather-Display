@@ -161,27 +161,22 @@ const server = Bun.serve({
         `<a href="/display" style="flex:1;text-align:center;padding:12px;color:#aaa;text-decoration:none">Display</a>` +
         `<a href="/flash" style="flex:1;text-align:center;padding:12px;color:#fff;text-decoration:none;font-weight:600">Flash</a>` +
         `</nav>`;
-      // Proxy GitHub release downloads through the local server to avoid CORS issues.
-      // This script is only injected in dev mode; the GitHub Pages version is unaffected.
-      const fetchProxy =
-        `<script>` +
-        `const _f=window.fetch;` +
-        `window.fetch=(u,...a)=>{` +
-        `if(typeof u==="string"&&u.startsWith("https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/"))` +
-        `u="/release-proxy?url="+encodeURIComponent(u);` +
-        `return _f(u,...a);};` +
-        `</script>`;
-      html = html.replace("</head>", `${fetchProxy}\n</head>`);
       html = html.replace("<main>", `${devNav}\n    <main style="margin-top:44px">`);
       return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
     }
 
-    if (req.method === "GET" && pathname === "/release-proxy") {
-      const target = new URL(req.url).searchParams.get("url") ?? "";
-      const allowed = "https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/";
-      if (!target.startsWith(allowed)) return new Response("Forbidden", { status: 403 });
-      const upstream = await fetch(target);
-      if (!upstream.ok) return new Response("Upstream error", { status: upstream.status });
+    // Proxy firmware binary requests to GitHub releases (avoids CORS issues in dev).
+    // On GitHub Pages the files are served directly from docs/firmware/ (same origin).
+    if (req.method === "GET" && pathname.startsWith("/firmware/")) {
+      const filename = pathname.slice("/firmware/".length);
+      if (!/^firmware[-\w.]+\.bin$/.test(filename)) return new Response("Forbidden", { status: 403 });
+      const match = filename.match(/^firmware(?:-factory)?-(.+)\.bin$/);
+      if (!match) return new Response("Not Found", { status: 404 });
+      const tag = match[1];
+      const upstream = await fetch(
+        `https://github.com/pfeerick/LilyGo-EPD-4-7-OWM-Weather-Display/releases/download/${tag}/${filename}`,
+      );
+      if (!upstream.ok) return new Response("Not Found", { status: upstream.status });
       const headers = { "Content-Type": "application/octet-stream" };
       const len = upstream.headers.get("Content-Length");
       if (len) headers["Content-Length"] = len;
