@@ -62,7 +62,7 @@ scripts/
 
 ## 4. Coding Conventions
 
-- **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing.
+- **C/C++ style:** `.clang-format` is present — Google base style, 120-character line limit, 2-space indentation, `SortIncludes: Never`. Run `clang-format -i` on changed `.cpp`/`.h` files before committing. **Do not run clang-format on `include/fonts/` or `include/images/`** — those directories contain auto-generated binary data and have nested `.clang-format` files with `DisableFormat: true` to exclude them from CI checks.
 - **Naming:** Arduino camelCase conventions for variables and functions (`displayWeather`, `fetchWeatherData`).
 - **Web files:** Biome enforced — 2-space indentation, 120-column limit, double quotes, trailing commas, semicolons. Run `bun run format` after editing any file under `web/`.
 - **Generated files:** Do not manually edit `include/config_html.h` or `include/update_html.h` — both are regenerated on every `pio run`.
