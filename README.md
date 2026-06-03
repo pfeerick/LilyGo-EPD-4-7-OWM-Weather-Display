@@ -80,7 +80,7 @@ page and flash it using [web.esphome.io](https://web.esphome.io/) or `esptool.py
 esptool.py --chip esp32 write_flash 0x0 firmware-factory-vX.Y.Z.bin
 ```
 
-For an OTA update without erasing, flash `firmware-vX.Y.Z.bin` at offset `0x10000`:
+To update the app only (preserves settings), flash `firmware-vX.Y.Z.bin` at offset `0x10000`:
 
 ```sh
 esptool.py --chip esp32 write_flash 0x10000 firmware-vX.Y.Z.bin
