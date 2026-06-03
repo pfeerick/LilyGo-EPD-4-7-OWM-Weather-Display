@@ -160,6 +160,10 @@ Four GitHub Actions workflows run on pull requests:
   git rebase --autosquash origin/main
   ```
 
+### Symlink quirk: `.cursorrules` and `.windsurfrules`
+
+These two files are git symlinks (mode `120000`) whose stored content is the bare target path `.ai/instructions.md` with no trailing newline — which is correct; newlines are not valid in filesystem paths. GitHub suppresses the "no newline at end of file" warning for `.md` files (likely because trailing whitespace is meaningful in Markdown), so only these two non-markdown symlinks show the warning in PR diffs. Do not attempt to add a trailing newline to fix it — it would corrupt the symlink target.
+
 ### What Lives Where
 
 - Agent-facing guidance → `.ai/instructions.md` (this file)
