@@ -260,7 +260,7 @@ function updateButton() {
         : isLatest
           ? "firmware-latest.bin"
           : `firmware-${selectedTag}.bin`;
-    binaryUrl = `firmware/${filename}`;
+    binaryUrl = new URL(`firmware/${filename}`, location.href).href;
   } else if (activeTab === "local" && localFileUrl) {
     binaryUrl = localFileUrl;
   }
