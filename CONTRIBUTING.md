@@ -25,6 +25,12 @@ Open a PR against `main`. Keep changes focused — one logical change per PR mak
 
 ---
 
+## AI tools
+
+An AI collaboration guide is maintained at [`.ai/instructions.md`](.ai/instructions.md). It is symlinked from `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, and `.github/copilot-instructions.md` so all common AI/LLM tools pick it up automatically. Update it when repo-specific workflows change or when you find yourself correcting an AI agent on the same point twice.
+
+---
+
 ## Building from source
 
 To compile you will need the following libraries, compatible versions of which will be installed automatically by PlatformIO:
