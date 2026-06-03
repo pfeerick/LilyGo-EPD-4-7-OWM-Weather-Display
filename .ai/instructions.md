@@ -145,6 +145,14 @@ Four GitHub Actions workflows run on pull requests:
 
 ## 8. AI Collaboration Guidelines
 
+### Branches
+
+Always create a new branch before starting any work. Never commit directly to `main`.
+
+- Name the branch after the conventional commit type and a short description: `feat/add-humidity-graph`, `fix/graph-overflow`, `chore/update-deps`
+- Create with `git checkout -b <branch-name>` before making any changes
+- This applies to all change types: features, fixes, refactors, docs, chores, etc.
+
 ### Commits
 
 - Prefer small, focused commits.
