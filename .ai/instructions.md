@@ -151,6 +151,14 @@ Four GitHub Actions workflows run on pull requests:
 - Use Conventional Commits format: `type(scope): description`
   - Examples: `feat(display): add humidity graph`, `fix(weather_api): handle missing hourly forecast`
 - Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`, `build`, `ci`, `chore`
+- When correcting an earlier commit on the same branch, use a fixup commit rather than amending or creating a loose fix:
+  ```sh
+  git commit --fixup=<sha-of-commit-being-fixed>
+  ```
+  Before the PR is merged, squash fixups into their targets with:
+  ```sh
+  git rebase --autosquash origin/main
+  ```
 
 ### What Lives Where
 
