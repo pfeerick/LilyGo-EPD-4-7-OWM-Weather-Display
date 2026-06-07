@@ -22,6 +22,7 @@ struct ForecastRecord {  // For current Day and Day 1, 2, 3, etc
   int sunrise;
   int sunset;
   float uvi;
+  float moon_phase;
 };
 
 #endif /* ifndef FORECAST_RECORD_H_ */

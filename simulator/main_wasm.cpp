@@ -164,6 +164,7 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonArray daily = root["daily"];
   wx_conditions.low = daily[0]["temp"]["min"].as<float>();
   wx_conditions.high = daily[0]["temp"]["max"].as<float>();
+  wx_conditions.moon_phase = daily[0]["moon_phase"].as<float>();
 
   JsonArray list = root["hourly"];
   byte wxIndex = 0;
