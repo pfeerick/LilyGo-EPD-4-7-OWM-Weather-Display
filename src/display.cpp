@@ -216,20 +216,18 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
   int b = jd;
   jd -= b;
   double Phase = jd;
-  b = (int)(Phase * 8 + 0.5) & 7;
   if (southernHemisphere) Phase = 1 - Phase;
-  int octant = (int)(Phase * 8 + 0.5) & 7;
   FillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, kDarkGrey);
   const int number_of_lines = 90;
   for (double Ypos = 0; Ypos <= number_of_lines / 2; Ypos++) {
     double Xpos = sqrt(number_of_lines / 2 * number_of_lines / 2 - Ypos * Ypos);
     double Rpos = 2 * Xpos;
     double Xpos1, Xpos2;
-    if (octant < 5) {
-      Xpos1 = -Xpos;
+    if (Phase < 0.5) {
+      Xpos1 = Xpos;
       Xpos2 = Rpos - 2 * Phase * Rpos - Xpos;
     } else {
-      Xpos1 = Xpos;
+      Xpos1 = -Xpos;
       Xpos2 = Xpos - 2 * Phase * Rpos + Rpos;
     }
     double pW1x = (Xpos1 + number_of_lines) / number_of_lines * diameter + x;
