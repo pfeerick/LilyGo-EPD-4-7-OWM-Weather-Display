@@ -101,6 +101,14 @@ This instantiates the WASM renderer directly in Bun, fetches live OWM data, and 
 bun run screenshot:readme
 ```
 
+To capture the "SETUP MODE" screen (the WiFi/config-portal QR codes shown when the device has no valid config) instead — no OWM credentials required — run:
+
+```sh
+bun run screenshot:setup
+```
+
+This writes `simulator-setup-screenshot.png`. The same screen can also be previewed live in the browser via the **Setup screen** button on the `/display` page.
+
 ### Rebuilding the WASM module
 
 Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and Ninja.
@@ -112,6 +120,6 @@ emmake cmake --build simulator/build
 
 The build writes `simulator.js` and `simulator.wasm` straight into `simulator/wasm/` (gitignored). When your PR is merged to `main`, CI rebuilds the artifacts and publishes them to the `latest` release.
 
-### How it tracks `main.cpp`
+### How it tracks the firmware source
 
-The WASM module `#include`s `src/main.cpp` directly — all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef SIMULATOR_BUILD` guards and replaced by stubs in `simulator/main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub version in `main_wasm.cpp` to match.
+`simulator/main_wasm.cpp` `#include`s `weather_api.cpp`, `display.cpp`, `icons.cpp`, and `setup_screen.cpp` from `src/` directly — rendering changes there are picked up automatically on the next WASM rebuild. `main.cpp` itself isn't compiled in; its hardware-only code (`setup()`/`loop()`, WiFi, deep sleep, the real `DecodeWeather`, etc.) stays behind `#ifndef SIMULATOR_BUILD` guards, and `main_wasm.cpp` provides its own JSON-string-based `DecodeWeather` plus the exported `wasm_*` functions instead. If you change how OWM JSON is parsed, update both the firmware's `DecodeWeather` and the reimplementation in `main_wasm.cpp` to match.
