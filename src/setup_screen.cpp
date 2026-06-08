@@ -1,4 +1,5 @@
 #include "setup_screen.h"
+#include "build_info.h"
 #include "display.h"
 #include "qrcode.h"
 #include "fonts/opensans12b.h"
@@ -69,6 +70,10 @@ void DisplaySetupScreen(const char* ap_name) {
   int blockH = 270;
   int textY = (epd_height() - blockH) / 2;
 
+  // Halve the whitespace above "SETUP MODE" to balance the block against the build-info footer
+  int topMargin = textY - 48;
+  textY -= topMargin / 2;
+
   SetFont(OpenSans18B);
   DrawString(cx, textY - 48, "SETUP MODE", Alignment::kCenter);
   SetFont(OpenSans12B);
@@ -83,6 +88,10 @@ void DisplaySetupScreen(const char* ap_name) {
   DrawString(cx, textY + 228, "To update firmware:", Alignment::kCenter);
   SetFont(OpenSans18B);
   DrawString(cx, textY + 260, "http://192.168.4.1/update", Alignment::kCenter);
+
+  SetFont(OpenSans12B);
+  DrawString(cx, epd_height() - 70, BUILD_INFO, Alignment::kCenter);
+  DrawString(cx, epd_height() - 36, BUILD_TIME, Alignment::kCenter);
 
   EdpUpdate();
   epd_poweroff();

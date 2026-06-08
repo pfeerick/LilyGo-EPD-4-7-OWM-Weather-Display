@@ -6,6 +6,7 @@
 include/owm_credentials.h
 include/config_html.h
 include/update_html.h
+include/build_info.h
 
 # Bun / Node
 node_modules/
