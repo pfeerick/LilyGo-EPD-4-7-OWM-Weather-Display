@@ -342,7 +342,6 @@ inline void enterSetupMode() {
   fprintf(stderr, "enterSetupMode() called\n");
   exit(1);
 }
-inline void DisplaySetupScreen(const char*) {}
 
 // --------------- EPDIY hardware stubs ---------------
 // Only the HIGH-LEVEL init/update/power functions need stubbing.

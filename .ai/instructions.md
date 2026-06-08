@@ -31,6 +31,7 @@ src/
   icons.cpp / .h        # Weather condition icon bitmaps
   power.cpp / .h        # Deep-sleep and wake management
   setup_portal.cpp / .h # Captive-portal WiFi + OWM config wizard
+  setup_screen.cpp / .h # E-paper "SETUP MODE" screen (WiFi/portal QR codes)
   weather_api.cpp / .h  # OpenWeatherMap HTTP fetch + JSON parse
 include/
   defaults.h            # Compile-time defaults (location, units, etc.)
@@ -41,7 +42,8 @@ include/
   images/               # Icon/image headers
   translations/         # Locale string tables
 simulator/
-  src/                  # WASM build entry: main_wasm.cpp with stubs for hardware-only functions
+  main_wasm.cpp         # WASM build entry: includes display/weather/icons/setup_screen .cpp + exports wasm_* + hardware stubs
+  simulator_stubs.h     # PC/WASM stand-ins for Arduino, ESP-IDF, WiFi, and EPDIY hardware APIs
   CMakeLists.txt        # Emscripten CMake build config
   wasm/                 # Pre-built simulator.js + simulator.wasm (gitignored; download from releases)
   .env.example          # OWM API key + location template
@@ -60,7 +62,7 @@ scripts/
 
 **HTML embedding:** `web/config.html` and `web/update.html` are the authoritative sources. `scripts/embed_html.py` runs as a PlatformIO pre-build script and regenerates `include/config_html.h` and `include/update_html.h` on every build. Never edit these generated headers directly — they are overwritten on every build.
 
-**Simulator seam:** `simulator/src/main_wasm.cpp` `#include`s `src/main.cpp` directly, so all rendering changes are picked up automatically on the next WASM rebuild. Hardware-only functions (`BeginSleep`, `StartWiFi`, `DecodeWeather`, etc.) are compiled out with `#ifndef SIMULATOR_BUILD` guards and replaced by stubs in `main_wasm.cpp`. If you add new weather fields to `DecodeWeather`, update the stub in `main_wasm.cpp` to match.
+**Simulator seam:** `simulator/main_wasm.cpp` `#include`s `weather_api.cpp`, `display.cpp`, `icons.cpp`, and `setup_screen.cpp` from `src/` directly, so rendering changes in those files are picked up automatically on the next WASM rebuild. `main.cpp` itself is *not* compiled in — its hardware-only code (`setup()`/`loop()`, WiFi, deep sleep, the real `DecodeWeather`, etc.) stays behind `#ifndef SIMULATOR_BUILD` guards, and `main_wasm.cpp` provides its own JSON-string-based `DecodeWeather` plus `wasm_*` exports (`wasm_init`, `wasm_set_config`, `wasm_render`, `wasm_render_setup`, ...) instead. If you change how OWM JSON is parsed, update both the firmware's `DecodeWeather` and the reimplementation in `main_wasm.cpp` to match.
 
 ## 4. Coding Conventions
 
@@ -78,7 +80,7 @@ scripts/
 - `web/update.html` — OTA update portal HTML source (embed_html.py publishes it to `include/update_html.h`)
 - `include/defaults.h` — compile-time defaults (location, units, language, update interval)
 - `include/forecast_record.h` — shared weather data structs
-- `simulator/src/main_wasm.cpp` — WASM build entry + hardware function stubs
+- `simulator/main_wasm.cpp` — WASM build entry; includes the rendering `.cpp` files from `src/` and exports `wasm_*` functions
 - `.clang-format` — C++ formatting config
 - `biome.json` — web file formatting/linting config
 - `cliff.toml` — git-cliff changelog config

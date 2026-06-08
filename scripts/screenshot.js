@@ -1,6 +1,9 @@
-// Renders the weather display via the WASM simulator and saves a PNG.
-// Usage: bun run screenshot [output-path]
-// Output defaults to simulator-screenshot.png in the current directory
+// Renders a display screen via the WASM simulator and saves a PNG.
+// Usage: bun run screenshot [--screen=weather|setup] [output-path]
+// --screen selects which screen to capture (default: weather, which needs an
+// OWM API key); "setup" renders the setup-mode screen (WiFi/portal QR codes)
+// and needs no OWM data. Output defaults to simulator-screenshot.png
+// (or simulator-setup-screenshot.png for --screen=setup) in the current directory.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -8,10 +11,28 @@ import { dirname, join } from "node:path";
 import { deflateSync } from "node:zlib";
 
 const ROOT = join(import.meta.dir, "..");
-const DEFAULT_OUT = join(process.cwd(), "simulator-screenshot.png");
-const outPath = process.argv[2] ?? DEFAULT_OUT;
 const EPD_W = 960;
 const EPD_H = 540;
+
+// --- Parse CLI args: [--screen=weather|setup] [output-path] ---
+// "--screen" selects *which screen* to capture; "setup" names the setup-mode
+// screen (DisplaySetupScreen / "SETUP MODE"), not a configuration action.
+const SCREENS = ["weather", "setup"];
+const DEFAULT_OUT_NAME = { weather: "simulator-screenshot.png", setup: "simulator-setup-screenshot.png" };
+let screen = "weather";
+let outArg;
+for (const arg of process.argv.slice(2)) {
+  if (arg.startsWith("--screen=")) {
+    screen = arg.slice("--screen=".length);
+  } else if (outArg === undefined) {
+    outArg = arg;
+  }
+}
+if (!SCREENS.includes(screen)) {
+  console.error(`Error: unknown --screen value "${screen}" (expected one of: ${SCREENS.join(", ")})`);
+  process.exit(1);
+}
+const outPath = outArg ?? join(process.cwd(), DEFAULT_OUT_NAME[screen]);
 
 // --- Load simulator/.env ---
 const dotenvPath = join(ROOT, "simulator", ".env");
@@ -38,7 +59,7 @@ const gmtOffsetSec = parseInt(process.env.OWM_GMT_OFFSET_SEC ?? "0", 10);
 const dstOffsetSec = parseInt(process.env.OWM_DST_OFFSET_SEC ?? "0", 10);
 const owmServer = process.env.OWM_SERVER ?? "api.openweathermap.org";
 
-if (!apikey) {
+if (screen === "weather" && !apikey) {
   console.error("Error: OWM_APIKEY not set. Copy simulator/.env.example to simulator/.env and fill in your key.");
   process.exit(1);
 }
@@ -61,41 +82,48 @@ const wasm = await SimulatorModule({
   printErr: () => {},
 });
 
-// --- Initialise and configure ---
+// --- Initialise ---
 wasm.ccall("wasm_init", null, [], []);
-// Use "Simulator" as city name to match the browser's default (Show city checkbox unchecked)
-wasm.ccall(
-  "wasm_set_config",
-  null,
-  ["string", "string", "string", "number", "number", "number"],
-  ["Simulator", unitsCode, lang.toUpperCase(), parseFloat(lat), gmtOffsetSec, dstOffsetSec],
-);
 
-// --- Fetch OWM data ---
-const owmUrl =
-  `https://${owmServer}/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apikey}` +
-  `&mode=json&units=${units}&lang=${lang}&exclude=minutely,alerts`;
+if (screen === "setup") {
+  // --- Render the setup-mode screen (WiFi/portal QR codes) — no OWM data needed ---
+  console.log("Rendering setup screen...");
+  wasm.ccall("wasm_render_setup", null, ["string"], ["WeatherSetup-A1B2"]);
+} else {
+  // Use "Simulator" as city name to match the browser's default (Show city checkbox unchecked)
+  wasm.ccall(
+    "wasm_set_config",
+    null,
+    ["string", "string", "string", "number", "number", "number"],
+    ["Simulator", unitsCode, lang.toUpperCase(), parseFloat(lat), gmtOffsetSec, dstOffsetSec],
+  );
 
-console.log(`Fetching OWM data for ${city || `${lat},${lon}`}...`);
-const owmRes = await fetch(owmUrl);
-if (!owmRes.ok) {
-  console.error(`OWM API error: ${owmRes.status} ${owmRes.statusText}`);
-  const body = await owmRes.text();
-  console.error(body.slice(0, 400));
-  process.exit(1);
-}
-const owmJson = await owmRes.text();
+  // --- Fetch OWM data ---
+  const owmUrl =
+    `https://${owmServer}/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apikey}` +
+    `&mode=json&units=${units}&lang=${lang}&exclude=minutely,alerts`;
 
-// --- Render ---
-console.log("Rendering...");
-const enc = new TextEncoder().encode(owmJson);
-const ptr = wasm._malloc(enc.length);
-wasm.HEAPU8.set(enc, ptr);
-const ok = wasm.ccall("wasm_render", "number", ["number", "number"], [ptr, enc.length]);
-wasm._free(ptr);
-if (ok < 0) {
-  console.error("wasm_render failed — check OWM JSON format (stderr above).");
-  process.exit(1);
+  console.log(`Fetching OWM data for ${city || `${lat},${lon}`}...`);
+  const owmRes = await fetch(owmUrl);
+  if (!owmRes.ok) {
+    console.error(`OWM API error: ${owmRes.status} ${owmRes.statusText}`);
+    const body = await owmRes.text();
+    console.error(body.slice(0, 400));
+    process.exit(1);
+  }
+  const owmJson = await owmRes.text();
+
+  // --- Render ---
+  console.log("Rendering...");
+  const enc = new TextEncoder().encode(owmJson);
+  const ptr = wasm._malloc(enc.length);
+  wasm.HEAPU8.set(enc, ptr);
+  const ok = wasm.ccall("wasm_render", "number", ["number", "number"], [ptr, enc.length]);
+  wasm._free(ptr);
+  if (ok < 0) {
+    console.error("wasm_render failed — check OWM JSON format (stderr above).");
+    process.exit(1);
+  }
 }
 
 // --- Read framebuffer (4bpp packed grayscale) ---

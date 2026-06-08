@@ -121,6 +121,7 @@ void EdpUpdate() {}
 #include "../src/weather_api.cpp"
 #include "../src/display.cpp"
 #include "../src/icons.cpp"
+#include "../src/setup_screen.cpp"
 
 void DrawBattery(int x, int y) {
   const uint8_t percentage = 85;
@@ -225,6 +226,11 @@ EMSCRIPTEN_KEEPALIVE int wasm_render(const char* json, int len) {
   if (!DecodeWeather(json_str, "onecall")) return -1;
   DisplayWeather();
   return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE void wasm_render_setup(const char* ap_name) {
+  epd_hl_set_all_white(&epd_hl);
+  DisplaySetupScreen(ap_name);
 }
 
 EMSCRIPTEN_KEEPALIVE uint8_t* wasm_get_framebuffer() {
