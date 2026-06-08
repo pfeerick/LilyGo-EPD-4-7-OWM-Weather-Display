@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun run index.js",
     "screenshot": "bun scripts/screenshot.js",
+    "screenshot:setup": "bun scripts/screenshot.js --screen=setup",
     "screenshot:readme": "bun scripts/screenshot.js docs/assets/simulator-screenshot.png",
     "format": "biome format --write web/config.html web/display.html docs/index.html index.js",
     "format:check": "biome ci web/config.html web/display.html docs/index.html index.js"
