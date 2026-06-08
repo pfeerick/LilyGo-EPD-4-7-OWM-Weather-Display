@@ -22,12 +22,14 @@ add_executable(simulator
   miniz/miniz_tdef.c
   miniz/miniz_tinfl.c
   miniz/miniz_zip.c
+  qrcodegen/qrcodegen.c
 )
 
 target_include_directories(simulator PRIVATE
   ${CMAKE_SOURCE_DIR}                           # simulator_stubs.h
-  ${CMAKE_SOURCE_DIR}/esp_stubs                 # esp_attr.h, esp_err.h, xtensa/
+  ${CMAKE_SOURCE_DIR}/esp_stubs                 # esp_attr.h, esp_err.h, qrcode.h, xtensa/
   ${CMAKE_SOURCE_DIR}/miniz                     # miniz.h and split headers
+  ${CMAKE_SOURCE_DIR}/qrcodegen                 # qrcodegen.h
   ${ROOT}/include                               # config.h, fonts/, images/
   ${ROOT}/src                                   # main.cpp
   ${ROOT}/.pio/libdeps/display/epdiy/src        # epdiy.h, epd_internals.h, epd_highlevel.h
@@ -43,7 +45,7 @@ if(EMSCRIPTEN)
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/wasm"
   )
   target_link_options(simulator PRIVATE
-    -sEXPORTED_FUNCTIONS=_wasm_init,_wasm_set_config,_wasm_render,_wasm_get_framebuffer,_wasm_fb_size,_malloc,_free
+    -sEXPORTED_FUNCTIONS=_wasm_init,_wasm_set_config,_wasm_render,_wasm_render_setup,_wasm_get_framebuffer,_wasm_fb_size,_malloc,_free
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPU8,stringToUTF8,lengthBytesUTF8
     -sMODULARIZE=1
     "-sEXPORT_NAME=SimulatorModule"
