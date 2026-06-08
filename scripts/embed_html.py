@@ -13,6 +13,9 @@ def git(args):
 
 sha    = git(["rev-parse", "--short", "HEAD"]) or "unknown"
 branch = git(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
+if branch == "HEAD":
+    # Detached HEAD (e.g. CI checkout of a release tag) — show the tag instead
+    branch = git(["describe", "--tags", "--exact-match"]) or branch
 dirty  = git(["status", "--porcelain"]) != ""  # non-empty means uncommitted changes
 build_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 build_info = f"{branch}@{sha}{'*' if dirty else ''} &bull; {build_time}"
