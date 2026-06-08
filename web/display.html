@@ -87,6 +87,7 @@
     <div id="controls">
       <button type="button" id="refreshBtn">Refresh</button>
       <button type="button" id="refetchBtn" title="Re-fetch live OWM data">Re-fetch OWM</button>
+      <button type="button" id="setupBtn" title="Render the setup-mode screen (WiFi/portal QR codes)">Setup screen</button>
       <button type="button" id="saveBtn" title="Save the current display as a PNG">Save PNG</button>
       <label>
         <input type="checkbox" id="autoRefresh" />
@@ -207,6 +208,23 @@
         }
       }
 
+      async function renderSetupScreen() {
+        statusEl.textContent = "Rendering setup screen…";
+        try {
+          if (!await ensureWasm()) return;
+          const t0 = performance.now();
+          wasmModule.ccall("wasm_render_setup", null, ["string"], ["WeatherSetup-A1B2"]);
+          const fbPtr  = wasmModule.ccall("wasm_get_framebuffer", "number", [], []);
+          const fbSize = wasmModule.ccall("wasm_fb_size",         "number", [], []);
+          const fbCopy = new Uint8Array(wasmModule.HEAPU8.buffer, fbPtr, fbSize).slice();
+          renderFramebuffer(fbCopy);
+          const ms = Math.round(performance.now() - t0);
+          statusEl.textContent = `${new Date().toLocaleTimeString()} (${ms} ms)`;
+        } catch (e) {
+          statusEl.textContent = `Error: ${e.message}`;
+        }
+      }
+
       function startAuto() {
         stopAuto();
         autoTimer = setInterval(() => fetchAndRender(false), parseInt(document.getElementById("interval").value, 10));
@@ -217,6 +235,7 @@
 
       document.getElementById("refreshBtn").addEventListener("click", () => fetchAndRender(false));
       document.getElementById("refetchBtn").addEventListener("click", () => fetchAndRender(true));
+      document.getElementById("setupBtn").addEventListener("click", () => renderSetupScreen());
 
       document.getElementById("saveBtn").addEventListener("click", () => {
         canvas.toBlob((blob) => {
