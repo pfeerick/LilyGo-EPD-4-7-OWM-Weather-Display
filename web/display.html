@@ -45,6 +45,7 @@
       }
       h1 { color: #eee; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
       #frame {
+        position: relative;
         background: #d4cfc8;
         border: 6px solid #444;
         border-radius: 4px;
@@ -55,12 +56,28 @@
         display: block;
         image-rendering: pixelated;
       }
+      #stoppedOverlay {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        background: rgba(0,0,0,0.55);
+        color: #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
       #controls {
         display: flex;
         gap: 12px;
         align-items: center;
       }
-      button {
+      button, select {
         padding: 8px 20px;
         border: none;
         border-radius: 4px;
@@ -69,7 +86,8 @@
         cursor: pointer;
         font-size: 0.9rem;
       }
-      button:hover { background: #666; }
+      button:hover:not(:disabled) { background: #666; }
+      button:disabled { opacity: 0.5; cursor: default; }
       label { color: #ddd; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
       #status { color: #bbb; font-size: 0.8rem; min-width: 10ch; }
     </style>
@@ -83,17 +101,19 @@
     <h1>E-ink Display Simulator &mdash; 960 &times; 540</h1>
     <div id="frame">
       <canvas id="epd" width="960" height="540"></canvas>
+      <div id="stoppedOverlay">Stopped</div>
     </div>
     <div id="controls">
-      <button type="button" id="refreshBtn">Refresh</button>
-      <button type="button" id="refetchBtn" title="Re-fetch live OWM data">Re-fetch OWM</button>
-      <button type="button" id="setupBtn" title="Render the setup-mode screen (WiFi/portal QR codes)">Setup screen</button>
+      <select id="screenSelect">
+        <option value="weather">Weather Display</option>
+        <option value="setup">Setup Screen</option>
+      </select>
+      <button type="button" id="startBtn">Start</button>
+      <button type="button" id="stopBtn" disabled>Stop</button>
+      <button type="button" id="refreshBtn" disabled>Refresh</button>
+      <button type="button" id="refetchBtn" title="Re-fetch live OWM data" disabled>Re-fetch OWM</button>
       <button type="button" id="saveBtn" title="Save the current display as a PNG">Save PNG</button>
-      <label>
-        <input type="checkbox" id="autoRefresh" />
-        Auto-refresh
-      </label>
-      <select id="interval" style="padding:6px;border-radius:4px;background:#555;color:#eee;border:none;">
+      <select id="interval">
         <option value="2000">2 s</option>
         <option value="5000" selected>5 s</option>
         <option value="10000">10 s</option>
@@ -107,7 +127,7 @@
         <input type="checkbox" id="showCity" />
         Show city
       </label>
-      <span id="status">—</span>
+      <span id="status">Stopped</span>
     </div>
     <script>
       const EPD_W = 960;
@@ -115,7 +135,14 @@
       const canvas = document.getElementById("epd");
       const ctx = canvas.getContext("2d");
       const statusEl = document.getElementById("status");
+      const stoppedOverlay = document.getElementById("stoppedOverlay");
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const refetchBtn = document.getElementById("refetchBtn");
+      const screenSelect = document.getElementById("screenSelect");
       let autoTimer = null;
+      let running = false;
       let wasmModule = null;
       let wasmReady = false;
       let owmCfg = { city: "", units: "M", lang: "EN", latitude: 0, gmtOffsetSec: 0, dstOffsetSec: 0 };
@@ -225,17 +252,56 @@
         }
       }
 
-      function startAuto() {
-        stopAuto();
-        autoTimer = setInterval(() => fetchAndRender(false), parseInt(document.getElementById("interval").value, 10));
-      }
-      function stopAuto() {
-        if (autoTimer !== null) { clearInterval(autoTimer); autoTimer = null; }
+      function renderActiveScreen(refetch = false) {
+        return screenSelect.value === "setup" ? renderSetupScreen() : fetchAndRender(refetch);
       }
 
-      document.getElementById("refreshBtn").addEventListener("click", () => fetchAndRender(false));
-      document.getElementById("refetchBtn").addEventListener("click", () => fetchAndRender(true));
-      document.getElementById("setupBtn").addEventListener("click", () => renderSetupScreen());
+      function updateRefetchState() {
+        refetchBtn.disabled = !running || screenSelect.value === "setup";
+      }
+
+      async function startSimulator() {
+        startBtn.disabled = true;
+        statusEl.textContent = "Starting…";
+        if (!await ensureWasm()) { startBtn.disabled = false; return; }
+        wasmModule.ccall("wasm_init", null, [], []);
+        applyCity();
+        running = true;
+        stoppedOverlay.style.display = "none";
+        stopBtn.disabled = false;
+        refreshBtn.disabled = false;
+        updateRefetchState();
+        await renderActiveScreen(false);
+        autoTimer = setInterval(() => renderActiveScreen(false), parseInt(document.getElementById("interval").value, 10));
+      }
+
+      function stopSimulator() {
+        if (autoTimer !== null) { clearInterval(autoTimer); autoTimer = null; }
+        running = false;
+        stoppedOverlay.style.display = "";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        refreshBtn.disabled = true;
+        refetchBtn.disabled = true;
+        statusEl.textContent = "Stopped";
+      }
+
+      startBtn.addEventListener("click", () => startSimulator());
+      stopBtn.addEventListener("click", () => stopSimulator());
+      refreshBtn.addEventListener("click", () => renderActiveScreen(false));
+      refetchBtn.addEventListener("click", () => renderActiveScreen(true));
+
+      screenSelect.addEventListener("change", () => {
+        updateRefetchState();
+        if (running) renderActiveScreen(false);
+      });
+
+      document.getElementById("interval").addEventListener("change", () => {
+        if (running) {
+          clearInterval(autoTimer);
+          autoTimer = setInterval(() => renderActiveScreen(false), parseInt(document.getElementById("interval").value, 10));
+        }
+      });
 
       document.getElementById("saveBtn").addEventListener("click", () => {
         canvas.toBlob((blob) => {
@@ -250,18 +316,10 @@
         }, "image/png");
       });
 
-      document.getElementById("autoRefresh").addEventListener("change", (e) => {
-        e.target.checked ? startAuto() : stopAuto();
-      });
-
-      document.getElementById("interval").addEventListener("change", () => {
-        if (document.getElementById("autoRefresh").checked) startAuto();
-      });
-
       document.getElementById("showCity").addEventListener("change", async () => {
         if (!await ensureWasm()) return;
         applyCity();
-        fetchAndRender(false);
+        if (running) renderActiveScreen(false);
       });
 
       document.getElementById("halfScale").addEventListener("change", (e) => {
@@ -273,9 +331,6 @@
           canvas.style.height = "";
         }
       });
-
-      // Load on page open
-      fetchAndRender();
     </script>
   </body>
 </html>
