@@ -1,4 +1,5 @@
 #pragma once
+#include <ArduinoJson.h>
 #include "forecast_record.h"
 #include "config.h"
 
@@ -7,6 +8,12 @@ constexpr uint8_t kMaxGraphReadings = 16;
 
 extern ForecastRecord wx_conditions;
 extern ForecastRecord wx_forecast[];
+
+// Populates wx_conditions/wx_forecast from a parsed OWM One Call API response,
+// logging each field via Serial. Shared by the firmware's stream-based
+// DecodeWeather (weather_api.cpp) and the simulator's string-based DecodeWeather
+// (main_wasm.cpp) so both stay in sync.
+bool ParseWeatherDoc(JsonDocument& doc, const String& type);
 
 #ifndef SIMULATOR_BUILD
 #include <WiFiClient.h>
