@@ -229,16 +229,15 @@ void DrawMoon(int x, int y, int diameter, float phase, bool southernHemisphere) 
 }
 
 String MoonPhase(float phase) {
-  int b = (int)(phase * 8 + 0.5) & 7;
-  if (b == 0) return TXT_MOON_NEW;
-  if (b == 1) return TXT_MOON_WAXING_CRESCENT;
-  if (b == 2) return TXT_MOON_FIRST_QUARTER;
-  if (b == 3) return TXT_MOON_WAXING_GIBBOUS;
-  if (b == 4) return TXT_MOON_FULL;
-  if (b == 5) return TXT_MOON_WANING_GIBBOUS;
-  if (b == 6) return TXT_MOON_THIRD_QUARTER;
-  if (b == 7) return TXT_MOON_WANING_CRESCENT;
-  return "";
+  constexpr float kPhaseWindow = 1.0f / 29.53f;  // ~1 day either side of an exact quarter phase
+  if (phase >= 1.0f - kPhaseWindow || phase < kPhaseWindow) return TXT_MOON_NEW;
+  if (phase < 0.25f - kPhaseWindow) return TXT_MOON_WAXING_CRESCENT;
+  if (phase <= 0.25f + kPhaseWindow) return TXT_MOON_FIRST_QUARTER;
+  if (phase < 0.5f - kPhaseWindow) return TXT_MOON_WAXING_GIBBOUS;
+  if (phase <= 0.5f + kPhaseWindow) return TXT_MOON_FULL;
+  if (phase < 0.75f - kPhaseWindow) return TXT_MOON_WANING_GIBBOUS;
+  if (phase <= 0.75f + kPhaseWindow) return TXT_MOON_THIRD_QUARTER;
+  return TXT_MOON_WANING_CRESCENT;
 }
 
 void DisplayForecastSection(int x, int y) {
