@@ -136,66 +136,10 @@ bool DecodeWeather(const std::string& json, String Type) {
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, json);
   if (error) {
-    fprintf(stderr, "deserializeJson() failed: %s\n", error.c_str());
+    Serial.printf("deserializeJson() failed: %s\n", error.c_str());
     return false;
   }
-  JsonObject root = doc.as<JsonObject>();
-  fprintf(stderr, "Decoding %s data\n", Type.c_str());
-
-  wx_conditions.high = -50;
-  wx_conditions.low = 50;
-
-  JsonObject current = doc["current"];
-  wx_conditions.sunrise = current["sunrise"];
-  wx_conditions.sunset = current["sunset"];
-  wx_conditions.temperature = current["temp"];
-  wx_conditions.feels_like = current["feels_like"];
-  wx_conditions.pressure = current["pressure"];
-  wx_conditions.humidity = current["humidity"];
-  wx_conditions.dew_point = current["dew_point"];
-  wx_conditions.uvi = current["uvi"];
-  wx_conditions.cloud_cover = current["clouds"];
-  wx_conditions.visibility = current["visibility"];
-  wx_conditions.wind_speed = current["wind_speed"];
-  wx_conditions.wind_dir = current["wind_deg"];
-
-  strlcpy(wx_conditions.forecast0, current["weather"][0]["description"] | "", sizeof(wx_conditions.forecast0));
-  strlcpy(wx_conditions.icon, current["weather"][0]["icon"] | "", sizeof(wx_conditions.icon));
-
-  JsonArray daily = root["daily"];
-  wx_conditions.low = daily[0]["temp"]["min"].as<float>();
-  wx_conditions.high = daily[0]["temp"]["max"].as<float>();
-  wx_conditions.moon_phase = daily[0]["moon_phase"].as<float>();
-
-  JsonArray list = root["hourly"];
-  byte wxIndex = 0;
-  for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
-    wx_forecast[wxIndex].dt = list[r]["dt"].as<int>();
-    wx_forecast[wxIndex].temperature = list[r]["temp"].as<float>();
-    float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
-    float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
-    float temps[3] = {wx_forecast[wxIndex].temperature, t1, t2};
-    wx_forecast[wxIndex].high = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
-                                                     : (temps[1] > temps[2] ? temps[1] : temps[2]));
-    wx_forecast[wxIndex].low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
-                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
-    wx_forecast[wxIndex].pressure = list[r]["pressure"].as<float>();
-    wx_forecast[wxIndex].humidity = list[r]["humidity"].as<float>();
-    strlcpy(wx_forecast[wxIndex].icon, list[r]["weather"][0]["icon"] | "", sizeof(wx_forecast[wxIndex].icon));
-    wx_forecast[wxIndex].rainfall = list[r]["rain"]["1h"].as<float>();
-    wx_forecast[wxIndex].snowfall = list[r]["snow"]["1h"].as<float>();
-
-    wxIndex++;
-  }
-  if (wxIndex >= 3) {
-    float pt = wx_forecast[0].pressure - wx_forecast[2].pressure;
-    pt = ((int)(pt * 10)) / 10.0f;
-    wx_conditions.trend = (pt > 0) ? '+' : (pt < 0) ? '-' : '0';
-  } else {
-    wx_conditions.trend = '0';
-  }
-  if (cfg.units == "I") ConvertReadingsToImperial(wxIndex);
-  return true;
+  return ParseWeatherDoc(doc, Type);
 }
 
 // ---- Exported WASM API ----

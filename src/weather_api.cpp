@@ -1,7 +1,6 @@
 ﻿#include "weather_api.h"
 
 #ifndef SIMULATOR_BUILD
-#include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include "defaults.h"
@@ -69,16 +68,8 @@ String TitleCase(const String& text) {
     return text;
 }
 
-#ifndef SIMULATOR_BUILD
-bool DecodeWeather(WiFiClient& json, const String& Type) {
-  Serial.printf("\nCreating object...");
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, json);
-  if (error) {
-    Serial.printf("deserializeJson() failed: %s\n", error.c_str());
-    return false;
-  }
-  Serial.printf(" Decoding %s data\n", Type.c_str());
+bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
+  Serial.printf("Decoding %s data\n", Type.c_str());
   wx_conditions.high = -50;  // Sentinel: replaced by daily[0] max below
   wx_conditions.low = 50;    // Sentinel: replaced by daily[0] min below
   JsonObject current = doc["current"];
@@ -134,9 +125,12 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
     Serial.printf("Temp: %f\n", wx_forecast[wxIndex].temperature);
     float t1 = (r + 1 < (int)list.size()) ? list[r + 1]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
     float t2 = (r + 2 < (int)list.size()) ? list[r + 2]["temp"].as<float>() : wx_forecast[wxIndex].temperature;
-    wx_forecast[wxIndex].high = max(max(wx_forecast[wxIndex].temperature, t1), t2);
+    float temps[3] = {wx_forecast[wxIndex].temperature, t1, t2};
+    wx_forecast[wxIndex].high = (temps[0] > temps[1] ? (temps[0] > temps[2] ? temps[0] : temps[2])
+                                                     : (temps[1] > temps[2] ? temps[1] : temps[2]));
     Serial.printf("High: %f\n", wx_forecast[wxIndex].high);
-    wx_forecast[wxIndex].low = min(min(wx_forecast[wxIndex].temperature, t1), t2);
+    wx_forecast[wxIndex].low = (temps[0] < temps[1] ? (temps[0] < temps[2] ? temps[0] : temps[2])
+                                                    : (temps[1] < temps[2] ? temps[1] : temps[2]));
     Serial.printf("Low: %f\n", wx_forecast[wxIndex].low);
     wx_forecast[wxIndex].pressure = list[r]["pressure"].as<float>();
     Serial.printf("Pres: %f\n", wx_forecast[wxIndex].pressure);
@@ -162,6 +156,17 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   }
   if (cfg.units == "I") ConvertReadingsToImperial(wxIndex);
   return true;
+}
+
+#ifndef SIMULATOR_BUILD
+bool DecodeWeather(WiFiClient& json, const String& Type) {
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, json);
+  if (error) {
+    Serial.printf("deserializeJson() failed: %s\n", error.c_str());
+    return false;
+  }
+  return ParseWeatherDoc(doc, Type);
 }
 
 bool ObtainWeatherData(WiFiClient& client, const String& RequestType) {

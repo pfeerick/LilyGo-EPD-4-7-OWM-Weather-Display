@@ -89,7 +89,37 @@
       button:hover:not(:disabled) { background: #666; }
       button:disabled { opacity: 0.5; cursor: default; }
       label { color: #ddd; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-      #status { color: #bbb; font-size: 0.8rem; min-width: 10ch; }
+      #status { color: #bbb; font-size: 0.8rem; text-align: center; min-height: 1.2em; }
+      #logPanel {
+        width: 100%;
+        max-width: 960px;
+        background: #1e1e2e;
+        border-radius: 4px;
+        color: #ccc;
+      }
+      #logPanel summary {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #logToolbar { padding: 0 12px 8px; display: flex; justify-content: flex-end; }
+      #logOutput {
+        margin: 0;
+        padding: 8px 12px;
+        max-height: 180px;
+        overflow-y: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-all;
+        background: #14141f;
+        border-top: 1px solid #333;
+      }
     </style>
   </head>
   <body>
@@ -127,8 +157,15 @@
         <input type="checkbox" id="showCity" />
         Show city
       </label>
-      <span id="status">Stopped</span>
     </div>
+    <span id="status">Stopped</span>
+    <details id="logPanel">
+      <summary>Serial Output</summary>
+      <div id="logToolbar">
+        <button type="button" id="clearLogBtn">Clear</button>
+      </div>
+      <pre id="logOutput"></pre>
+    </details>
     <script>
       const EPD_W = 960;
       const EPD_H = 540;
@@ -146,6 +183,25 @@
       let wasmModule = null;
       let wasmReady = false;
       let owmCfg = { city: "", units: "M", lang: "EN", latitude: 0, gmtOffsetSec: 0, dstOffsetSec: 0 };
+
+      const logOutput = document.getElementById("logOutput");
+      const MAX_LOG_LINES = 1000;
+
+      function appendLogLine(text) {
+        const atBottom = logOutput.scrollTop + logOutput.clientHeight >= logOutput.scrollHeight - 4;
+        const ts = new Date().toLocaleTimeString();
+        for (const line of text.split("\n")) {
+          logOutput.appendChild(document.createTextNode(`[${ts}] ${line}\n`));
+        }
+        while (logOutput.childNodes.length > MAX_LOG_LINES) {
+          logOutput.removeChild(logOutput.firstChild);
+        }
+        if (atBottom) logOutput.scrollTop = logOutput.scrollHeight;
+      }
+
+      document.getElementById("clearLogBtn").addEventListener("click", () => {
+        logOutput.textContent = "";
+      });
 
       // Pixel unpacking: 4bpp packed grayscale.
       //   odd x  → upper nibble: (byte >> 4) & 0xF
@@ -192,7 +248,11 @@
             s.onerror = () => reject(new Error("Failed to load /wasm/simulator.js — build the WASM module first"));
             document.head.appendChild(s);
           });
-          wasmModule = await SimulatorModule({ locateFile: f => `/wasm/${f}` });
+          wasmModule = await SimulatorModule({
+            locateFile: f => `/wasm/${f}`,
+            print: appendLogLine,
+            printErr: appendLogLine,
+          });
           wasmModule.ccall("wasm_init", null, [], []);
           owmCfg = await (await fetch("/owm-config")).json();
           applyCity();
