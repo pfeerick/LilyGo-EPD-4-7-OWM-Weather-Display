@@ -119,6 +119,8 @@ bool DecodeWeather(WiFiClient& json, const String& Type) {
   Serial.printf("TLow: %f\n", wx_conditions.low);
   wx_conditions.high = daily[0]["temp"]["max"].as<float>();
   Serial.printf("High: %f\n", wx_conditions.high);
+  wx_conditions.moon_phase = daily[0]["moon_phase"].as<float>();
+  Serial.printf("MPhs: %f\n", wx_conditions.moon_phase);
 
   //TODO: daily[1..7] has 7 more days of temp/icon/description data — add a weekly forecast row if screen space allows
 

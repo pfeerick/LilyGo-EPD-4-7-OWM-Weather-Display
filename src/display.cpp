@@ -189,33 +189,17 @@ static inline bool isSouthernHemisphere() {
 
 void DisplayAstronomySection(int x, int y) {
   SetFont(OpenSans10B);
-  time_t now = time(NULL);
-  struct tm* now_utc = gmtime(&now);
-  DrawString(x + 5, y + 102, MoonPhase(now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900),
-             Alignment::kLeft);
+  DrawString(x + 5, y + 102, MoonPhase(wx_conditions.moon_phase), Alignment::kLeft);
   DrawMoonImage(x + 10, y + 23);
-  DrawMoon(x - 28, y - 15, 75, now_utc->tm_mday, now_utc->tm_mon + 1, now_utc->tm_year + 1900, isSouthernHemisphere());
+  DrawMoon(x - 28, y - 15, 75, wx_conditions.moon_phase, isSouthernHemisphere());
   DrawString(x + 115, y + 40, ConvertUnixTime(wx_conditions.sunrise).substring(0, 5), Alignment::kLeft);
   DrawString(x + 115, y + 80, ConvertUnixTime(wx_conditions.sunset).substring(0, 5), Alignment::kLeft);
   DrawSunriseImage(x + 180, y + 20);
   DrawSunsetImage(x + 180, y + 60);
 }
 
-void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernHemisphere) {
-  int c, e;
-  double jd;
-  if (mm < 3) {
-    yy--;
-    mm += 12;
-  }
-  mm++;
-  c = 365.25 * yy;
-  e = 30.6 * mm;
-  jd = c + e + dd - 694039.09;
-  jd /= 29.53059;
-  int b = jd;
-  jd -= b;
-  double Phase = jd;
+void DrawMoon(int x, int y, int diameter, float phase, bool southernHemisphere) {
+  double Phase = phase;
   if (southernHemisphere) Phase = 1 - Phase;
   FillCircle(x + diameter - 1, y + diameter, diameter / 2 + 1, kDarkGrey);
   const int number_of_lines = 90;
@@ -244,23 +228,8 @@ void DrawMoon(int x, int y, int diameter, int dd, int mm, int yy, bool southernH
   DrawCircle(x + diameter - 1, y + diameter, diameter / 2, kBlack);
 }
 
-String MoonPhase(int d, int m, int y) {
-  int c, e;
-  double jd;
-  int b;
-  if (m < 3) {
-    y--;
-    m += 12;
-  }
-  ++m;
-  c = 365.25 * y;
-  e = 30.6 * m;
-  jd = c + e + d - 694039.09;
-  jd /= 29.53059;
-  b = jd;
-  jd -= b;
-  b = jd * 8 + 0.5;
-  b = b & 7;
+String MoonPhase(float phase) {
+  int b = (int)(phase * 8 + 0.5) & 7;
   if (b == 0) return TXT_MOON_NEW;
   if (b == 1) return TXT_MOON_WAXING_CRESCENT;
   if (b == 2) return TXT_MOON_FIRST_QUARTER;
