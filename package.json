@@ -12,6 +12,6 @@
     "format:check": "biome ci web/config.html web/display.html docs/index.html index.js"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16"
+    "@biomejs/biome": "2.5.0"
   }
 }
