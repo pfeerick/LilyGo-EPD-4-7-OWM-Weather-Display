@@ -129,7 +129,7 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
   JsonArray list = doc["hourly"];
   byte wxIndex = 0;
   Serial.printf("hourly list size: %u\n", list.size());
-  for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
+  for (byte r = 0; r < list.size() && wxIndex < kMaxGraphReadings; r += 3) {
     Serial.printf("\nPeriod-%u--------------\n", r);
     wx_forecast[wxIndex].dt = list[r]["dt"].as<int>();
     wx_forecast[wxIndex].temperature = list[r]["temp"].as<float>();
