@@ -12,6 +12,7 @@ ForecastRecord wx_forecast[kMaxReadings];
 void ConvertReadingsToImperial(int count) {
   wx_conditions.pressure = HpaToInhg(wx_conditions.pressure);
   for (int i = 0; i < count; i++) {
+    wx_forecast[i].pressure = HpaToInhg(wx_forecast[i].pressure);
     wx_forecast[i].rainfall = MmToInches(wx_forecast[i].rainfall);
     wx_forecast[i].snowfall = MmToInches(wx_forecast[i].snowfall);
   }
