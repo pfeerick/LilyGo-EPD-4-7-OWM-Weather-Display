@@ -37,4 +37,9 @@ constexpr int kDefaultSleepDuration = 60;  // minutes
 constexpr int kDefaultWakeupHour = 8;      // 0-23
 constexpr int kDefaultSleepHour = 23;      // 0-23
 
+// Valid ranges (must match the min/max attributes in web/config.html).
+// sleep_duration of 0 would divide by zero in BeginSleep().
+constexpr int kMinSleepDuration = 5;    // minutes
+constexpr int kMaxSleepDuration = 720;  // minutes
+
 #endif /* ifndef DEFAULTS_H_ */

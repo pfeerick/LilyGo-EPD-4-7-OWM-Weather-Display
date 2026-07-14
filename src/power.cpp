@@ -13,6 +13,7 @@ long start_time = 0;
 void BeginSleep() {
   epd_poweroff();
   UpdateLocalTime();
+  if (sleep_duration < 1) sleep_duration = kDefaultSleepDuration;  // guard the % below against divide-by-zero
   long delta = 30;  // ESP32 RTC speed compensation: prevents display at xx:59:yy then xx:00:yy one minute later
   long sleep_timer = (sleep_duration * 60 - ((current_min % sleep_duration) * 60 + current_sec)) + delta;
   esp_sleep_enable_timer_wakeup(sleep_timer * 1000000LL);
