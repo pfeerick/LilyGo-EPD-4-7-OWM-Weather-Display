@@ -19,15 +19,25 @@ void ConvertReadingsToImperial(int count) {
 }
 
 String ConvertUnixTime(int unix_time) {
-  // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
+  // Returns e.g. '21:12 15/07/26' (metric) or '09:12pm 07/15/26' (imperial)
   const bool isMetric = (cfg.units == "M");
-  time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
-  struct tm* now_tm = gmtime(&tm);
+  time_t t = unix_time;
+  struct tm now_tm;
+#ifdef SIMULATOR_BUILD
+  // The simulator runs in the browser's timezone, not the configured location's,
+  // so apply the offsets supplied via wasm_set_config manually.
+  t += cfg.gmt_offset_sec + cfg.daylight_offset_sec;
+  gmtime_r(&t, &now_tm);
+#else
+  // TZ is set from cfg.timezone in SetupTime(), so localtime_r applies DST
+  // only when it is actually in effect (unlike adding daylight_offset_sec).
+  localtime_r(&t, &now_tm);
+#endif
   char output[40];
   if (isMetric) {
-    strftime(output, sizeof(output), "%H:%M %d/%m/%y", now_tm);
+    strftime(output, sizeof(output), "%H:%M %d/%m/%y", &now_tm);
   } else {
-    strftime(output, sizeof(output), "%I:%M%P %m/%d/%y", now_tm);
+    strftime(output, sizeof(output), "%I:%M%P %m/%d/%y", &now_tm);
   }
   return output;
 }
