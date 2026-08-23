@@ -9,6 +9,14 @@ Two formatters are enforced by CI:
 
 Run clang-format on changed C/C++ files before submitting, and `bun run format` (or `bunx biome format --write`) on any changed web files.
 
+## Tool versions
+
+[mise](https://mise.jdx.dev) pins the versions of the CLI tools used across this repo in [`mise.toml`](mise.toml): Bun, clang-format, Python, Ninja, CMake, Emscripten (`emsdk`), and git-cliff. If you use mise, run `mise install` once to get all of them; otherwise install each tool yourself matching the versions in `mise.toml`.
+
+`mise install` alone only downloads the tools — for the plain commands used throughout this doc (`bun`, `pio`, `emcmake`, `clang-format`, ...) to find them, mise also needs to be [activated in your shell](https://mise.jdx.dev/getting-started.html#activate-mise) (`eval "$(mise activate zsh)"` or equivalent in your shell rc file). Without that, prefix each command with `mise exec --` instead (e.g. `mise exec -- bun run dev`).
+
+PlatformIO itself isn't a mise tool — install it with `pip install platformio==6.1.19` (matching `mise.toml`'s comment) into the mise-managed Python once it's active.
+
 ## Commit style
 
 Use [Conventional Commits](https://www.conventionalcommits.org):
@@ -42,7 +50,7 @@ The setup portal HTML lives in `web/config.html` and the OTA update portal in `w
 
 ## Previewing the web UI
 
-You can iterate on the setup portal page without flashing firmware using the included Bun preview server. The required Bun version is pinned in `.bun-version`. Install [Bun](https://bun.sh) if you do not have it already:
+You can iterate on the setup portal page without flashing firmware using the included Bun preview server. The required Bun version is pinned in `mise.toml`. If you use [mise](https://mise.jdx.dev), run `mise install` to get the pinned version automatically. Otherwise, install [Bun](https://bun.sh) directly:
 
 ```sh
 # Install Bun
@@ -111,7 +119,7 @@ This writes `simulator-setup-screenshot.png`. The same screen can also be previe
 
 ### Rebuilding the WASM module
 
-Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and Ninja.
+Only needed when you change the C++ rendering code. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html), Ninja, and CMake — `mise install` gets you pinned versions of all three (see [Tool versions](#tool-versions)).
 
 ```sh
 emcmake cmake -B simulator/build -S simulator -G Ninja -DCMAKE_BUILD_TYPE=Release

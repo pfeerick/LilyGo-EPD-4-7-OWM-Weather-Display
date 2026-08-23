@@ -71,6 +71,9 @@ const mock = {
 
 const server = Bun.serve({
   port,
+  routes: {
+    "/wasm/*": { dir: SIMULATOR_WASM_DIR },
+  },
   async fetch(req) {
     const { pathname } = new URL(req.url);
 
@@ -213,14 +216,6 @@ const server = Bun.serve({
         }),
         { headers: { "Content-Type": "application/json" } },
       );
-    }
-
-    if (req.method === "GET" && pathname.startsWith("/wasm/")) {
-      const file = pathname.slice(6);
-      const wasmPath = join(SIMULATOR_WASM_DIR, file);
-      if (!existsSync(wasmPath)) return new Response("Not Found", { status: 404 });
-      const ct = file.endsWith(".wasm") ? "application/wasm" : "application/javascript";
-      return new Response(Bun.file(wasmPath), { headers: { "Content-Type": ct } });
     }
 
     return new Response("Not Found", { status: 404 });

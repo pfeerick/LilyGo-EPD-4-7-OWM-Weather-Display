@@ -16,14 +16,15 @@ jobs:
     name: clang-format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - name: Install clang-format-18
-        run: sudo apt-get install -y clang-format-18
+      - uses: jdx/mise-action@v4
+        with:
+          install_args: clang-format
 
       - name: Check formatting
         run: |
-          clang-format-18 --dry-run --Werror \
+          clang-format --dry-run --Werror \
             src/*.cpp \
             include/*.h \
             include/translations/*.h \
@@ -38,11 +39,11 @@ jobs:
     name: biome
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: jdx/mise-action@v4
         with:
-          bun-version-file: ".bun-version"
+          install_args: bun
 
       - run: bun install --frozen-lockfile
 
