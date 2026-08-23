@@ -1,0 +1,11 @@
+[tools]
+bun = "1.4.0"
+python = "3.12.14"
+ninja = "1.13.2"
+cmake = "4.4.2"
+emsdk = "6.0.8"
+clang-format = "18.1.8"
+git-cliff = "2.13.1"
+
+# PlatformIO: `pip install platformio==6.1.19` into this Python, not a mise
+# pipx tool — pipx's isolated venv breaks esptool's own subprocess calls.

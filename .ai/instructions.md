@@ -18,8 +18,9 @@ This document provides essential context for AI models working in this repositor
   - `bblanchon/ArduinoJson @ ^7.4.3` — JSON deserialisation of OWM API responses
 - **Filesystem:** LittleFS — setup portal HTML is **embedded at compile time** (no separate filesystem flash step)
 - **WASM Simulator:** Emscripten + CMake + Ninja; builds `simulator.js` + `simulator.wasm` from the same C++ rendering code
-- **Web tooling:** Bun (version pinned in `.bun-version`) + Biome for web file formatting and linting
+- **Web tooling:** Bun + Biome for web file formatting and linting
 - **Changelog:** git-cliff (`cliff.toml`) — generates release notes from Conventional Commits
+- **Tool versions:** [mise](https://mise.jdx.dev) pins Bun, clang-format, Python, Ninja, CMake, Emscripten (`emsdk`), and git-cliff in `mise.toml`; run `mise install` to get them all
 
 ## 3. Architecture
 
@@ -86,6 +87,8 @@ scripts/
 - `cliff.toml` — git-cliff changelog config
 
 ## 6. Development Workflow
+
+**mise tool resolution:** commands below (`bun`, `pio`, `emcmake`, `clang-format`, ...) assume mise is activated in the shell. An agent's Bash tool typically starts an unactivated shell — check with e.g. `which bun`; if it's not found, prefix commands with `mise exec --` (e.g. `mise exec -- bun run dev`) instead of installing tools another way.
 
 ### Firmware Build & Flash
 
@@ -166,6 +169,7 @@ Always create a new branch before starting any work. Never commit directly to `m
 - Use Conventional Commits format: `type(scope): description`
   - Examples: `feat(display): add humidity graph`, `fix(weather_api): handle missing hourly forecast`
 - Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`, `build`, `ci`, `chore`
+- Commits authored by an AI agent must include a trailer identifying the model, e.g. `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`.
 - When correcting an earlier commit on the same branch, use a fixup commit rather than amending or creating a loose fix:
   ```sh
   git commit --fixup=<sha-of-commit-being-fixed>
