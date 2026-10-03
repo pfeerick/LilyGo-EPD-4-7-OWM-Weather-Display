@@ -58,9 +58,9 @@ bool LoadConfig() {
   cfg.ntp_server = doc["ntp_server"] | kDefaultNtpServer;
   cfg.gmt_offset_sec = doc["gmt_offset_sec"] | 0;
   cfg.daylight_offset_sec = doc["daylight_offset_sec"] | 0;
-  cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
-  cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
-  cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
+  cfg.sleep_duration = constrain((doc["sleep_duration"] | kDefaultSleepDuration), kMinSleepDuration, kMaxSleepDuration);
+  cfg.wakeup_hour = constrain((doc["wakeup_hour"] | kDefaultWakeupHour), 0, 23);
+  cfg.sleep_hour = constrain((doc["sleep_hour"] | kDefaultSleepHour), 0, 23);
   cfg.debug_display_update = doc["debug_display_update"] | false;
   Serial.println("Config loaded from LittleFS");
   return true;

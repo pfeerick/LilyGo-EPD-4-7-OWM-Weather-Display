@@ -12,21 +12,32 @@ ForecastRecord wx_forecast[kMaxReadings];
 void ConvertReadingsToImperial(int count) {
   wx_conditions.pressure = HpaToInhg(wx_conditions.pressure);
   for (int i = 0; i < count; i++) {
+    wx_forecast[i].pressure = HpaToInhg(wx_forecast[i].pressure);
     wx_forecast[i].rainfall = MmToInches(wx_forecast[i].rainfall);
     wx_forecast[i].snowfall = MmToInches(wx_forecast[i].snowfall);
   }
 }
 
 String ConvertUnixTime(int unix_time) {
-  // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
+  // Returns e.g. '21:12 15/07/26' (metric) or '09:12pm 07/15/26' (imperial)
   const bool isMetric = (cfg.units == "M");
-  time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
-  struct tm* now_tm = gmtime(&tm);
+  time_t t = unix_time;
+  struct tm now_tm;
+#ifdef SIMULATOR_BUILD
+  // The simulator runs in the browser's timezone, not the configured location's,
+  // so apply the offsets supplied via wasm_set_config manually.
+  t += cfg.gmt_offset_sec + cfg.daylight_offset_sec;
+  gmtime_r(&t, &now_tm);
+#else
+  // TZ is set from cfg.timezone in SetupTime(), so localtime_r applies DST
+  // only when it is actually in effect (unlike adding daylight_offset_sec).
+  localtime_r(&t, &now_tm);
+#endif
   char output[40];
   if (isMetric) {
-    strftime(output, sizeof(output), "%H:%M %d/%m/%y", now_tm);
+    strftime(output, sizeof(output), "%H:%M %d/%m/%y", &now_tm);
   } else {
-    strftime(output, sizeof(output), "%I:%M%P %m/%d/%y", now_tm);
+    strftime(output, sizeof(output), "%I:%M%P %m/%d/%y", &now_tm);
   }
   return output;
 }
@@ -118,7 +129,7 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
   JsonArray list = doc["hourly"];
   byte wxIndex = 0;
   Serial.printf("hourly list size: %u\n", list.size());
-  for (byte r = 0; r < 48 && wxIndex < 16; r += 3) {
+  for (byte r = 0; r < list.size() && wxIndex < kMaxGraphReadings; r += 3) {
     Serial.printf("\nPeriod-%u--------------\n", r);
     wx_forecast[wxIndex].dt = list[r]["dt"].as<int>();
     wx_forecast[wxIndex].temperature = list[r]["temp"].as<float>();
@@ -147,10 +158,12 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
   if (wxIndex >= 3) {
     float pressure_trend = wx_forecast[0].pressure - wx_forecast[2].pressure;
     pressure_trend = ((int)(pressure_trend * 10)) / 10.0;
-    wx_conditions.trend = '=';
-    if (pressure_trend > 0) wx_conditions.trend = '+';
-    if (pressure_trend < 0) wx_conditions.trend = '-';
-    if (pressure_trend == 0) wx_conditions.trend = '0';
+    if (pressure_trend > 0)
+      wx_conditions.trend = '+';
+    else if (pressure_trend < 0)
+      wx_conditions.trend = '-';
+    else
+      wx_conditions.trend = '0';
   } else {
     wx_conditions.trend = '0';
   }

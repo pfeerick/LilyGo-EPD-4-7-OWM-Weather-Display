@@ -4,6 +4,8 @@
 #include <string>
 
 // GPIO for the button that triggers config mode when held at boot.
+// GPIO 34-39 have no internal pull-ups, so INPUT_PULLUP is a no-op here;
+// the pin relies on the T5 4.7 board's external pull-up on this button.
 #define CONFIG_BUTTON_PIN 39
 #define CONFIG_BUTTON_HOLD_MS 2000
 

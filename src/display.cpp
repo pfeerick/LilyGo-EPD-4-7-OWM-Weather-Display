@@ -163,13 +163,20 @@ void DisplayVisiCCoverUVISection(int x, int y) {
 }
 
 void DisplayUVIndexLevel(int x, int y, float UVI) {
-  const char* Level = "";
-  if (UVI <= 2) Level = " (L)";
-  if (UVI >= 3 && UVI <= 5) Level = " (M)";
-  if (UVI >= 6 && UVI <= 7) Level = " (H)";
-  if (UVI >= 8 && UVI <= 10) Level = " (VH)";
-  if (UVI >= 11) Level = " (EX)";
-  DrawString(x + 20, y - 5, String(UVI, (UVI < 0 ? 1 : 0)) + Level, Alignment::kLeft);
+  // Band on the rounded value so the level always matches the number shown
+  int uvi_rounded = (int)roundf(UVI);
+  const char* Level;
+  if (uvi_rounded <= 2)
+    Level = " (L)";
+  else if (uvi_rounded <= 5)
+    Level = " (M)";
+  else if (uvi_rounded <= 7)
+    Level = " (H)";
+  else if (uvi_rounded <= 10)
+    Level = " (VH)";
+  else
+    Level = " (EX)";
+  DrawString(x + 20, y - 5, String(UVI, (UVI < 1 ? 1 : 0)) + Level, Alignment::kLeft);
   DrawUVI(x - 10, y - 5);
 }
 
@@ -392,7 +399,7 @@ void DrawUVI(int x, int y) {
 static void calculateGraphYScale(const float* data, int count, float& yMin, float& yMax) {
   yMax = -10000;
   yMin = 10000;
-  for (int i = 1; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     if (data[i] >= yMax) yMax = data[i];
     if (data[i] <= yMin) yMin = data[i];
   }
@@ -401,7 +408,11 @@ static void calculateGraphYScale(const float* data, int count, float& yMin, floa
 }
 
 void DrawGraph(GraphConfig gcfg, float data_array[]) {
-  if (gcfg.autoscale) calculateGraphYScale(data_array, gcfg.readings, gcfg.y_min, gcfg.y_max);
+  if (gcfg.autoscale) {
+    calculateGraphYScale(data_array, gcfg.readings, gcfg.y_min, gcfg.y_max);
+    // Flat data can round min and max to the same value; widen to avoid dividing by zero below
+    if (gcfg.y_max <= gcfg.y_min) gcfg.y_max = gcfg.y_min + 1;
+  }
   SetFont(OpenSans10B);
   int last_x = gcfg.x + 1;
   int last_y =

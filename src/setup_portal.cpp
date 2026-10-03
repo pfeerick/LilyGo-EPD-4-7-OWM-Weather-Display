@@ -1,5 +1,6 @@
 ﻿#include "setup_portal.h"
 #include "config.h"
+#include "defaults.h"
 #include "config_html.h"
 #include "update_html.h"
 #include <WiFi.h>
@@ -147,9 +148,9 @@ static void handleSave() {
   cfg.ntp_server = arg("ntp_server").c_str();
   cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
   cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
-  cfg.sleep_duration = arg("sleep_duration").toInt();
-  cfg.wakeup_hour = arg("wakeup_hour").toInt();
-  cfg.sleep_hour = arg("sleep_hour").toInt();
+  cfg.sleep_duration = constrain(arg("sleep_duration").toInt(), (long)kMinSleepDuration, (long)kMaxSleepDuration);
+  cfg.wakeup_hour = constrain(arg("wakeup_hour").toInt(), 0L, 23L);
+  cfg.sleep_hour = constrain(arg("sleep_hour").toInt(), 0L, 23L);
 
   SaveConfig();
 
