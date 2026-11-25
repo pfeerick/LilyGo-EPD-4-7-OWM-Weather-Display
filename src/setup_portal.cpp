@@ -156,8 +156,8 @@ static void handleSave() {
   cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
   cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
   cfg.sleep_duration = SanitizeSleepDuration(arg("sleep_duration").toInt());
-  cfg.wakeup_hour = arg("wakeup_hour").toInt();
-  cfg.sleep_hour = arg("sleep_hour").toInt();
+  cfg.wakeup_hour = SanitizeHour(arg("wakeup_hour").toInt());
+  cfg.sleep_hour = SanitizeHour(arg("sleep_hour").toInt());
 
   SaveConfig();
 

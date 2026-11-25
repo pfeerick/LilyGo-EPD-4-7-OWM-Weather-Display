@@ -54,3 +54,8 @@ inline int SanitizeSleepDuration(int minutes) {
   if (minutes > kMaxSleepDuration) return kMaxSleepDuration;
   return minutes;
 }
+
+// Clamps an hour-of-day setting (wakeup_hour / sleep_hour) to 0-23.
+inline int SanitizeHour(int hour) {
+  return hour < 0 ? 0 : (hour > 23 ? 23 : hour);
+}
