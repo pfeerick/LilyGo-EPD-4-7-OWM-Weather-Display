@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <string>
+#include "defaults.h"
 
 // GPIO for the button that triggers config mode when held at boot.
 #define CONFIG_BUTTON_PIN 39
@@ -46,4 +47,10 @@ bool SeedConfigFromHeader();
 
 // Returns a sleep duration (minutes) safe to use as a divisor: non-positive values fall back to
 // kDefaultSleepDuration, anything else is clamped to [kMinSleepDuration, kMaxSleepDuration].
-int SanitizeSleepDuration(int minutes);
+// Header-inline (no LittleFS dependency) so it can be unit tested natively.
+inline int SanitizeSleepDuration(int minutes) {
+  if (minutes <= 0) return kDefaultSleepDuration;
+  if (minutes < kMinSleepDuration) return kMinSleepDuration;
+  if (minutes > kMaxSleepDuration) return kMaxSleepDuration;
+  return minutes;
+}
