@@ -392,7 +392,7 @@ void DrawUVI(int x, int y) {
 static void calculateGraphYScale(const float* data, int count, float& yMin, float& yMax) {
   yMax = -10000;
   yMin = 10000;
-  for (int i = 1; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     if (data[i] >= yMax) yMax = data[i];
     if (data[i] <= yMin) yMin = data[i];
   }
