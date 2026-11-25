@@ -6,6 +6,7 @@ on:
       - 'src/**'
       - 'include/**'
       - 'simulator/**'
+      - 'test/**'
       - 'web/**'
       - 'docs/**'
       - 'index.js'
@@ -33,7 +34,9 @@ jobs:
             simulator/epdiy_pc/*.c \
             simulator/epdiy_pc/*.h \
             simulator/esp_stubs/*.h \
-            simulator/esp_stubs/xtensa/*.h
+            simulator/esp_stubs/xtensa/*.h \
+            test/*.cpp \
+            test/*.h
 
   biome:
     name: biome
