@@ -28,9 +28,9 @@ When setup mode is active, the display shows the Access Point name and instructi
 2. Open any URL in a browser — the captive portal will redirect you automatically, or navigate directly to **`http://192.168.4.1`**
 3. Fill in your settings and click **Save & Restart**
 
-The form is pre-filled with the current saved configuration, so you can review and make targeted edits without re-entering everything. The password field is always shown blank for security; leaving it empty on save preserves the existing password.
+The form is pre-filled with the current saved configuration, so you can review and make targeted edits without re-entering everything. The WiFi password and OWM API key fields are always shown blank for security, since the setup access point is open; leaving either empty on save preserves the existing value.
 
-The raw config can also be retrieved as JSON from **`http://192.168.4.1/config.json`** — useful for backup or inspection. The response includes the WiFi password by default; define `REDACT_PASSWORD_IN_CONFIG_DOWNLOAD` in `include/config.h` to suppress it. The endpoint can be disabled entirely by commenting out `ENABLE_CONFIG_DOWNLOAD` in the same file.
+The raw config can also be retrieved as JSON from **`http://192.168.4.1/config.json`** — useful for backup or inspection. The WiFi password and API key are redacted from the response by default; comment out `REDACT_PASSWORD_IN_CONFIG_DOWNLOAD` and/or `REDACT_APIKEY_IN_CONFIG_DOWNLOAD` in `include/config.h` to include them. The endpoint can be disabled entirely by commenting out `ENABLE_CONFIG_DOWNLOAD` in the same file.
 
 The following settings are available in the portal:
 
