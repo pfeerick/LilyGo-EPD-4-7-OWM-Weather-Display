@@ -43,7 +43,8 @@ static String buildPage() {
   String page = FPSTR(CONFIG_HTML);
   page.replace("__SSID__", htmlEscape(cfg.ssid));
   page.replace("__PASSWORD__", "");  // never pre-fill password
-  page.replace("__APIKEY__", htmlEscape(cfg.apikey));
+  // never pre-fill the API key either; hint whether one is already stored
+  page.replace("__APIKEY_PLACEHOLDER__", cfg.apikey.empty() ? "" : "Leave blank to keep current");
   page.replace("__SERVER__", htmlEscape(cfg.server));
   page.replace("__CITY__", htmlEscape(cfg.city));
   page.replace("__LATITUDE__", htmlEscape(cfg.latitude));
@@ -124,6 +125,13 @@ static void handleSave() {
   CHECK_FIELD_LEN("timezone", 79)
   CHECK_FIELD_LEN("ntp_server", 63)
 
+  // The API key is never pre-filled, so blank means "keep current" — but there must be one to keep
+  String key = arg("apikey");
+  if (key.length() == 0 && cfg.apikey.empty()) {
+    httpServer.send(400, "text/plain", "API key is required");
+    return;
+  }
+
   cfg.ssid = arg("ssid").c_str();
 
   // Only overwrite password if user typed something
@@ -136,7 +144,7 @@ static void handleSave() {
     cfg.password = pw.c_str();
   }
 
-  cfg.apikey = arg("apikey").c_str();
+  if (key.length() > 0) cfg.apikey = key.c_str();
   cfg.server = arg("server").c_str();
   cfg.city = arg("city").c_str();
   cfg.latitude = arg("latitude").c_str();
@@ -147,7 +155,7 @@ static void handleSave() {
   cfg.ntp_server = arg("ntp_server").c_str();
   cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
   cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
-  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.sleep_duration = SanitizeSleepDuration(arg("sleep_duration").toInt());
   cfg.wakeup_hour = arg("wakeup_hour").toInt();
   cfg.sleep_hour = arg("sleep_hour").toInt();
 

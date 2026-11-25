@@ -12,6 +12,7 @@ ForecastRecord wx_forecast[kMaxReadings];
 void ConvertReadingsToImperial(int count) {
   wx_conditions.pressure = HpaToInhg(wx_conditions.pressure);
   for (int i = 0; i < count; i++) {
+    wx_forecast[i].pressure = HpaToInhg(wx_forecast[i].pressure);  // OWM always returns hPa
     wx_forecast[i].rainfall = MmToInches(wx_forecast[i].rainfall);
     wx_forecast[i].snowfall = MmToInches(wx_forecast[i].snowfall);
   }
@@ -20,7 +21,7 @@ void ConvertReadingsToImperial(int count) {
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
   const bool isMetric = (cfg.units == "M");
-  time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
+  time_t tm = unix_time + wx_conditions.timezone_offset;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
   if (isMetric) {
@@ -72,6 +73,9 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
   Serial.printf("Decoding %s data\n", Type.c_str());
   wx_conditions.high = -50;  // Sentinel: replaced by daily[0] max below
   wx_conditions.low = 50;    // Sentinel: replaced by daily[0] min below
+  // Local-time offset of the forecast location (DST-aware at fetch time); fall back to the manual offsets if absent
+  wx_conditions.timezone_offset = doc["timezone_offset"] | (cfg.gmt_offset_sec + cfg.daylight_offset_sec);
+  Serial.printf("TZOf: %d\n", wx_conditions.timezone_offset);
   JsonObject current = doc["current"];
   wx_conditions.sunrise = current["sunrise"];
   Serial.printf("SRis: %d\n", wx_conditions.sunrise);
@@ -145,12 +149,12 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
     wxIndex++;
   }
   if (wxIndex >= 3) {
-    float pressure_trend = wx_forecast[0].pressure - wx_forecast[2].pressure;
+    // wx_forecast[2] is 6 h ahead of wx_forecast[0]; positive change means pressure is rising
+    float pressure_trend = wx_forecast[2].pressure - wx_forecast[0].pressure;
     pressure_trend = ((int)(pressure_trend * 10)) / 10.0;
-    wx_conditions.trend = '=';
+    wx_conditions.trend = '0';
     if (pressure_trend > 0) wx_conditions.trend = '+';
     if (pressure_trend < 0) wx_conditions.trend = '-';
-    if (pressure_trend == 0) wx_conditions.trend = '0';
   } else {
     wx_conditions.trend = '0';
   }

@@ -130,27 +130,56 @@ void DisplayTempHumiPressSection(int x, int y) {
              Alignment::kLeft);
 }
 
+// Byte offset just past the first `chars` UTF-8 code points of `text` (or text.length() if shorter).
+static int Utf8ByteOffset(const String& text, size_t chars) {
+  int i = 0, len = text.length();
+  while (i < len && chars > 0) {
+    i++;
+    while (i < len && (text[i] & 0xC0) == 0x80)
+      i++;  // skip continuation bytes
+    chars--;
+  }
+  return i;
+}
+
+// Splits `text` into at most two lines of up to `width` characters each, breaking at the last space that
+// fits (or mid-word if there is none, so no character is lost). Text that still overflows the second line is
+// truncated with "..." rather than dropped silently.
+static void WrapToTwoLines(const String& text, size_t width, String& line1, String& line2) {
+  const int len = text.length();
+  int cut = Utf8ByteOffset(text, width);
+  line2 = "";
+  if (cut >= len) {
+    line1 = text;
+    return;
+  }
+  int brk = -1;
+  for (int i = cut; i > 0; i--) {
+    if (text[i] == ' ') {
+      brk = i;
+      break;
+    }
+  }
+  line1 = text.substring(0, brk > 0 ? brk : cut);
+  String rest = text.substring(brk > 0 ? brk + 1 : cut);
+  if (Utf8ByteOffset(rest, width) < (int)rest.length()) {
+    rest = rest.substring(0, Utf8ByteOffset(rest, width - 3));
+    rest.trim();
+    rest += "...";
+  }
+  line2 = rest;
+}
+
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
   const bool isMetric = (cfg.units == "M");
   SetFont(OpenSans12B);
   String Wx_Description = wx_conditions.forecast0;
   Wx_Description.replace(".", "");
-  int spaceRemaining = 0, p = 0, charCount = 0;
-  while (p < Wx_Description.length()) {
-    if (Wx_Description.substring(p, p + 1) == " ") spaceRemaining = p;
-    if (charCount > lineWidth - 1) {
-      Wx_Description = Wx_Description.substring(0, spaceRemaining) + "~" + Wx_Description.substring(spaceRemaining + 1);
-      charCount = 0;
-    }
-    p++;
-    charCount++;
-  }
   if (wx_forecast[0].rainfall > 0)
     Wx_Description += " (" + String(wx_forecast[0].rainfall, 1) + String((isMetric ? "mm" : "in")) + ")";
-  int sep = Wx_Description.indexOf("~");
-  String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
-  String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
+  String Line1, Line2;
+  WrapToTwoLines(Wx_Description, lineWidth, Line1, Line2);
   DrawString(x + 30, y + 5, TitleCase(Line1), Alignment::kLeft);
   if (Line2.length() > 0) DrawString(x + 30, y + 30, Line2, Alignment::kLeft);
 }
@@ -163,12 +192,17 @@ void DisplayVisiCCoverUVISection(int x, int y) {
 }
 
 void DisplayUVIndexLevel(int x, int y, float UVI) {
-  const char* Level = "";
-  if (UVI <= 2) Level = " (L)";
-  if (UVI >= 3 && UVI <= 5) Level = " (M)";
-  if (UVI >= 6 && UVI <= 7) Level = " (H)";
-  if (UVI >= 8 && UVI <= 10) Level = " (VH)";
-  if (UVI >= 11) Level = " (EX)";
+  // OWM reports a fractional UVI; WHO exposure bands apply to the rounded index, which is also what is displayed
+  const long uviRounded = lroundf(UVI);
+  const char* Level = " (EX)";
+  if (uviRounded <= 2)
+    Level = " (L)";
+  else if (uviRounded <= 5)
+    Level = " (M)";
+  else if (uviRounded <= 7)
+    Level = " (H)";
+  else if (uviRounded <= 10)
+    Level = " (VH)";
   DrawString(x + 20, y - 5, String(UVI, (UVI < 0 ? 1 : 0)) + Level, Alignment::kLeft);
   DrawUVI(x - 10, y - 5);
 }
@@ -392,12 +426,15 @@ void DrawUVI(int x, int y) {
 static void calculateGraphYScale(const float* data, int count, float& yMin, float& yMax) {
   yMax = -10000;
   yMin = 10000;
-  for (int i = 1; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     if (data[i] >= yMax) yMax = data[i];
     if (data[i] <= yMin) yMin = data[i];
   }
-  yMax = round(yMax + 0.5f);
-  if (yMin != 0) yMin = round(yMin);
+  // floor() for the minimum so the lowest reading is never clipped, and floor() + 1 for the maximum
+  // for headroom (same result as the previous round(max + 0.5)). This also guarantees yMax > yMin,
+  // so DrawGraph never divides by zero.
+  yMin = floorf(yMin);
+  yMax = floorf(yMax) + 1;
 }
 
 void DrawGraph(GraphConfig gcfg, float data_array[]) {

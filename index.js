@@ -36,7 +36,7 @@ const SIMULATOR_WASM_DIR = join(import.meta.dir, "simulator", "wasm");
 const mock = {
   __SSID__: "MyHomeWiFi",
   __PASSWORD__: "",
-  __APIKEY__: "your_api_key_here",
+  __APIKEY_PLACEHOLDER__: "Leave blank to keep current",
   __SERVER__: "api.openweathermap.org",
   __CITY__: "Bath",
   __LATITUDE__: "51.38",

@@ -11,9 +11,11 @@
 // Comment out to disable the endpoint entirely.
 #define ENABLE_CONFIG_DOWNLOAD
 
-// Define to redact the WiFi password from the /config.json response.
+// Define to redact the WiFi password / OWM API key from the /config.json response.
+// The setup AP is open, so both are redacted by default; comment out to include them.
 // Only has effect when ENABLE_CONFIG_DOWNLOAD is also defined.
-// #define REDACT_PASSWORD_IN_CONFIG_DOWNLOAD
+#define REDACT_PASSWORD_IN_CONFIG_DOWNLOAD
+#define REDACT_APIKEY_IN_CONFIG_DOWNLOAD
 
 struct AppConfig {
   std::string ssid;
@@ -41,3 +43,7 @@ bool LoadConfig();
 void SaveConfig();
 bool IsConfigValid();
 bool SeedConfigFromHeader();
+
+// Returns a sleep duration (minutes) safe to use as a divisor: non-positive values fall back to
+// kDefaultSleepDuration, anything else is clamped to [kMinSleepDuration, kMaxSleepDuration].
+int SanitizeSleepDuration(int minutes);

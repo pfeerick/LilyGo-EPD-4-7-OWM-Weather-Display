@@ -4,7 +4,7 @@
 struct ForecastRecord {  // For current Day and Day 1, 2, 3, etc
   int dt;
   char icon[8];        // OWM icon code e.g. "01d", "01n" (3 chars + null)
-  char trend;          // Pressure trend: '+', '-', '0', '='
+  char trend;          // Pressure trend: '+' rising, '-' falling, '0' steady
   char forecast0[64];  // Weather description e.g. "scattered clouds"
   float temperature;
   float feels_like;
@@ -21,6 +21,7 @@ struct ForecastRecord {  // For current Day and Day 1, 2, 3, etc
   int visibility;
   int sunrise;
   int sunset;
+  int timezone_offset;  // Seconds east of UTC for the forecast location (OWM `timezone_offset`)
   float uvi;
   float moon_phase;
 };
