@@ -145,12 +145,12 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
     wxIndex++;
   }
   if (wxIndex >= 3) {
-    float pressure_trend = wx_forecast[0].pressure - wx_forecast[2].pressure;
+    // wx_forecast[2] is 6 h ahead of wx_forecast[0]; positive change means pressure is rising
+    float pressure_trend = wx_forecast[2].pressure - wx_forecast[0].pressure;
     pressure_trend = ((int)(pressure_trend * 10)) / 10.0;
-    wx_conditions.trend = '=';
+    wx_conditions.trend = '0';
     if (pressure_trend > 0) wx_conditions.trend = '+';
     if (pressure_trend < 0) wx_conditions.trend = '-';
-    if (pressure_trend == 0) wx_conditions.trend = '0';
   } else {
     wx_conditions.trend = '0';
   }
