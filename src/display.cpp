@@ -130,27 +130,56 @@ void DisplayTempHumiPressSection(int x, int y) {
              Alignment::kLeft);
 }
 
+// Byte offset just past the first `chars` UTF-8 code points of `text` (or text.length() if shorter).
+static int Utf8ByteOffset(const String& text, size_t chars) {
+  int i = 0, len = text.length();
+  while (i < len && chars > 0) {
+    i++;
+    while (i < len && (text[i] & 0xC0) == 0x80)
+      i++;  // skip continuation bytes
+    chars--;
+  }
+  return i;
+}
+
+// Splits `text` into at most two lines of up to `width` characters each, breaking at the last space that
+// fits (or mid-word if there is none, so no character is lost). Text that still overflows the second line is
+// truncated with "..." rather than dropped silently.
+static void WrapToTwoLines(const String& text, size_t width, String& line1, String& line2) {
+  const int len = text.length();
+  int cut = Utf8ByteOffset(text, width);
+  line2 = "";
+  if (cut >= len) {
+    line1 = text;
+    return;
+  }
+  int brk = -1;
+  for (int i = cut; i > 0; i--) {
+    if (text[i] == ' ') {
+      brk = i;
+      break;
+    }
+  }
+  line1 = text.substring(0, brk > 0 ? brk : cut);
+  String rest = text.substring(brk > 0 ? brk + 1 : cut);
+  if (Utf8ByteOffset(rest, width) < (int)rest.length()) {
+    rest = rest.substring(0, Utf8ByteOffset(rest, width - 3));
+    rest.trim();
+    rest += "...";
+  }
+  line2 = rest;
+}
+
 void DisplayForecastTextSection(int x, int y) {
   constexpr uint8_t lineWidth = 34;
   const bool isMetric = (cfg.units == "M");
   SetFont(OpenSans12B);
   String Wx_Description = wx_conditions.forecast0;
   Wx_Description.replace(".", "");
-  int spaceRemaining = 0, p = 0, charCount = 0;
-  while (p < Wx_Description.length()) {
-    if (Wx_Description.substring(p, p + 1) == " ") spaceRemaining = p;
-    if (charCount > lineWidth - 1) {
-      Wx_Description = Wx_Description.substring(0, spaceRemaining) + "~" + Wx_Description.substring(spaceRemaining + 1);
-      charCount = 0;
-    }
-    p++;
-    charCount++;
-  }
   if (wx_forecast[0].rainfall > 0)
     Wx_Description += " (" + String(wx_forecast[0].rainfall, 1) + String((isMetric ? "mm" : "in")) + ")";
-  int sep = Wx_Description.indexOf("~");
-  String Line1 = (sep >= 0) ? Wx_Description.substring(0, sep) : Wx_Description;
-  String Line2 = (sep >= 0) ? Wx_Description.substring(sep + 1) : "";
+  String Line1, Line2;
+  WrapToTwoLines(Wx_Description, lineWidth, Line1, Line2);
   DrawString(x + 30, y + 5, TitleCase(Line1), Alignment::kLeft);
   if (Line2.length() > 0) DrawString(x + 30, y + 30, Line2, Alignment::kLeft);
 }
