@@ -113,10 +113,11 @@
     <div class="saved" id="msg">Saved! Device is restarting&hellip;</div>
     <form id="f" method="POST" action="/save">
       <h2>WiFi</h2>
-      <label>Network (SSID)</label>
-      <input name="ssid" value="__SSID__" required maxlength="63" />
-      <label>Password</label>
+      <label for="ssid">Network (SSID)</label>
+      <input id="ssid" name="ssid" value="__SSID__" required maxlength="63" />
+      <label for="password">Password</label>
       <input
+        id="password"
         name="password"
         type="password"
         value="__PASSWORD__"
@@ -125,36 +126,36 @@
       />
 
       <h2>OpenWeatherMap</h2>
-      <label>API Key</label>
-      <input name="apikey" value="__APIKEY__" required maxlength="63" />
-      <label>API Server</label>
-      <input name="server" value="__SERVER__" required maxlength="63" />
+      <label for="apikey">API Key</label>
+      <input id="apikey" name="apikey" value="__APIKEY__" required maxlength="63" />
+      <label for="server">API Server</label>
+      <input id="server" name="server" value="__SERVER__" required maxlength="63" />
 
       <h2>Location</h2>
-      <label>City Name (display only)</label>
-      <input name="city" value="__CITY__" required maxlength="63" />
+      <label for="city">City Name (display only)</label>
+      <input id="city" name="city" value="__CITY__" required maxlength="63" />
       <div class="row">
         <div>
-          <label>Latitude</label>
-          <input name="latitude" value="__LATITUDE__" required maxlength="15" placeholder="e.g. 51.38" />
+          <label for="latitude">Latitude</label>
+          <input id="latitude" name="latitude" value="__LATITUDE__" required maxlength="15" placeholder="e.g. 51.38" />
         </div>
         <div>
-          <label>Longitude</label>
-          <input name="longitude" value="__LONGITUDE__" required maxlength="15" placeholder="e.g. -2.36" />
+          <label for="longitude">Longitude</label>
+          <input id="longitude" name="longitude" value="__LONGITUDE__" required maxlength="15" placeholder="e.g. -2.36" />
         </div>
       </div>
       <h2>Units &amp; Language</h2>
       <div class="row">
         <div>
-          <label>Units</label>
-          <select name="units">
+          <label for="units">Units</label>
+          <select id="units" name="units">
             <option value="M" __UNITS_M__>Metric (°C)</option>
             <option value="I" __UNITS_I__>Imperial (°F)</option>
           </select>
         </div>
         <div>
-          <label>Language</label>
-          <select name="language">
+          <label for="language">Language</label>
+          <select id="language" name="language">
             <option value="EN" __LANG_EN__>English</option>
             <option value="AR" __LANG_AR__>Arabic</option>
             <option value="CZ" __LANG_CZ__>Czech</option>
@@ -176,8 +177,9 @@
       </div>
 
       <h2>Time &amp; Timezone</h2>
-      <label>POSIX Timezone String</label>
+      <label for="timezone">POSIX Timezone String</label>
       <input
+        id="timezone"
         name="timezone"
         value="__TIMEZONE__"
         required
@@ -185,32 +187,32 @@
         placeholder="e.g. GMT0BST,M3.5.0/01,M10.5.0/02"
       />
       <p class="note">Find yours at <em>github.com/nayarsystems/posix_tz_db</em></p>
-      <label>NTP Server</label>
-      <input name="ntp_server" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org" />
+      <label for="ntp_server">NTP Server</label>
+      <input id="ntp_server" name="ntp_server" value="__NTPSERVER__" required maxlength="63" placeholder="pool.ntp.org" />
       <div class="row">
         <div>
-          <label>GMT Offset (seconds)</label>
-          <input name="gmt_offset_sec" type="number" value="__GMTOFFSET__" maxlength="7" />
+          <label for="gmt_offset_sec">GMT Offset (seconds)</label>
+          <input id="gmt_offset_sec" name="gmt_offset_sec" type="number" value="__GMTOFFSET__" maxlength="7" />
         </div>
         <div>
-          <label>DST Offset (seconds)</label>
-          <input name="daylight_offset_sec" type="number" value="__DSTOFFSET__" maxlength="7" />
+          <label for="daylight_offset_sec">DST Offset (seconds)</label>
+          <input id="daylight_offset_sec" name="daylight_offset_sec" type="number" value="__DSTOFFSET__" maxlength="7" />
         </div>
       </div>
 
       <h2>Power / Schedule</h2>
       <div class="row">
         <div>
-          <label>Update Interval (minutes)</label>
-          <input name="sleep_duration" type="number" min="5" max="720" value="__SLEEPDURATION__" />
+          <label for="sleep_duration">Update Interval (minutes)</label>
+          <input id="sleep_duration" name="sleep_duration" type="number" min="5" max="720" value="__SLEEPDURATION__" />
         </div>
         <div>
-          <label>Wake Hour (0–23)</label>
-          <input name="wakeup_hour" type="number" min="0" max="23" value="__WAKEUPHOUR__" />
+          <label for="wakeup_hour">Wake Hour (0–23)</label>
+          <input id="wakeup_hour" name="wakeup_hour" type="number" min="0" max="23" value="__WAKEUPHOUR__" />
         </div>
       </div>
-      <label>Sleep Hour (0–23)</label>
-      <input name="sleep_hour" type="number" min="0" max="23" value="__SLEEPHOUR__" />
+      <label for="sleep_hour">Sleep Hour (0–23)</label>
+      <input id="sleep_hour" name="sleep_hour" type="number" min="0" max="23" value="__SLEEPHOUR__" />
 
       <button type="submit">Save &amp; Restart</button>
     </form>
