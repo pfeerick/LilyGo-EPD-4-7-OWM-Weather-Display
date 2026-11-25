@@ -48,6 +48,23 @@ To compile you will need the following libraries, compatible versions of which w
 
 The setup portal HTML lives in `web/config.html` and the OTA update portal in `web/update.html`. On each PlatformIO build, `scripts/embed_html.py` automatically regenerates `include/config_html.h` and `include/update_html.h` (the embedded PROGMEM copies) — no separate filesystem upload is needed.
 
+## Unit tests
+
+`test/` holds a native [doctest](https://github.com/doctest/doctest) suite that compiles the real parsing and rendering code from `src/` (through `simulator/main_wasm.cpp` and the simulator's hardware stubs) with your desktop compiler, so it needs no hardware or Emscripten. It needs CMake, Ninja, a C/C++ compiler, and the library headers PlatformIO downloads:
+
+```sh
+pio pkg install   # once, fetches ArduinoJson/epdiy headers into .pio/libdeps
+cmake -B test/build -S test -G Ninja
+cmake --build test/build
+ctest --test-dir test/build --output-on-failure
+```
+
+The firmware's serial logging is muted during tests. Set `TEST_VERBOSE=1` to see it. CI runs the suite on every PR that touches `src/`, `include/`, `simulator/` or `test/`, and before each release.
+
+Tests live in `test/test_*.h`, grouped by source file, and are all included from `test/test_main.cpp`. Everything compiles as one translation unit, so `static` helpers in `src/*.cpp` can be tested directly. `test/fixtures.h` builds synthetic OWM responses. Add tests for bug fixes and new parsing or layout logic when you can.
+
+On Windows with clang, also pass `-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_RC_COMPILER=llvm-rc`. A few POSIX-only checks (such as the `%P` time format) are skipped there.
+
 ## Previewing the web UI
 
 You can iterate on the setup portal page without flashing firmware using the included Bun preview server. The required Bun version is pinned in `mise.toml`. If you use [mise](https://mise.jdx.dev), run `mise install` to get the pinned version automatically. Otherwise, install [Bun](https://bun.sh) directly:
