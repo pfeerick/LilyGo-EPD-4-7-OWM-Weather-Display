@@ -10,4 +10,13 @@ TEST_SUITE("config") {
     CHECK(SanitizeSleepDuration(kMaxSleepDuration) == kMaxSleepDuration);
     CHECK(SanitizeSleepDuration(100000) == kMaxSleepDuration);
   }
+
+  TEST_CASE("SanitizeHour clamps to 0-23") {
+    CHECK(SanitizeHour(-1) == 0);
+    CHECK(SanitizeHour(0) == 0);
+    CHECK(SanitizeHour(8) == 8);
+    CHECK(SanitizeHour(23) == 23);
+    CHECK(SanitizeHour(24) == 23);
+    CHECK(SanitizeHour(1000) == 23);
+  }
 }

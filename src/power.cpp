@@ -42,6 +42,7 @@ uint8_t StartWiFi() {
     WiFi.disconnect(false);
     delay(500);
     WiFi.begin(cfg.ssid.c_str(), cfg.password.c_str());
+    WiFi.waitForConnectResult();
   }
   if (WiFi.status() == WL_CONNECTED) {
     wifi_signal = WiFi.RSSI();

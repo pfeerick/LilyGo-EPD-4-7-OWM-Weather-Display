@@ -78,13 +78,12 @@ void setup() {
   }
 
   if (StartWiFi() != WL_CONNECTED) {
-    Serial.println("WiFi failed — entering setup mode");
-    uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    char ap_name[24];
-    snprintf(ap_name, sizeof(ap_name), "WeatherSetup-%02X%02X", mac[4], mac[5]);
-    DisplaySetupScreen(ap_name);
-    EnterSetupMode();
+    // Config is valid, so this is likely a transient outage (router reboot, brief
+    // dropout). Keep the last rendered screen and retry next cycle rather than
+    // stranding the device in setup mode; setup stays reachable via the button.
+    Serial.println("WiFi failed — retrying next update cycle");
+    StopWiFi();
+    BeginSleep();
   }
 
   if (SetupTime()) {

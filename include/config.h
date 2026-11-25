@@ -5,6 +5,8 @@
 #include "defaults.h"
 
 // GPIO for the button that triggers config mode when held at boot.
+// GPIO 34-39 have no internal pull-ups, so INPUT_PULLUP is a no-op here;
+// the pin relies on the T5 4.7 board's external pull-up on this button.
 #define CONFIG_BUTTON_PIN 39
 #define CONFIG_BUTTON_HOLD_MS 2000
 
@@ -53,4 +55,9 @@ inline int SanitizeSleepDuration(int minutes) {
   if (minutes < kMinSleepDuration) return kMinSleepDuration;
   if (minutes > kMaxSleepDuration) return kMaxSleepDuration;
   return minutes;
+}
+
+// Clamps an hour-of-day setting (wakeup_hour / sleep_hour) to 0-23.
+inline int SanitizeHour(int hour) {
+  return hour < 0 ? 0 : (hour > 23 ? 23 : hour);
 }
