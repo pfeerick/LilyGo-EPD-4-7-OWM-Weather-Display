@@ -41,3 +41,7 @@ bool LoadConfig();
 void SaveConfig();
 bool IsConfigValid();
 bool SeedConfigFromHeader();
+
+// Returns a sleep duration (minutes) safe to use as a divisor: non-positive values fall back to
+// kDefaultSleepDuration, anything else is clamped to [kMinSleepDuration, kMaxSleepDuration].
+int SanitizeSleepDuration(int minutes);

@@ -58,7 +58,7 @@ bool LoadConfig() {
   cfg.ntp_server = doc["ntp_server"] | kDefaultNtpServer;
   cfg.gmt_offset_sec = doc["gmt_offset_sec"] | 0;
   cfg.daylight_offset_sec = doc["daylight_offset_sec"] | 0;
-  cfg.sleep_duration = doc["sleep_duration"] | kDefaultSleepDuration;
+  cfg.sleep_duration = SanitizeSleepDuration(doc["sleep_duration"] | kDefaultSleepDuration);
   cfg.wakeup_hour = doc["wakeup_hour"] | kDefaultWakeupHour;
   cfg.sleep_hour = doc["sleep_hour"] | kDefaultSleepHour;
   cfg.debug_display_update = doc["debug_display_update"] | false;
@@ -97,6 +97,13 @@ void SaveConfig() {
   serializeJson(doc, f);
   f.close();
   Serial.println("Config saved to LittleFS");
+}
+
+int SanitizeSleepDuration(int minutes) {
+  if (minutes <= 0) return kDefaultSleepDuration;
+  if (minutes < kMinSleepDuration) return kMinSleepDuration;
+  if (minutes > kMaxSleepDuration) return kMaxSleepDuration;
+  return minutes;
 }
 
 bool IsConfigValid() {

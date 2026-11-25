@@ -147,7 +147,7 @@ static void handleSave() {
   cfg.ntp_server = arg("ntp_server").c_str();
   cfg.gmt_offset_sec = arg("gmt_offset_sec").toInt();
   cfg.daylight_offset_sec = arg("daylight_offset_sec").toInt();
-  cfg.sleep_duration = arg("sleep_duration").toInt();
+  cfg.sleep_duration = SanitizeSleepDuration(arg("sleep_duration").toInt());
   cfg.wakeup_hour = arg("wakeup_hour").toInt();
   cfg.sleep_hour = arg("sleep_hour").toInt();
 

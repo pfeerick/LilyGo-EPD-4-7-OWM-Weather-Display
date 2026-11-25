@@ -34,6 +34,8 @@ constexpr const char* kDefaultLanguage = "EN";
 constexpr const char* kDefaultUnits = "M";
 
 constexpr int kDefaultSleepDuration = 60;  // minutes
+constexpr int kMinSleepDuration = 5;       // minutes; matches web/config.html min
+constexpr int kMaxSleepDuration = 720;     // minutes; matches web/config.html max
 constexpr int kDefaultWakeupHour = 8;      // 0-23
 constexpr int kDefaultSleepHour = 23;      // 0-23
 
