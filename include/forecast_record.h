@@ -21,6 +21,7 @@ struct ForecastRecord {  // For current Day and Day 1, 2, 3, etc
   int visibility;
   int sunrise;
   int sunset;
+  int timezone_offset;  // Seconds east of UTC for the forecast location (OWM `timezone_offset`)
   float uvi;
   float moon_phase;
 };

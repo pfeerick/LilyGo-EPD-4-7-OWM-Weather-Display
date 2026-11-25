@@ -21,7 +21,7 @@ void ConvertReadingsToImperial(int count) {
 String ConvertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
   const bool isMetric = (cfg.units == "M");
-  time_t tm = unix_time + cfg.gmt_offset_sec + cfg.daylight_offset_sec;
+  time_t tm = unix_time + wx_conditions.timezone_offset;
   struct tm* now_tm = gmtime(&tm);
   char output[40];
   if (isMetric) {
@@ -73,6 +73,9 @@ bool ParseWeatherDoc(JsonDocument& doc, const String& Type) {
   Serial.printf("Decoding %s data\n", Type.c_str());
   wx_conditions.high = -50;  // Sentinel: replaced by daily[0] max below
   wx_conditions.low = 50;    // Sentinel: replaced by daily[0] min below
+  // Local-time offset of the forecast location (DST-aware at fetch time); fall back to the manual offsets if absent
+  wx_conditions.timezone_offset = doc["timezone_offset"] | (cfg.gmt_offset_sec + cfg.daylight_offset_sec);
+  Serial.printf("TZOf: %d\n", wx_conditions.timezone_offset);
   JsonObject current = doc["current"];
   wx_conditions.sunrise = current["sunrise"];
   Serial.printf("SRis: %d\n", wx_conditions.sunrise);
