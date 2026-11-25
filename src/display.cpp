@@ -163,12 +163,17 @@ void DisplayVisiCCoverUVISection(int x, int y) {
 }
 
 void DisplayUVIndexLevel(int x, int y, float UVI) {
-  const char* Level = "";
-  if (UVI <= 2) Level = " (L)";
-  if (UVI >= 3 && UVI <= 5) Level = " (M)";
-  if (UVI >= 6 && UVI <= 7) Level = " (H)";
-  if (UVI >= 8 && UVI <= 10) Level = " (VH)";
-  if (UVI >= 11) Level = " (EX)";
+  // OWM reports a fractional UVI; WHO exposure bands apply to the rounded index, which is also what is displayed
+  const long uviRounded = lroundf(UVI);
+  const char* Level = " (EX)";
+  if (uviRounded <= 2)
+    Level = " (L)";
+  else if (uviRounded <= 5)
+    Level = " (M)";
+  else if (uviRounded <= 7)
+    Level = " (H)";
+  else if (uviRounded <= 10)
+    Level = " (VH)";
   DrawString(x + 20, y - 5, String(UVI, (UVI < 0 ? 1 : 0)) + Level, Alignment::kLeft);
   DrawUVI(x - 10, y - 5);
 }
