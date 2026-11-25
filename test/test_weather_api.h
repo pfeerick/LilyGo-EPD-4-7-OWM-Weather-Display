@@ -54,6 +54,20 @@ TEST_SUITE("weather_api") {
       CHECK(wx_forecast[i].dt == 1700000000 + i * 3 * 3600);
   }
 
+  TEST_CASE("ParseWeatherDoc stops at the end of a short hourly array") {
+    ConfigGuard guard;
+    cfg.units = "M";
+    for (auto& f : wx_forecast)
+      f.dt = 12345;  // sentinel: must survive for slots past the data
+    // 10 hourly entries -> samples at r = 0, 3, 6, 9 only
+    REQUIRE(DecodeWeather(MakeOneCallJson(1010, 1015, 0, 2.4f, 10), "onecall"));
+    for (int i = 0; i < 4; i++)
+      CHECK(wx_forecast[i].dt == 1700000000 + i * 3 * 3600);
+    for (int i = 4; i < kMaxReadings; i++)
+      CHECK(wx_forecast[i].dt == 12345);
+    CHECK(wx_conditions.trend == '+');  // trend still computed from the first three samples
+  }
+
   TEST_CASE("imperial mode converts current and forecast pressure and precipitation") {
     ConfigGuard guard;
     cfg.units = "I";
