@@ -26,9 +26,12 @@ jobs:
   simulator:
     uses: ./.github/workflows/simulator-build.yml
 
+  test:
+    uses: ./.github/workflows/test.yml
+
   release:
     name: Create Release
-    needs: [compile-check, lint, simulator]
+    needs: [compile-check, lint, simulator, test]
     runs-on: ubuntu-latest
     permissions:
       contents: write

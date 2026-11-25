@@ -99,13 +99,6 @@ void SaveConfig() {
   Serial.println("Config saved to LittleFS");
 }
 
-int SanitizeSleepDuration(int minutes) {
-  if (minutes <= 0) return kDefaultSleepDuration;
-  if (minutes < kMinSleepDuration) return kMinSleepDuration;
-  if (minutes > kMaxSleepDuration) return kMaxSleepDuration;
-  return minutes;
-}
-
 bool IsConfigValid() {
   return !cfg.ssid.empty() && !cfg.apikey.empty() && !cfg.latitude.empty() && !cfg.longitude.empty() &&
          !cfg.timezone.empty();

@@ -24,7 +24,6 @@ bool DecodeWeather(WiFiClient& json, const String& type);
 String ConvertUnixTime(int unix_time);
 float MmToInches(float value_mm);
 float HpaToInhg(float value_hpa);
-int JulianDate(int d, int m, int y);
 float SumOfPrecip(float data_array[], int readings);
 String TitleCase(const String& text);
 void ConvertReadingsToImperial(int count);

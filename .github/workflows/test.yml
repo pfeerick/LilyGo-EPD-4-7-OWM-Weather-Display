@@ -1,0 +1,42 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/test.yml"
+      - "test/**"
+      - "src/**"
+      - "include/**"
+      - "simulator/**"
+      - "platformio.ini"
+  workflow_call:
+
+jobs:
+  native:
+    name: Native (doctest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+        with:
+          install_args: python ninja cmake
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - name: Install PlatformIO
+        run: pip install platformio==6.1.19
+      - name: Fetch PlatformIO library deps (headers only)
+        run: pio pkg install
+
+      - name: Configure
+        run: cmake -B test/build -S test -G Ninja -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build test/build
+
+      - name: Run tests
+        run: ctest --test-dir test/build --output-on-failure

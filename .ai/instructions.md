@@ -48,6 +48,11 @@ simulator/
   CMakeLists.txt        # Emscripten CMake build config
   wasm/                 # Pre-built simulator.js + simulator.wasm (gitignored; download from releases)
   .env.example          # OWM API key + location template
+test/
+  CMakeLists.txt        # Native (host compiler) doctest suite; fetches doctest header at configure time
+  test_main.cpp         # Single TU: doctest main + harness.h (includes simulator/main_wasm.cpp) + test_*.h
+  test_*.h              # Test cases grouped by source file (config, weather_api, display)
+  fixtures.h            # Synthetic OWM One Call JSON builder
 web/
   config.html           # Setup portal HTML — source of truth; never edit config_html.h directly
   display.html          # Display configuration portal page
@@ -82,6 +87,7 @@ scripts/
 - `include/defaults.h` — compile-time defaults (location, units, language, update interval)
 - `include/forecast_record.h` — shared weather data structs
 - `simulator/main_wasm.cpp` — WASM build entry; includes the rendering `.cpp` files from `src/` and exports `wasm_*` functions
+- `test/CMakeLists.txt` — native unit test build (doctest); reuses the simulator stubs
 - `.clang-format` — C++ formatting config
 - `biome.json` — web file formatting/linting config
 - `cliff.toml` — git-cliff changelog config
@@ -134,22 +140,37 @@ emmake cmake --build simulator/build
 
 Output goes to `simulator/wasm/` (gitignored). CI rebuilds and publishes WASM artifacts on every merge to `main`.
 
+### Unit Tests (native, no hardware required)
+
+```sh
+pio pkg install                                   # once: ArduinoJson/epdiy headers into .pio/libdeps
+cmake -B test/build -S test -G Ninja
+cmake --build test/build
+ctest --test-dir test/build --output-on-failure   # TEST_VERBOSE=1 to see firmware Serial output
+```
+
+- Tests compile the real `src/` code through `simulator/main_wasm.cpp` as one translation unit, so `static` helpers are testable directly. Prefer extracting pure helpers (e.g. `UVIndexLevel`, `SanitizeSleepDuration`) over testing drawing code.
+- Add a test with every bug fix to parsing, scaling, wrapping, or config validation logic.
+- **Windows:** `mise exec` (and mise shims) try to install every pinned tool, and `emsdk` fails to install on Windows, so call the installed binaries directly (`%LOCALAPPDATA%\mise\installs\cmake\<ver>\...\bin\cmake.exe`). With LLVM clang, also pass `-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_RC_COMPILER=llvm-rc`. `%P`-format checks are skipped on Windows (CRT aborts on it).
+
 ## 7. CI/CD
 
-Five GitHub Actions workflows run on pull requests (or push to main):
+Six GitHub Actions workflows run on pull requests (or push to main):
 
 | Workflow | Trigger (path filters) | What it does |
 |---|---|---|
 | `compile-check.yml` | `src/`, `include/`, `platformio.ini` | PlatformIO firmware build; uploads firmware binaries as artifacts |
-| `lint.yml` | `src/`, `include/`, `simulator/`, `web/`, `docs/`, `index.js` | clang-format-18 dry-run on C++ files; Biome format check on web files |
+| `lint.yml` | `src/`, `include/`, `simulator/`, `test/`, `web/`, `docs/`, `index.js` | clang-format-18 dry-run on C++ files; Biome format check on web files |
 | `simulator-build.yml` | `simulator/`, `src/`, `include/` | Emscripten CMake WASM build; uploads `simulator.js` + `simulator.wasm` |
-| `release.yml` | Push to `main` or version tags | Runs all three above; creates/updates GitHub release with git-cliff changelog and firmware + WASM artifacts |
+| `test.yml` | `test/`, `src/`, `include/`, `simulator/`, `platformio.ini` | Native CMake build of the doctest suite; runs `ctest` |
+| `release.yml` | Push to `main` or version tags | Runs all four above; creates/updates GitHub release with git-cliff changelog and firmware + WASM artifacts |
 | `pages.yml` | Push to `main` (`docs/**`) | Deploys `docs/` to GitHub Pages (firmware flasher at `pfeerick.github.io/LilyGo-EPD-4-7-OWM-Weather-Display/`) |
 
 **Before submitting a PR:**
 - Run `clang-format -i` on any changed `.cpp`/`.h` files
 - Run `bun run format` on any changed files under `web/` or `docs/`
 - Confirm `pio run` succeeds locally
+- Run the native unit tests (`ctest --test-dir test/build`) when touching `src/`, `include/`, or `simulator/`
 
 **GitHub Pages setup (one-time manual step):** For `pages.yml` to deploy successfully, go to **Settings > Pages > Build and deployment** and set Source to **GitHub Actions**.
 

@@ -16,5 +16,8 @@ simulator/build/
 simulator/wasm/*.js
 simulator/wasm/*.wasm
 
+# Native unit test build artifacts
+test/build/
+
 # Simulator credentials (copy simulator/.env.example to simulator/.env)
 simulator/.env
