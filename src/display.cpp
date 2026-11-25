@@ -396,8 +396,11 @@ static void calculateGraphYScale(const float* data, int count, float& yMin, floa
     if (data[i] >= yMax) yMax = data[i];
     if (data[i] <= yMin) yMin = data[i];
   }
-  yMax = round(yMax + 0.5f);
-  if (yMin != 0) yMin = round(yMin);
+  // floor() for the minimum so the lowest reading is never clipped, and floor() + 1 for the maximum
+  // for headroom (same result as the previous round(max + 0.5)). This also guarantees yMax > yMin,
+  // so DrawGraph never divides by zero.
+  yMin = floorf(yMin);
+  yMax = floorf(yMax) + 1;
 }
 
 void DrawGraph(GraphConfig gcfg, float data_array[]) {
