@@ -161,7 +161,7 @@ void Mist(int x, int y, bool icon_size, const char* icon_name) {
   int scale = kSmall, linesize = 5;
   if (icon_name[2] == 'n') AddMoon(x, y, icon_size);
   if (icon_size == large_icon) scale = kLarge;
-  AddSun(x, y, scale * (icon_size ? 1 : 0.75), linesize);
+  AddSun(x, y, scale * (icon_size ? 1 : 0.75), icon_size);
   AddFog(x, y, scale, linesize, icon_size);
 }
 
